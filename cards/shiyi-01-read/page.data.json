@@ -1,0 +1,38 @@
+{
+  "$kit": {
+    "theme": "light",
+    "note": "Measured placements, screen 1 of 5 (READ). Artboard 412x892 — the reference host's own window size (card-host hard-codes inner_size: vec2(412, 892)). Every node is a Kit node, so every node carries its own box. The action band sits at the bottom: one screen, one question, answered where the thumb is.",
+    "placements": {
+      "page":             { "component": "page",           "layout": { "x": 0,   "y": 0,   "w": 412, "h": 892 } },
+
+      "eyebrow":          { "component": "eyebrow",        "layout": { "x": 24,  "y": 36,  "w": 364, "h": 16 } },
+      "heading":          { "component": "heading",        "layout": { "x": 24,  "y": 58,  "w": 364, "h": 62 } },
+
+      "quote_band":       { "component": "band",           "layout": { "x": 24,  "y": 140, "w": 364, "h": 110 } },
+      "quote":            { "component": "quote",          "layout": { "x": 44,  "y": 164, "w": 324, "h": 32 } },
+      "quote_src":        { "component": "source",         "layout": { "x": 44,  "y": 212, "w": 324, "h": 16 } },
+
+      "rule_1":           { "component": "hairline",       "layout": { "x": 24,  "y": 274, "w": 364, "h": 1 } },
+
+      "row_when":         { "component": "row",            "layout": { "x": 24,  "y": 292, "w": 364, "h": 22 } },
+      "row_where":        { "component": "row",            "layout": { "x": 24,  "y": 318, "w": 364, "h": 22 } },
+      "row_kind":         { "component": "row",            "layout": { "x": 24,  "y": 344, "w": 364, "h": 22 } },
+      "row_open":         { "component": "note",           "layout": { "x": 24,  "y": 374, "w": 364, "h": 44 } },
+
+      "rule_2":           { "component": "hairline",       "layout": { "x": 24,  "y": 434, "w": 364, "h": 1 } },
+
+      "memo_lbl":         { "component": "note",           "layout": { "x": 24,  "y": 452, "w": 364, "h": 20 } },
+      "memo_eff":         { "component": "note",           "layout": { "x": 24,  "y": 476, "w": 364, "h": 20 } },
+
+      "action_fix":       { "component": "action",         "layout": { "x": 24,  "y": 740, "w": 364, "h": 46 } },
+      "action_fix_bg":    { "component": "action_ghost",   "layout": { "x": 24,  "y": 740, "w": 364, "h": 46 } },
+      "action_fix_ctl":   { "component": "action_control", "layout": { "x": 24,  "y": 740, "w": 364, "h": 46 } },
+      "action_fix_lbl":   { "component": "ghost_label",    "layout": { "x": 24,  "y": 753, "w": 364, "h": 20 } },
+
+      "action_yes":       { "component": "action",         "layout": { "x": 24,  "y": 800, "w": 364, "h": 54 } },
+      "action_yes_bg":    { "component": "action_fill",    "layout": { "x": 24,  "y": 800, "w": 364, "h": 54 } },
+      "action_yes_ctl":   { "component": "action_control", "layout": { "x": 24,  "y": 800, "w": 364, "h": 54 } },
+      "action_yes_lbl":   { "component": "action_label",   "layout": { "x": 24,  "y": 816, "w": 364, "h": 22 } }
+    }
+  }
+}

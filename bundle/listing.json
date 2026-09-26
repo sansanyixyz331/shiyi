@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "subtitle": "从你的聊天里，读出你没说出口的安排",
+  "description": "拾意读取你聊天里的一条消息，认出藏在里面的时间、地点与待办，做成一张等你点头的卡片；你确认后它去执行，并记住你的长期偏好，下次自动调整建议。Agent 干活，人保留控制。",
+  "category": "utilities",
+  "keywords": [
+    "assistant",
+    "intent",
+    "messages",
+    "memory",
+    "productivity"
+  ],
+  "screenshots": [
+    "screenshots/01-read.png",
+    "screenshots/02-ask.png",
+    "screenshots/03-plan.png",
+    "screenshots/04-memo.png",
+    "screenshots/05-done.png"
+  ],
+  "icon": "assets/icon.svg",
+  "platforms": [
+    "android"
+  ],
+  "publisher": {
+    "name": "sansanyixyz331",
+    "support": "https://github.com/sansanyixyz331/shiyi",
+    "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
+  },
+  "release_notes": "0.2.0 — five screens (read, ask, plan, remember, done), each one a hand-written L0 card rendered through the reference host.",
+  "age_rating": "all",
+  "license": "Apache-2.0"
+}

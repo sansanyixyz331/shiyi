@@ -1,0 +1,45 @@
+{
+  "$kit": {
+    "theme": "light",
+    "note": "Measured placements, screen 2 of 5 (ASK). Artboard 412x892, the host's own window. Two option pairs; the selected one uses the filled action, the other the ghost. Actions sit at the bottom.",
+    "placements": {
+      "page":              { "component": "page",           "layout": { "x": 0,   "y": 0,   "w": 412, "h": 892 } },
+
+      "eyebrow":           { "component": "eyebrow",        "layout": { "x": 24,  "y": 36,  "w": 364, "h": 16 } },
+      "heading":           { "component": "heading",        "layout": { "x": 24,  "y": 58,  "w": 364, "h": 62 } },
+      "hint":              { "component": "note",           "layout": { "x": 24,  "y": 136, "w": 364, "h": 20 } },
+
+      "q1_band":           { "component": "band",           "layout": { "x": 24,  "y": 176, "w": 364, "h": 124 } },
+      "q1_label":          { "component": "row",            "layout": { "x": 44,  "y": 200, "w": 324, "h": 22 } },
+      "opt_a1":            { "component": "action",         "layout": { "x": 44,  "y": 232, "w": 152, "h": 44 } },
+      "opt_a1_bg":         { "component": "action_fill",    "layout": { "x": 44,  "y": 232, "w": 152, "h": 44 } },
+      "opt_a1_ctl":        { "component": "action_control", "layout": { "x": 44,  "y": 232, "w": 152, "h": 44 } },
+      "opt_a1_lbl":        { "component": "action_label",   "layout": { "x": 44,  "y": 244, "w": 152, "h": 20 } },
+      "opt_a2":            { "component": "action",         "layout": { "x": 216, "y": 232, "w": 152, "h": 44 } },
+      "opt_a2_bg":         { "component": "action_ghost",   "layout": { "x": 216, "y": 232, "w": 152, "h": 44 } },
+      "opt_a2_ctl":        { "component": "action_control", "layout": { "x": 216, "y": 232, "w": 152, "h": 44 } },
+      "opt_a2_lbl":        { "component": "ghost_label",    "layout": { "x": 216, "y": 244, "w": 152, "h": 20 } },
+
+      "q2_band":           { "component": "band",           "layout": { "x": 24,  "y": 316, "w": 364, "h": 124 } },
+      "q2_label":          { "component": "row",            "layout": { "x": 44,  "y": 340, "w": 324, "h": 22 } },
+      "opt_b1":            { "component": "action",         "layout": { "x": 44,  "y": 372, "w": 152, "h": 44 } },
+      "opt_b1_bg":         { "component": "action_fill",    "layout": { "x": 44,  "y": 372, "w": 152, "h": 44 } },
+      "opt_b1_ctl":        { "component": "action_control", "layout": { "x": 44,  "y": 372, "w": 152, "h": 44 } },
+      "opt_b1_lbl":        { "component": "action_label",   "layout": { "x": 44,  "y": 384, "w": 152, "h": 20 } },
+      "opt_b2":            { "component": "action",         "layout": { "x": 216, "y": 372, "w": 152, "h": 44 } },
+      "opt_b2_bg":         { "component": "action_ghost",   "layout": { "x": 216, "y": 372, "w": 152, "h": 44 } },
+      "opt_b2_ctl":        { "component": "action_control", "layout": { "x": 216, "y": 372, "w": 152, "h": 44 } },
+      "opt_b2_lbl":        { "component": "ghost_label",    "layout": { "x": 216, "y": 384, "w": 152, "h": 20 } },
+
+      "action_later":      { "component": "action",         "layout": { "x": 24,  "y": 740, "w": 364, "h": 46 } },
+      "action_later_bg":   { "component": "action_ghost",   "layout": { "x": 24,  "y": 740, "w": 364, "h": 46 } },
+      "action_later_ctl":  { "component": "action_control", "layout": { "x": 24,  "y": 740, "w": 364, "h": 46 } },
+      "action_later_lbl":  { "component": "ghost_label",    "layout": { "x": 24,  "y": 753, "w": 364, "h": 20 } },
+
+      "action_go":         { "component": "action",         "layout": { "x": 24,  "y": 800, "w": 364, "h": 54 } },
+      "action_go_bg":      { "component": "action_fill",    "layout": { "x": 24,  "y": 800, "w": 364, "h": 54 } },
+      "action_go_ctl":     { "component": "action_control", "layout": { "x": 24,  "y": 800, "w": 364, "h": 54 } },
+      "action_go_lbl":     { "component": "action_label",   "layout": { "x": 24,  "y": 816, "w": 364, "h": 22 } }
+    }
+  }
+}

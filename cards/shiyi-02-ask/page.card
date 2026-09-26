@@ -1,0 +1,132 @@
+# ledger shiyi-02-ask@0.2.0
+# level: L0
+# profile: ui/l0
+# model: shiyi
+#
+# 拾意 · Pickup — screen 2 of 5: ASK.
+#
+# Two things the message does not say. The point of this screen is that it
+# asks ONLY those two and then stops — the card carries no third question,
+# because a card that interrogates is worse than a card that guesses wrong
+# once. Selected options are drawn with the filled action, unselected with the
+# ghost one: the choice is visible without a legend.
+#
+# Screens are separate cards; see shiyi-01-read for why (the reference host's
+# card path carries no tap events, so the Agent advances the app, and the
+# tapped control is named in service-actions.json beside this file).
+
+theme light
+
+state act_enabled { shape: bool, initial: true }
+
+# ── copy ─────────────────────────────────────────────────────────────────────
+copy eyebrow { class: vocabulary, en: "拾意 · 第二步 · 追问", zh: "拾意 · 第二步 · 追问" }
+copy heading { class: vocabulary, en: "这件事还缺两样，只有你知道", zh: "这件事还缺两样，只有你知道" }
+copy hint    { class: vocabulary, en: "能猜的我猜，猜不出的不装懂。就这两样。", zh: "能猜的我猜，猜不出的不装懂。就这两样。" }
+
+copy q_when  { class: vocabulary, en: "什么时候走？", zh: "什么时候走？" }
+copy q_from  { class: vocabulary, en: "从哪出发？", zh: "从哪出发？" }
+
+copy o_morn  { class: vocabulary, en: "周三一早", zh: "周三一早" }
+copy o_aft   { class: vocabulary, en: "周三午后", zh: "周三午后" }
+copy o_home  { class: vocabulary, en: "从家里", zh: "从家里" }
+copy o_work  { class: vocabulary, en: "从公司", zh: "从公司" }
+
+copy act_later { class: vocabulary, en: "先放着，回头再说", zh: "先放着，回头再说" }
+copy act_go    { class: vocabulary, en: "就按这个查", zh: "就按这个查" }
+
+# ── components ───────────────────────────────────────────────────────────────
+component Page(instance: text) {
+  view Kit(component: "page", instance: instance) { slot }
+}
+component Slab(instance: text) {
+  view Kit(component: "band", instance: instance) { slot }
+}
+component Eyebrow(instance: text, text: text) {
+  view Kit(component: "eyebrow", instance: instance, text: text)
+}
+component Heading(instance: text, text: text) {
+  view Kit(component: "heading", instance: instance, text: text)
+}
+component Line(instance: text, text: text) {
+  view Kit(component: "row", instance: instance, text: text)
+}
+component Note(instance: text, text: text) {
+  view Kit(component: "note", instance: instance, text: text)
+}
+component Action(instance: text) {
+  view Kit(component: "action", instance: instance) { slot }
+}
+component ActionFill(instance: text) {
+  view Kit(component: "action_fill", instance: instance) { slot }
+}
+component ActionGhost(instance: text) {
+  view Kit(component: "action_ghost", instance: instance) { slot }
+}
+component ActionControl(instance: text, enabled: bool) {
+  view Kit(component: "action_control", instance: instance, enabled: enabled)
+}
+component ActionLabel(instance: text, text: text) {
+  view Kit(component: "action_label", instance: instance, text: text)
+}
+component GhostLabel(instance: text, text: text) {
+  view Kit(component: "ghost_label", instance: instance, text: text)
+}
+
+# ── view ─────────────────────────────────────────────────────────────────────
+view root Page(instance: "page") {
+  Eyebrow(instance: "eyebrow", text: copy.eyebrow)
+  Heading(instance: "heading", text: copy.heading)
+  Note(instance: "hint", text: copy.hint)
+
+  Slab(instance: "q1_band") {
+    Line(instance: "q1_label", text: copy.q_when)
+    Action(instance: "opt_a1") {
+      ActionFill(instance: "opt_a1_bg") {
+
+      }
+      ActionControl(instance: "opt_a1_ctl", enabled: act_enabled)
+      ActionLabel(instance: "opt_a1_lbl", text: copy.o_morn)
+    }
+    Action(instance: "opt_a2") {
+      ActionGhost(instance: "opt_a2_bg") {
+
+      }
+      ActionControl(instance: "opt_a2_ctl", enabled: act_enabled)
+      GhostLabel(instance: "opt_a2_lbl", text: copy.o_aft)
+    }
+  }
+
+  Slab(instance: "q2_band") {
+    Line(instance: "q2_label", text: copy.q_from)
+    Action(instance: "opt_b1") {
+      ActionFill(instance: "opt_b1_bg") {
+
+      }
+      ActionControl(instance: "opt_b1_ctl", enabled: act_enabled)
+      ActionLabel(instance: "opt_b1_lbl", text: copy.o_home)
+    }
+    Action(instance: "opt_b2") {
+      ActionGhost(instance: "opt_b2_bg") {
+
+      }
+      ActionControl(instance: "opt_b2_ctl", enabled: act_enabled)
+      GhostLabel(instance: "opt_b2_lbl", text: copy.o_work)
+    }
+  }
+
+  Action(instance: "action_later") {
+    ActionGhost(instance: "action_later_bg") {
+
+    }
+    ActionControl(instance: "action_later_ctl", enabled: act_enabled)
+    GhostLabel(instance: "action_later_lbl", text: copy.act_later)
+  }
+  Action(instance: "action_go") {
+    ActionFill(instance: "action_go_bg") {
+
+    }
+    ActionControl(instance: "action_go_ctl", enabled: act_enabled)
+    ActionLabel(instance: "action_go_lbl", text: copy.act_go)
+  }
+}

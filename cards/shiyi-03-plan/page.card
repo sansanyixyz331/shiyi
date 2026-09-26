@@ -1,0 +1,113 @@
+# ledger shiyi-03-plan@0.2.0
+# level: L0
+# profile: ui/l0
+# model: shiyi
+#
+# 拾意 · Pickup — screen 3 of 5: PLAN.
+#
+# Three trains, and the reason there are only three: the remembered rule
+# ("takes the train, never flies") is printed above them, so the narrowing is
+# visible and arguable rather than silent. The chosen row is drawn on the soft
+# accent surface — the same surface screen 4 uses for what is being remembered,
+# so "picked" and "kept" look like the same kind of thing.
+#
+# Screens are separate cards; see shiyi-01-read for why.
+
+theme light
+
+state act_enabled { shape: bool, initial: true }
+
+# ── copy ─────────────────────────────────────────────────────────────────────
+copy eyebrow { class: vocabulary, en: "拾意 · 第三步 · 方案", zh: "拾意 · 第三步 · 方案" }
+copy heading { class: vocabulary, en: "按你的老规矩，先出一版", zh: "按你的老规矩，先出一版" }
+copy memo    { class: vocabulary, en: "记得：你坐高铁，不坐飞机。所以只查了高铁。", zh: "记得：你坐高铁，不坐飞机。所以只查了高铁。" }
+
+copy pick1     { class: vocabulary, en: "G1234 · 08:12 开", zh: "G1234 · 08:12 开" }
+copy pick1_sub { class: vocabulary, en: "4小时12分 · 二等座余 6 · 推荐", zh: "4小时12分 · 二等座余 6 · 推荐" }
+copy pick2     { class: vocabulary, en: "G2345 · 09:40 开", zh: "G2345 · 09:40 开" }
+copy pick2_sub { class: vocabulary, en: "4小时05分 · 二等座余 2", zh: "4小时05分 · 二等座余 2" }
+copy pick3     { class: vocabulary, en: "G3456 · 14:20 开", zh: "G3456 · 14:20 开" }
+copy pick3_sub { class: vocabulary, en: "4小时30分 · 二等座充足", zh: "4小时30分 · 二等座充足" }
+
+copy foot      { class: vocabulary, en: "只列白天的车：夜里到深圳，当天什么也办不成。", zh: "只列白天的车：夜里到深圳，当天什么也办不成。" }
+
+copy act_other { class: vocabulary, en: "换一版看看", zh: "换一版看看" }
+copy act_take  { class: vocabulary, en: "就要第一班", zh: "就要第一班" }
+
+# ── components ───────────────────────────────────────────────────────────────
+component Page(instance: text) {
+  view Kit(component: "page", instance: instance) { slot }
+}
+component Slab(instance: text) {
+  view Kit(component: "band", instance: instance) { slot }
+}
+component SlabSoft(instance: text) {
+  view Kit(component: "band_soft", instance: instance) { slot }
+}
+component Eyebrow(instance: text, text: text) {
+  view Kit(component: "eyebrow", instance: instance, text: text)
+}
+component Heading(instance: text, text: text) {
+  view Kit(component: "heading", instance: instance, text: text)
+}
+component Line(instance: text, text: text) {
+  view Kit(component: "row", instance: instance, text: text)
+}
+component Note(instance: text, text: text) {
+  view Kit(component: "note", instance: instance, text: text)
+}
+component Action(instance: text) {
+  view Kit(component: "action", instance: instance) { slot }
+}
+component ActionFill(instance: text) {
+  view Kit(component: "action_fill", instance: instance) { slot }
+}
+component ActionGhost(instance: text) {
+  view Kit(component: "action_ghost", instance: instance) { slot }
+}
+component ActionControl(instance: text, enabled: bool) {
+  view Kit(component: "action_control", instance: instance, enabled: enabled)
+}
+component ActionLabel(instance: text, text: text) {
+  view Kit(component: "action_label", instance: instance, text: text)
+}
+component GhostLabel(instance: text, text: text) {
+  view Kit(component: "ghost_label", instance: instance, text: text)
+}
+
+# ── view ─────────────────────────────────────────────────────────────────────
+view root Page(instance: "page") {
+  Eyebrow(instance: "eyebrow", text: copy.eyebrow)
+  Heading(instance: "heading", text: copy.heading)
+  Note(instance: "memo", text: copy.memo)
+
+  SlabSoft(instance: "pick1_band") {
+    Line(instance: "pick1", text: copy.pick1)
+    Note(instance: "pick1_sub", text: copy.pick1_sub)
+  }
+  Slab(instance: "pick2_band") {
+    Line(instance: "pick2", text: copy.pick2)
+    Note(instance: "pick2_sub", text: copy.pick2_sub)
+  }
+  Slab(instance: "pick3_band") {
+    Line(instance: "pick3", text: copy.pick3)
+    Note(instance: "pick3_sub", text: copy.pick3_sub)
+  }
+
+  Note(instance: "foot", text: copy.foot)
+
+  Action(instance: "action_other") {
+    ActionGhost(instance: "action_other_bg") {
+
+    }
+    ActionControl(instance: "action_other_ctl", enabled: act_enabled)
+    GhostLabel(instance: "action_other_lbl", text: copy.act_other)
+  }
+  Action(instance: "action_take") {
+    ActionFill(instance: "action_take_bg") {
+
+    }
+    ActionControl(instance: "action_take_ctl", enabled: act_enabled)
+    ActionLabel(instance: "action_take_lbl", text: copy.act_take)
+  }
+}

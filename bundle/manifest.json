@@ -1,0 +1,10 @@
+{
+  "capabilities": [],
+  "id": "shiyi",
+  "integrity": {
+    "bundle_blake3": "01b7e40b0cdf28b575e28483c557b16c035239cbdc9986475ad4325acfa262dd"
+  },
+  "name": "拾意 Pickup",
+  "schema": 1,
+  "version": "0.2.0"
+}

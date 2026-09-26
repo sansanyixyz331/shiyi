@@ -1,0 +1,15 @@
+{
+  "card": "shiyi-01-read",
+  "source": "intent.read",
+  "note": "A card here carries no tap events: the reference host's card path (kit_pack) passes only declared props, layout and style, so a Kit node cannot declare on_tap. Each control's meaning is declared beside the card instead, and the Agent reads it to decide the next screen. Same shape the official aircon app uses for its 12 screens.",
+  "controls": {
+    "action_yes": {
+      "event": "intent.confirmed",
+      "enabled": true
+    },
+    "action_fix": {
+      "event": "intent.corrected",
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "theme": "light",
+  "tokens": {
+    "c_page": {
+      "value": 4294440691,
+      "property": "bg"
+    },
+    "c_card": {
+      "value": 4294967295,
+      "property": "bg"
+    },
+    "c_ghost": {
+      "value": 4293782244,
+      "property": "bg"
+    },
+    "c_rule": {
+      "value": 4293453279,
+      "property": "bg"
+    },
+    "c_ink": {
+      "value": 4280032026,
+      "property": "color"
+    },
+    "c_soft": {
+      "value": 4285229154,
+      "property": "color"
+    },
+    "c_accent": {
+      "value": 4280250204,
+      "property": "color"
+    },
+    "c_onacc": {
+      "value": 4294967295,
+      "property": "color"
+    },
+    "r_card": {
+      "value": 16.0,
+      "property": "radius"
+    },
+    "r_btn": {
+      "value": 12.0,
+      "property": "radius"
+    },
+    "r_rule": {
+      "value": 1.0,
+      "property": "radius"
+    },
+    "c_accent_soft": {
+      "value": 4293456365,
+      "property": "bg"
+    }
+  },
+  "components": {
+    "page": {
+      "style": {
+        "t": "stack",
+        "variant": "surface",
+        "bg": {
+          "$token": "c_page"
+        }
+      },
+      "props": {},
+      "slot": true
+    },
+    "band": {
+      "style": {
+        "t": "stack",
+        "variant": "surface",
+        "bg": {
+          "$token": "c_card"
+        },
+        "radius": {
+          "$token": "r_card"
+        }
+      },
+      "props": {},
+      "slot": true
+    },
+    "hairline": {
+      "style": {
+        "t": "stack",
+        "variant": "surface",
+        "bg": {
+          "$token": "c_rule"
+        },
+        "radius": {
+          "$token": "r_rule"
+        }
+      },
+      "props": {},
+      "slot": false
+    },
+    "eyebrow": {
+      "style": {
+        "t": "text",
+        "size": 11.0,
+        "weight": 600,
+        "line_height": 15.0,
+        "alignx": 0.0,
+        "variant": "single_line",
+        "color": {
+          "$token": "c_soft"
+        },
+        "tracking": 1.4,
+        "font_src": "makepad_widgets:resources/LXGWWenKaiRegular.ttf"
+      },
+      "props": {
+        "text": "text"
+      },
+      "slot": false
+    },
+    "heading": {
+      "style": {
+        "t": "text",
+        "size": 23.0,
+        "weight": 600,
+        "line_height": 31.0,
+        "alignx": 0.0,
+        "variant": "multiline",
+        "color": {
+          "$token": "c_ink"
+        },
+        "font_src": "makepad_widgets:resources/LXGWWenKaiRegular.ttf"
+      },
+      "props": {
+        "text": "text"
+      },
+      "slot": false
+    },
+    "quote": {
+      "style": {
+        "t": "text",
+        "size": 17.0,
+        "weight": 500,
+        "line_height": 26.0,
+        "alignx": 0.0,
+        "variant": "multiline",
+        "color": {
+          "$token": "c_ink"
+        },
+        "font_src": "makepad_widgets:resources/LXGWWenKaiRegular.ttf"
+      },
+      "props": {
+        "text": "text"
+      },
+      "slot": false
+    },
+    "source": {
+      "style": {
+        "t": "text",
+        "size": 12.0,
+        "weight": 400,
+        "line_height": 16.0,
+        "alignx": 0.0,
+        "variant": "multiline",
+        "color": {
+          "$token": "c_soft"
+        },
+        "font_src": "makepad_widgets:resources/LXGWWenKaiRegular.ttf"
+      },
+      "props": {
+        "text": "text"
+      },
+      "slot": false
+    },
+    "row": {
+      "style": {
+        "t": "text",
+        "size": 15.0,
+        "weight": 400,
+        "line_height": 21.0,
+        "alignx": 0.0,
+        "variant": "multiline",
+        "color": {
+          "$token": "c_ink"
+        },
+        "font_src": "makepad_widgets:resources/LXGWWenKaiRegular.ttf"
+      },
+      "props": {
+        "text": "text"
+      },
+      "slot": false
+    },
+    "note": {
+      "style": {
+        "t": "text",
+        "size": 13.0,
+        "weight": 400,
+        "line_height": 19.0,
+        "alignx": 0.0,
+        "variant": "multiline",
+        "color": {
+          "$token": "c_soft"
+        },
+        "font_src": "makepad_widgets:resources/LXGWWenKaiRegular.ttf"
+      },
+      "props": {
+        "text": "text"
+      },
+      "slot": false
+    },
+    "action": {
+      "style": {
+        "t": "stack",
+        "kit": "{\"widget\":\"KitButton\",\"bindings\":{\"control\":[1],\"label\":[2]}}"
+      },
+      "props": {},
+      "slot": true
+    },
+    "action_fill": {
+      "style": {
+        "t": "stack",
+        "variant": "surface",
+        "bg": {
+          "$token": "c_accent"
+        },
+        "radius": {
+          "$token": "r_btn"
+        }
+      },
+      "props": {},
+      "slot": true
+    },
+    "action_ghost": {
+      "style": {
+        "t": "stack",
+        "variant": "surface",
+        "bg": {
+          "$token": "c_ghost"
+        },
+        "radius": {
+          "$token": "r_btn"
+        }
+      },
+      "props": {},
+      "slot": true
+    },
+    "action_control": {
+      "style": {
+        "t": "button"
+      },
+      "props": {
+        "enabled": "enabled"
+      },
+      "slot": false
+    },
+    "action_label": {
+      "style": {
+        "t": "text",
+        "size": 16.0,
+        "weight": 600,
+        "line_height": 21.0,
+        "alignx": 0.5,
+        "variant": "single_line",
+        "color": {
+          "$token": "c_onacc"
+        },
+        "font_src": "makepad_widgets:resources/LXGWWenKaiRegular.ttf"
+      },
+      "props": {
+        "text": "text"
+      },
+      "slot": false
+    },
+    "ghost_label": {
+      "style": {
+        "t": "text",
+        "size": 15.0,
+        "weight": 500,
+        "line_height": 20.0,
+        "alignx": 0.5,
+        "variant": "single_line",
+        "color": {
+          "$token": "c_ink"
+        },
+        "font_src": "makepad_widgets:resources/LXGWWenKaiRegular.ttf"
+      },
+      "props": {
+        "text": "text"
+      },
+      "slot": false
+    },
+    "band_soft": {
+      "style": {
+        "t": "stack",
+        "variant": "surface",
+        "bg": {
+          "$token": "c_accent_soft"
+        },
+        "radius": {
+          "$token": "r_card"
+        }
+      },
+      "props": {},
+      "slot": true
+    }
+  }
+}

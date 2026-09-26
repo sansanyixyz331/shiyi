@@ -1,0 +1,12 @@
+# 生成物（build/ 下的脚本是源码，要进仓库；只有产物不进）
+build/_run/
+build/shots/
+build/drafts/
+build/kit-theme-backup/
+target/
+.local-state/
+*.key
+*.cert
+.DS_Store
+__pycache__/
+*.pyc
