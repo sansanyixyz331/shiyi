@@ -83,6 +83,18 @@ shiyi/
 
 ## 5. 怎么跑（官方参考宿主）
 
+### 5.1 复现环境（让评审拿到同一版本）
+
+| 项 | 值 |
+|---|---|
+| **宿主** | 官方 OctoSense App Hub 参考实现 `card-host` |
+| **宿主修订** | 本地 checkout `e86d43f5`（2026-09-23）；**比官方文档页脚钉定的核查依据 `97c2a1fd`（09-20）更新** |
+| **构建** | `hub` / `card-host` 于 2026-09-26 从源码构建（本机隔离环境） |
+| **支持平台** | 卡片包**与平台无关**（纯数据）；本作品在 **Windows 桌面参考宿主**完成端到端验证；目标设备平台 **Android** |
+| **依赖** | Rust 工具链 + 共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`） |
+
+### 5.2 启动说明
+
 前置：Rust 工具链 + 共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`）。
 
 本机已备一套隔离环境（`F:\gosim_build\`，入口 `source F:/gosim_build/env.sh`），
@@ -242,6 +254,16 @@ layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
 - **no-facts**：一切事实（时间、地点、天气、班次、金额）必须**来自真实数据源并标注来源**；
   模型只负责**识别与组织**，不得编造状态或执行结果。
 - **不可只交创意**：最终交付 = **可运行的小程序 + Apache-2.0 开源仓库**。
+
+## 作者与支持
+
+| 项 | 值 |
+|---|---|
+| 作者 / 发布者 | **sansanyixyz331**（队伍 `三三Claw`） |
+| 支持 | <https://github.com/sansanyixyz331/shiyi/issues> |
+| 仓库 | <https://github.com/sansanyixyz331/shiyi> |
+| 版本 | `0.2.0`（tag `v0.2.0`） |
+| 许可 | Apache-2.0 |
 
 ## License
 
