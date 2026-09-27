@@ -3,7 +3,7 @@
 > **从你的聊天里，读出你没说出口的安排。**
 > *Reads the plan you never said out loud, from the messages you already sent.*
 
-GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品（应用层 / Nautilus 路径）。
+GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
 
 ---
 
@@ -57,6 +57,7 @@ shiyi/
   src/                   # 服务逻辑（Agent 侧）
     intent_card.py       # 识别内核：消息 → 结构化事实（每条带来源）
     shiyi_flow.py        # 五屏流程状态机（事件名直接读 service-actions.json）
+    memory_store.py      # 本机长期记忆：真读写 .local-state/memory.json（零权限/零网络）
   docs/
     作品设计_拾意.md      # 选题 / 流程 / 数据来源 / no-facts 声明
     小程序机制笔记.md      # Hub app / Card bundle / Image-to-AppCard 机制
@@ -79,7 +80,7 @@ shiyi/
 | 2 追问 | `cards/shiyi-02-ask` | 只问消息永远说不出的两样（几点走 / 从哪出发）→ 定 |
 | 3 方案 | `cards/shiyi-03-plan` | 把老规矩摆出来，再给一版被它筛过的候选 → 选 |
 | 4 记忆 | `cards/shiyi-04-memo` | 旧规矩 vs 这次要加的，都可读可改 → 记 / 不记 |
-| 5 完成 | `cards/shiyi-05-done` | 回执三行（写到哪就说哪），无积分无徽章 → 看行程 / 重开 |
+| 5 完成 | `cards/shiyi-05-done` | 回执三行：**一件真做了、两件明说没动**（不摆"已完成"的样子），无积分无徽章 → 看行程 / 重开 |
 
 ## 5. 怎么跑（官方参考宿主）
 
@@ -159,6 +160,16 @@ python build/verify_flow.py --negative      # 只跑失败态
 然后 `/click` 打到它的中心，取该控件在 `service-actions.json` 里声明的事件名推下一屏。
 证据落在 `build/_evidence/`：`flow_run.json`（全步骤）+ `shots/*.png`（每屏宿主内截图）+ 宿主日志。
 
+同一次运行里还做**长期记忆的真读写取证**（对应官方「结果核验」轴），三条断言：
+
+| 断言 | 做法 | 期望 |
+|---|---|---|
+| `keep_wrote_file` | 点「记下」 | 本机记忆文件真被写（留路径 / sha / 内容 / 时间戳） |
+| `memory_is_effective` | 再跑一遍 | 读得到上一遍写进去的东西（证明不是常量） |
+| `skip_left_file_untouched` | 点「这次别记」 | 文件 sha 一个字节不变 |
+
+三条都记进 `flow_run.json` 的 `memory` 段。只想看记忆层本身：`python src/memory_store.py`。
+
 **演示短片（A4）**：
 
 ```sh
@@ -175,7 +186,7 @@ python build/record_demo.py --no-caption    # 不要字幕
 包被改过一个字符 → 真起宿主、真被拒、录到拒绝后的空窗口，画面上叠宿主原话）
 → ④ 片尾卡。
 
-成片：`build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒 / 1373 帧**，满足官方
+成片：`build/_video/shiyi-walkthrough.mp4`（**2 分 16 秒 / 1355 帧**，满足官方
 初赛"2–3 分钟演示"的要求）。说明：这是**桌面官方参考宿主**里的真实运行录制；
 手机端要等官方"支持设备／运行包"公布（官方那条 HTTP 自动化通道在 Android 上被
 编译掉了，手机端另有真机触摸注入的一套，是几小时级的活）。
@@ -188,7 +199,7 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 仓库骨架 | ✅ 已搭 |
 | 卡片本体 | ✅ **五屏全部手写 L0，逐屏实跑渲染** |
 | kit 组件包 | ✅ 五屏共用 `bundle/kit/native/light/kit.json`（16 组件 + 12 token） |
-| 卡外动作 | ✅ 每屏 `service-actions.json`（12 个控件 / 12 个事件，与流程同源） |
+| 卡外动作 | ✅ 每屏 `service-actions.json`（**14 个控件 / 14 个事件**，与流程同源） |
 | 宿主运行 | ✅ `card-host` 逐屏跑通（五屏 `[SPLASH] … view=true`，零 lower 错误） |
 | 真实截图 | ✅ 五张 `515×1073`（实拍后裁掉宿主标题栏，入 bundle 与各屏目录） |
 | 门禁 | ✅ `hub check` **PASSED**（唯一告警 = 未签名，开发期正常） |
@@ -196,7 +207,8 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 服务逻辑 | ✅ 五屏流程状态机（`src/shiyi_flow.py`）**已与官方参考宿主串成端到端** |
 | 端到端验证（A3） | ✅ `build/verify_flow.py`：五屏逐屏真渲染 + 每步真实点击命中控件 + 事件链推进 → `build/_evidence/` |
 | 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），日志与抓图留证 |
-| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒 / 1373 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
+| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 16 秒 / 1355 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
+| **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
 | 签名 / 提交 | ⬜ 待做（需发布者密钥） |
 
 ## 7. 实测记录（2026-09-26 跑通的关键契约）
@@ -254,6 +266,31 @@ layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
 - **no-facts**：一切事实（时间、地点、天气、班次、金额）必须**来自真实数据源并标注来源**；
   模型只负责**识别与组织**，不得编造状态或执行结果。
 - **不可只交创意**：最终交付 = **可运行的小程序 + Apache-2.0 开源仓库**。
+
+### 8.1 一次自我纠错（留档）
+
+第 5 屏原来印的是「行程已排 / 日历已加 / 提醒已设」—— **三件一件也没真做**：
+车次是演示样例，日历和提醒从没被写过。这违反上面第一条红线（把建议写成了完成），
+也在官方的「结果核验」轴上站不住。现在改成：
+
+```
+写了记忆 · 去深圳默认早班，从家里出发     ← 真写了（本机记忆文件，可核验）
+行程没动 · 周三那班只是方案里的样例        ← 明说没动
+日历与提醒没动 · 没碰系统                  ← 明说没动
+```
+
+同时把「长期记忆」从代码里的三个常量换成了**真实的本地文件读写** —— 于是
+"它记住了"这句话第一次有了可核验的落点。改法与理由见 `src/memory_store.py` 顶部。
+
+## 9. 长期记忆存在哪
+
+| 项 | 值 |
+|---|---|
+| 位置 | 仓库下 `.local-state/memory.json`（`.gitignore` 已排除，运行期生成） |
+| 内容 | 偏好（`prefs`）/ 各地点学到的默认（`places`）/ 每次写入的流水（`log`） |
+| 权限 | **零**（`manifest.capabilities = []`）：不联网、不读系统日历、不碰任何其他应用 |
+| 首次运行 | 文件不存在 → 用内建初始值播种，并如实标注 `seeded_from: "builtin_initial"` |
+| 可核验 | 打开就是个 JSON；`python build/verify_flow.py` 会断言它被真写、且不会被误写 |
 
 ## 作者与支持
 

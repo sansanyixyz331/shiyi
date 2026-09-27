@@ -22,6 +22,11 @@
    「识别所得」；两条都做不到的，宁可留空说「还没定」。S3 的三个车次是
    **演示样例**（`source: sample`），接真实票务服务前不当作事实。
 
+4. **记忆是真读写。** 长期记忆存在本机一个 JSON 文件里（`memory_store.py`），
+   不是写死在代码里的常量。用户点「记下」→ 真写盘；点「这次别记」→ 一个
+   字节都不写。回执上写得出写的是哪个文件的哪一项 —— 于是「它记住了」这句
+   话是可核验的，不用信我们一面之词。
+
 运行：
     python src/shiyi_flow.py                  # 走完五屏，打印每屏内容
     python src/shiyi_flow.py "下周三我得去趟深圳"
@@ -41,6 +46,7 @@ except Exception:
     pass
 
 from intent_card import build_card, DEFAULT_PREFS, _parse_when, _parse_where, _parse_intent  # noqa: E402
+from memory_store import MemoryStore  # noqa: E402
 
 REPO = os.path.dirname(HERE)
 SCREEN_OF = {
@@ -86,16 +92,20 @@ def load_controls(stage):
 class Flow:
     """五屏流程。一屏一决策，每屏都留一个出口。"""
 
-    def __init__(self, text, room="家庭群", at=None, prefs=None):
+    def __init__(self, text, room="家庭群", at=None, prefs=None, store=None):
         self.text = text
         self.room = room
         self.at = at or datetime.now()
-        self.prefs = dict(prefs or DEFAULT_PREFS)
+        # 记忆：从本机那份文件里真读（第一次跑会自动播种落盘），不再用写死的常量。
+        self.store = store if store is not None else MemoryStore()
+        self.memory_before = self.store.ensure()
+        self.prefs = dict(prefs) if prefs is not None else self.store.prefs()
         self.basis = build_card(text, room=room, at=self.at, prefs=self.prefs)
         self.stage = "read"
         self.answers = {}
         self.decisions = []          # 走过的每一步，供回执与审计
         self.plan_round = 1
+        self.memory_write = None     # 用户点「记下」之后，这里是真写盘的回执
 
     # ── 当前屏 ───────────────────────────────────────────────────────────
     def frame(self):
@@ -135,12 +145,17 @@ class Flow:
             else "还没定：坐哪班、几点。这一步我不猜。"
 
         mem = self.basis["memory"]["effects"]
+        # 底下这句现在是有出处的：偏好真的躺在 self.store 那个文件里，
+        # 不是印在代码里的常量。第一次跑时文件由内建初始值播种（并如实标注）。
         if any(m["rule"] == "no_flight" for m in mem):
-            memo_lbl, memo_eff = "记得你的老规矩：你坐高铁，不坐飞机。", "所以往下只会给你高铁方案。"
+            memo_lbl = "从本机记忆里读到：你坐高铁，不坐飞机。"
+            memo_eff = "所以往下只会给你高铁方案。"
         elif mem:
-            memo_lbl, memo_eff = "记得你的老规矩，这次也用上了。", "所以下面的建议已经按它筛过。"
+            memo_lbl = "本机记忆里存着你的老规矩，这次用上了。"
+            memo_eff = "所以下面的建议已经按它筛过。"
         else:
-            memo_lbl, memo_eff = "这次没有老规矩可用，按常理给。", "不合常理的地方我会标出来。"
+            memo_lbl = "本机记忆里没有相关的老规矩，按常理给。"
+            memo_eff = "不合常理的地方我会标出来。"
 
         return dict(self._head(), **{
             "heading": "从你发过的话里，读出了一个安排",
@@ -220,32 +235,44 @@ class Flow:
             "foot": "下次你说“去%s”，我就按这个来。想改随时说。" % where,
             "act_skip": "这次别记",
             "act_keep": "记下",
+            # 证据用：动手之前，记忆里关于这个地点本来是什么（第二次跑就能看出来）
+            "_remembered_before": self.store.places().get(where),
+            "_memory_file": self.store.rel_path,
         })
 
     def _frame_done(self):
+        """回执。只写**真做了**的事，没做的明说没做。
+
+        从前的三行是「行程已排 / 日历已加 / 提醒已设」—— 一件都没真做：
+        车次是演示样例，日历和提醒从没被写过。那是把建议写成了完成，既违反
+        本文件头顶那条 no-facts 纪律，也在官方的「结果核验」轴上站不住。
+        现在三行分开：哪件真落了盘、哪件一个字没动。
+        """
         when = self.basis["fields"]["when"]
         wd = "一 二 三 四 五 六 日".split()
         day = "周三"
         if when["resolved"]:
             d = date.fromisoformat(when["resolved"][:10])
             day = "周" + wd[d.weekday()]
-        else:
-            d = self.at.date()
-        prev = "周" + wd[(d.weekday() - 1) % 7]
-        where = (self.basis["fields"]["where"]["normalized"] or "目的地").replace("市", "")
         kept = self.decisions[-1] if self.decisions else "memo.skip"
-        r1 = "行程已排 · %s 08:12 G1234 %s" % (day, where)
-        r2 = "日历已加 · %s 05:40 出门" % day
-        r3 = "提醒已设 · %s 21:00 收行李" % prev
-        foot = ("三处都能点开自己看。改动随时说，我不自己乱动。"
-                if kept == "memo.keep" else
-                "这次没往记忆里写东西。改动随时说，我不自己乱动。")
+
+        if kept == "memo.keep" and self.memory_write:
+            r1 = "写了记忆 · %s" % self.memory_write["line"]
+            foot = ("只有第一行真落了盘（%s），后两行一个字没动。"
+                    % self.memory_write["path"])
+        else:
+            r1 = "没写记忆 · 这次按你说的不记"
+            foot = "这次什么都没写进本机记忆。"
+        r2 = "行程没动 · %s那班只是方案里的样例" % day
+        r3 = "日历与提醒没动 · 没碰系统"
+
         return dict(self._head(), **{
-            "heading": "办好了，剩下交给我",
+            "heading": "记下了。别的没动，等你点头",
             "r1": r1, "r2": r2, "r3": r3, "foot": foot,
             "act_again": "重开一条",
             "act_open": "看行程",
             "_kept": kept,
+            "_memory_write": self.memory_write,
         })
 
     # ── 推进 ─────────────────────────────────────────────────────────────
@@ -263,6 +290,18 @@ class Flow:
                 self.answers["from"] = FROM_WORD.get(event.rsplit(".", 1)[1], "家里")
         if self.stage == "plan" and event == "plan.another_round":
             self.plan_round += 1
+        if self.stage == "memo":
+            # 记忆就在这一步落地：点「记下」才写盘，点「这次别记」一个字节不写。
+            if event == "memo.keep":
+                where = (self.basis["fields"]["where"]["normalized"]
+                         or "那个地方").replace("市", "")
+                when = self.answers.get("when") or "周三一早"
+                frm = self.answers.get("from") or "家里"
+                self.memory_write = self.store.apply_keep(
+                    where, "早班" if when == "周三一早" else "午班", frm,
+                    message=self.text, room=self.room)
+            elif event == "memo.skip":
+                self.memory_write = None
 
         nxt = TRANSITIONS.get((self.stage, event), self.stage)
         self.decisions.append(event)

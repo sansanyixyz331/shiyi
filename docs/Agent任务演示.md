@@ -30,8 +30,8 @@
 | 一 | `shiyi-01-read` 识别 | 从消息里抽出**时间 / 地点 / 类型**三类信号，逐条标「出自原文」或「识别所得」；命中长期偏好时同时给出「命中哪条」 | `_parse_when` / `_parse_where` / `_parse_intent` / `_memory_applies` |
 | 二 | `shiyi-02-ask` 追问 | **只问消息永远说不出来的两样**（几点走 / 从哪出发）；基础信息真缺了才回头问 | `_frame_ask` |
 | 三 | `shiyi-03-plan` 方案 | 把命中的老规矩摆出来，给一版**被它筛过**的候选（"只查了高铁，因为你坐高铁不坐飞机"） | `_frame_plan` |
-| 四 | `shiyi-04-memo` 记忆 | 摊开「原来记着的」vs「这次要加的」，**都可读可改**，由用户决定记不记 | `_frame_memo` |
-| 五 | `shiyi-05-done` 回执 | 三行回执（行程 / 日历 / 提醒，**写到哪就说哪**），无积分无徽章 | `_frame_done` |
+| 四 | `shiyi-04-memo` 记忆 | 摊开「原来记着的」vs「这次要加的」（"原来"取自**真实记忆文件**，不是常量），**都可读可改**；点「记下」**真写盘** | `_frame_memo` / `memory_store.apply_keep` |
+| 五 | `shiyi-05-done` 回执 | 三行回执，**分「真做了」与「没动」**：① 本机记忆真被写（写的是哪个文件的哪一项）② 行程没动 ③ 日历与提醒没动 —— 不摆"已完成"的样子，无积分无徽章 | `_frame_done` |
 
 **关键的机制事实**：每屏按钮的含义写在它旁边的 `service-actions.json`
 （`控件名 → 事件名`），Agent 读它来决定下一屏。共 **5 屏 / 14 个控件 / 14 个事件**：
@@ -66,11 +66,11 @@
 
 | 屏 | 渲染字节 | 点中控件 | 控件矩形 | 宿主应答 | 事件 → 下一屏 |
 |---|---|---|---|---|---|
-| 1 read | 76741 | `action_yes` | [24,800,364,54] | `{"ok":1,"f":20}` | `intent.confirmed` → ask |
+| 1 read | 76739 | `action_yes` | [24,800,364,54] | ok | `intent.confirmed` → ask |
 | 2 ask | 56022 | `opt_a1`/`opt_b1`/`action_go` | … | ok | → plan |
-| 3 plan | 66127 | `action_take` | [24,800,364,54] | `{"ok":1,"f":18}` | `plan.take_recommended` → memo |
-| 4 memo | 50954 | `action_keep` | [24,800,364,54] | `{"ok":1,"f":21}` | `memo.keep` → done |
-| 5 done | 49917 | `action_open` | [24,800,364,54] | `{"ok":1,"f":20}` | `trip.open` →（终点） |
+| 3 plan | 66127 | `action_take` | [24,800,364,54] | `{"ok":1,"f":20}` | `plan.take_recommended` → memo |
+| 4 memo | 50954 | `action_keep` | [24,800,364,54] | `{"ok":1,"f":22}` | `memo.keep` → done |
+| 5 done | 55843 | `action_open` | [24,800,364,54] | `{"ok":1,"f":23}` | `trip.open` →（终点） |
 
 **判真的三个要点**（都是踩过坑才定的）：
 - **五屏字节各不相同**（49–77 KB）→ 证明每屏是**真的不同画面**，不是同一张被复制。
@@ -91,6 +91,20 @@ python src/intent_card.py   # 三条样例消息的识别结果 + 事实来源
 "$HUB_BIN" scan  "$APP_REPO/bundle" --packet "$APP_REPO/build/review.json"
 ```
 官方明示：**预检不覆盖真实交互**，所以第 3.1 层的冒烟不可省。
+
+### 3.4 记忆层（长期记忆真的写了吗）
+
+"它记住了"这句话，作品得拿得出东西来核。`build/verify_flow.py` 同一次运行里
+对**长期记忆**做三条断言（全部记进 `flow_run.json` 的 `memory` 段）：
+
+| 断言 | 做法 | 实测结果 |
+|---|---|---|
+| `keep_wrote_file` | 点「记下」 | 本机 `.local-state/memory.json` 真被写：`places.深圳 = {默认早班, 从家里出发, 来源消息, 时间戳}` ✓ |
+| `memory_is_effective` | 再跑一遍 | 进记忆屏时读到的是**上一遍写进去的那条**，不是代码常量 ✓ |
+| `skip_left_file_untouched` | 点「这次别记」 | 文件 sha 前后一致（一个字节没动）✓ |
+
+记忆的写入完全来自：① 用户消息原文，② 用户在追问屏按下的选项 —— 没有一条是推断的，
+每条都带 `learned_from`（哪条消息教它的）。存储位置与权限见 `docs/数据来源与限制.md` §5.4。
 
 ## 4. 哪些环节需要人工确认
 

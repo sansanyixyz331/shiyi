@@ -26,12 +26,18 @@
   · 卡片包未签名 → 宿主拒绝准入，且**一张都不渲染**（fail-closed）
   · 卡片包被改过 → 摘要不符 → 同样拒绝
 
+外带一项**记忆真读写取证**（对应官方「结果核验」）：
+
+  · 点「记下」→ 本机记忆文件真被写（路径、sha、内容、写入时间全留证）
+  · 再跑一遍 → 读得到上一遍写进去的东西（证明不是常量）
+  · 点「这次别记」→ 文件 sha 一个字节不变
+
 用法：
-    python build/verify_flow.py              # 正流程 + 两个失败态
+    python build/verify_flow.py              # 正流程 + 两个失败态 + 记忆取证
     python build/verify_flow.py --positive   # 只跑正流程
 
 产物：build/_evidence/（不进 bundle）
-    flow_run.json          全步骤记录
+    flow_run.json          全步骤记录（含 memory 段：记忆取证的断言与实测值）
     shots/<screen>.png     每屏宿主内截图（未裁，含宿主标题栏）
     neg_unsigned.log      未签名被拒的宿主日志
     neg_tampered.log      摘要不符被拒的宿主日志
@@ -418,12 +424,103 @@ def run_negative():
     return out
 
 
+# ── 记忆真读写取证 ────────────────────────────────────────────────────────
+
+MEM_FILE = os.path.join(ROOT, ".local-state", "memory.json")
+KEEP_WALK = ("intent.confirmed", "ask.when.morning", "ask.from.home",
+             "ask.settled", "plan.take_recommended")
+
+
+def sha_file(path):
+    if not os.path.isfile(path):
+        return None
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def _walk(flow, last):
+    """走到 last 事件。返回（动手前的帧，动手后的帧）。
+
+    动手前那一帧很重要：记忆屏上"原来记着的"是什么，只有停在那儿才看得到。
+    """
+    for ev in KEEP_WALK:
+        flow.handle(ev)
+    before_fr = flow.frame()
+    flow.handle(last)
+    return before_fr, flow.frame()
+
+
+def run_memory():
+    """记忆真读写取证：keep 真写、第二遍读得到、skip 一个字节不写。"""
+    from shiyi_flow import Flow  # noqa: PLC0415
+
+    log("")
+    log("▨ 记忆真读写（对应官方「结果核验」轴）")
+
+    if os.path.exists(MEM_FILE):        # 干净起点
+        os.remove(MEM_FILE)
+
+    # ① 第一遍：点「记下」
+    fl = Flow(MESSAGE, room=ROOM)
+    memo_fr, done_fr = _walk(fl, "memo.keep")
+    receipt = done_fr["_memory_write"]
+    with open(MEM_FILE, encoding="utf-8") as f:
+        doc = json.load(f)
+    keep_ok = (doc["places"].get("深圳", {}).get("default_depart") == "早班"
+               and doc["places"]["深圳"].get("from") == "家里"
+               and bool(doc["log"]) and doc["log"][-1]["event"] == "memo.keep")
+    log("   记忆文件：%s" % receipt["path"])
+    log("   ① 第一遍（文件不存在 → 自动播种：%s）" % doc.get("seeded_from"))
+    log("      进入记忆屏时，『深圳』= %s" % memo_fr["_remembered_before"])
+    log("      点『记下』→ %s" % receipt["line"])
+    log("      写入时间 %s ｜ 文件 sha=%s" % (receipt["written_at"], sha_file(MEM_FILE)[:16]))
+    log("      断言：文件里真写进了这次的内容 → %s" % ("是 ✓" if keep_ok else "否 ✗"))
+
+    # ② 第二遍：读得到第一遍写进去的
+    fl2 = Flow(MESSAGE, room=ROOM)
+    for ev in KEEP_WALK:
+        fl2.handle(ev)
+    seen = fl2.frame()["_remembered_before"]
+    seen_ok = bool(seen) and seen.get("default_depart") == "早班"
+    log("   ② 第二遍（文件已在）")
+    log("      进入记忆屏时，『深圳』= %s" % json.dumps(seen, ensure_ascii=False))
+    log("      断言：读得到上一遍记下的（不是常量）→ %s" % ("是 ✓" if seen_ok else "否 ✗"))
+
+    # ③ 第三遍：点「这次别记」
+    before = sha_file(MEM_FILE)
+    fl3 = Flow(MESSAGE, room=ROOM)
+    _walk(fl3, "memo.skip")
+    after = sha_file(MEM_FILE)
+    skip_ok = (before == after)
+    log("   ③ 第三遍（点『这次别记』）")
+    log("      文件 sha：%s → %s" % (before[:16], after[:16]))
+    log("      断言：一个字节没动 → %s" % ("是 ✓" if skip_ok else "否 ✗"))
+
+    return {
+        "file": receipt["path"],
+        "first_run": {
+            "seeded_from": doc.get("seeded_from"),
+            "remembered_before_keep": memo_fr["_remembered_before"],
+            "write_receipt": receipt,
+            "file_sha16": sha_file(MEM_FILE)[:16],
+        },
+        "second_run": {"remembered_before": seen},
+        "third_run_skip": {"sha_before16": before[:16], "sha_after16": after[:16]},
+        "assertions": {
+            "keep_wrote_file": keep_ok,
+            "memory_is_effective": seen_ok,
+            "skip_left_file_untouched": skip_ok,
+        },
+        "file_content": doc,
+    }
+
+
 def main():
     want_pos = "--positive" in sys.argv or "--negative" not in sys.argv
     want_neg = "--negative" in sys.argv or "--positive" not in sys.argv
     os.makedirs(EVID, exist_ok=True)
 
-    report = {"message": MESSAGE, "room": ROOM, "steps": [], "negative": []}
+    report = {"message": MESSAGE, "room": ROOM, "steps": [], "negative": [], "memory": {}}
     dst = os.path.join(EVID, "flow_run.json")
     if os.path.exists(dst):        # 分两次跑时保留另一半的结果
         try:
@@ -433,6 +530,7 @@ def main():
                 report["steps"] = old.get("steps", [])
                 report["decisions"] = old.get("decisions", [])
                 report["final_stage"] = old.get("final_stage")
+                report["memory"] = old.get("memory", {})
             if not want_neg:
                 report["negative"] = old.get("negative", [])
         except Exception:
@@ -442,6 +540,7 @@ def main():
         report["steps"] = steps
         report["decisions"] = fl.decisions
         report["final_stage"] = fl.stage
+        report["memory"] = run_memory()
     if want_neg:
         report["negative"] = run_negative()
 

@@ -40,7 +40,7 @@ copy f_where   { class: vocabulary, en: "地点 · 广东深圳 · 出自原文"
 copy f_kind    { class: vocabulary, en: "类型 · 出行安排 · 识别所得", zh: "类型 · 出行安排 · 识别所得" }
 copy f_open    { class: vocabulary, en: "还没定：坐哪班、几点。这一步我不猜。", zh: "还没定：坐哪班、几点。这一步我不猜。" }
 
-copy memo_lbl  { class: vocabulary, en: "记得你的老规矩：你坐高铁，不坐飞机。", zh: "记得你的老规矩：你坐高铁，不坐飞机。" }
+copy memo_lbl  { class: vocabulary, en: "从本机记忆里读到：你坐高铁，不坐飞机。", zh: "从本机记忆里读到：你坐高铁，不坐飞机。" }
 copy memo_eff  { class: vocabulary, en: "所以往下只会给你高铁方案。", zh: "所以往下只会给你高铁方案。" }
 
 copy act_yes   { class: vocabulary, en: "对，就是这件事", zh: "对，就是这件事" }

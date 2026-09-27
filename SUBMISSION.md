@@ -8,8 +8,8 @@
 |---|---|
 | app id | `shiyi` |
 | 名称 | 拾意 Pickup |
-| 版本 | `0.2.0`（`manifest.json`） |
-| 发布版本 | **tag `v0.2.0`** |
+| 版本 | `0.2.1`（`manifest.json`） |
+| 发布版本 | **tag `v0.2.1`** |
 | 固定提交号 | 见本仓库 `main` 分支 HEAD（提交时锁定） |
 | 许可证 | **Apache-2.0**（`LICENSE`） |
 | 公开仓库 | <https://github.com/sansanyixyz331/shiyi> |
@@ -29,11 +29,12 @@
 | 1 | **简短需求** | `README.md` §1–§2（一句话 + 赛题对应，≤300 字） | ✅ |
 | 2 | **可运行最小原型及启动说明** | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5 | ✅ |
 | 3 | **固定版本源码或包** | 源码 = 本仓库；包 = `bundle/`（`manifest.bundle_blake3` 内容寻址）；版本 = tag `v0.2.0` | ✅ |
-| 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒**，含五屏正流程 + 两个失败态） | ✅ |
+| 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 16 秒**，含五屏正流程 + 两个失败态） | ✅ |
 | 5 | **两张关键截图** | ① `bundle/screenshots/01-read.png`（识别：从消息读出时间/地点/类型 + 来源）② `bundle/screenshots/03-plan.png`（记忆命中"坐高铁不坐飞机"→ 只给高铁方案） | ✅ |
 | 6 | **数据来源与限制** | `docs/数据来源与限制.md`（逐字段来源 + **限制：车次为演示样例**） | ✅ |
 | 7 | **已报名成员名单** | 官方 issue 报名凭证：<https://github.com/gosimfoundation/hackathon-agenticapp26/issues/5#issuecomment-5852150142>（队伍 `三三Claw` / 成员 id `三三Claw-ljh`） | ✅ |
 | — | **至少一次可核对的操作** | `build/verify_flow.py` 在宿主内五屏真点击（证据 `build/_evidence/flow_run.json`） | ✅ |
+| — | **可核验的长期记忆（真读写）** | 点「记下」→ `.local-state/memory.json` 真被写；再跑一遍读得到；点「这次别记」sha 不变 —— 三条断言进 `flow_run.json` 的 `memory` 段 | ✅ |
 | — | **一个失败或空状态** | 两个失败态：未签名被拒 / 摘要不符被拒（`_evidence` 抓图 + 宿主日志；视频 ③ 段） | ✅ |
 
 ## B. 通用材料（官方《作品提交与 App Hub》「所有作品需要的材料」6 项）
@@ -43,7 +44,7 @@
 | 1 | 公开源码仓库、**固定提交号或发布版本**、**Apache-2.0** | 仓库公开；tag `v0.2.0`；`LICENSE` = Apache-2.0 | ✅ |
 | 2 | 应用**目标、适用场景、图标、运行截图、作者与支持方式** | 目标/场景 = `README.md` §1–2；图标 = `bundle/assets/icon.svg`；截图 = `bundle/screenshots/`×5；作者/支持 = `listing.json` publisher + 本文件顶部 | ✅ |
 | 3 | **宿主版本、支持平台、依赖与启动说明**（让评审复现同一版本） | 见下方 §C「复现」——含宿主修订、平台、依赖、逐步命令 | ✅ |
-| 4 | **数据来源、申请权限、隐私处理，以及用户授权、拒绝和失败时的行为** | `docs/数据来源与限制.md`（来源+限制+权限=零）+ `PRIVACY.md`（隐私）+ 该文件的「授权 / 拒绝 / 失败」三表 | ✅ |
+| 4 | **数据来源、申请权限、隐私处理，以及用户授权、拒绝和失败时的行为** | `docs/数据来源与限制.md`（来源+限制+权限=零）+ `PRIVACY.md`（隐私）+ 该文件的「授权 / 拒绝 / 失败」三表 + §5.4 长期记忆的存储位置与写入行为 | ✅ |
 | 5 | **Agent 任务演示**：输入是什么、Agent 实际完成哪些步骤、如何核验结果、哪些环节需人工确认 | `docs/Agent任务演示.md`（四问逐条）+ `src/shiyi_flow.py`（步骤真源） | ✅ |
 | 6 | 运行截图、日志或视频**及对应复现步骤** | 见下方 §C 与 §D：每条证据都配一条可执行命令 | ✅ |
 
@@ -57,8 +58,8 @@
 | `kit/` | `bundle/kit/native/light/kit.json`（16 组件 / 12 token） | ✅ |
 | 图标 `assets/` | `bundle/assets/icon.svg` | ✅ |
 | 截图 `screenshots/`（≥1 张 PNG） | `bundle/screenshots/01..05-*.png`（5 张） | ✅ |
-| **预检结果** | `build/review.json`（`hub scan` 产物，7 问）+ `hub check` **PASSED** | ✅ |
-| **实际运行证据** | `build/_evidence/`（`flow_run.json` + 5 张宿主内截图 + 宿主日志） | ✅ |
+| **预检结果** | `build/review.json`（`hub scan` 产物，7 问）+ `hub check` **PASSED**（0.2.1 改动后已重跑） | ✅ |
+| **实际运行证据** | `build/_evidence/`（`flow_run.json`〔含 `memory` 记忆取证段〕+ 5 张宿主内截图 + 宿主日志） | ✅ |
 
 ## D. 复现（评审照这个走，能拿到同一版本）
 
@@ -80,8 +81,11 @@
 # 1) 门禁自检（未签名告警为开发期正常，官方原话）
 "$HUB_BIN" check "$APP_REPO/bundle" --allow-unsigned        # → PASSED
 
-# 2) 五屏端到端：起官方参考宿主 → 逐屏渲染 → 真点击 → 断言下一屏 → 抓图
+# 2) 五屏端到端 + 失败态 + 长期记忆真读写断言
 python build/verify_flow.py                                  # → build/_evidence/
+
+# 2b) 只看记忆层（可选）：播种 → 写入 → 覆盖 → 落盘，全流程可看
+python src/memory_store.py
 
 # 3) 演示短片（可选：重录）
 python build/record_demo.py                                  # → build/_video/*.mp4
@@ -98,15 +102,15 @@ python build/record_demo.py                                  # → build/_video/
 | 宿主内逐屏抓图 | `build/_evidence/shots/*.png` | 五个末帧，字节各不相同（非同一张） |
 | 宿主运行日志 | `build/_evidence/host_*.log` | 含 `admitted` / `[SPLASH] eval` |
 | 失败态抓图 | `build/_evidence/neg_*.png` | 拒绝后**零渲染**（空白窗） |
-| 演示短片 | `build/_video/shiyi-walkthrough.mp4` | 2 分 17 秒，四段 |
+| 演示短片 | `build/_video/shiyi-walkthrough.mp4` | 2 分 16 秒，四段 |
+| **长期记忆文件** | `.local-state/memory.json` | 运行期生成（`.gitignore` 排除）；`flow_run.json` 的 `memory` 段有三条断言的实测值 |
 | 门禁 / 审查包 | `build/review.json` | `hub scan` 7 问 |
 
 ## F. 已知限制（诚实声明）
 
 - **车次数据为演示样例**（`source: sample`）：`src/shiyi_flow.py` 的 S3 三个班次
   是**示例**，接真实票务服务前**不当作事实**（见 `docs/数据来源与限制.md`）。
-- **记忆层当前为本地演示实现**：卡片上的"老规矩"来自本地偏好库（`DEFAULT_PREFS`），
-  读写闭环在开发期实现中；卡片已按要求**显式写出"命中哪条、改变了什么"**。
+- **长期记忆存在本机文件里**：`.local-state/memory.json`（零权限、不联网）；**首次运行用内建初始值播种**并如实标注来源。点「记下」真写、点「这次别记」不写 —— 三条断言见 `flow_run.json` 的 `memory` 段。**注意：记忆不改变“车次为演示样例”这条限制**。
 - **未签名**：`bundle/` 未做发布者签名（`hub check` 的唯一告警）；
   官方明示未签名包可本地预检、`--allow-unsigned` 即为该场景。
 - **演示在桌面参考宿主**：手机端官方运行包未公布，故演示记录自桌面官方参考宿主。

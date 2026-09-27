@@ -5,10 +5,13 @@
 #
 # 拾意 · Pickup — screen 5 of 5: DONE.
 #
-# A receipt, not a celebration. Three lines say what was actually written
-# where, so the user can go and check any of it; the closing line keeps the
-# standing promise that nothing else moves without being asked. What is NOT
-# here matters too: no score, no streak, no "you saved 12 minutes".
+# A receipt, not a celebration — and an honest one. The three lines are split
+# by what actually happened: the first names the one thing that was really
+# written to disk (and where), the other two say plainly that nothing was
+# moved. Earlier drafts read "trip scheduled / calendar added / reminder set"
+# — none of which was true, so they are gone; a receipt that lists work you
+# did not do is worse than no receipt. What is NOT here matters too: no score,
+# no streak, no "you saved 12 minutes".
 #
 # Screens are separate cards; see shiyi-01-read for why.
 
@@ -18,13 +21,13 @@ state act_enabled { shape: bool, initial: true }
 
 # ── copy ─────────────────────────────────────────────────────────────────────
 copy eyebrow { class: vocabulary, en: "拾意 · 第五步 · 完成", zh: "拾意 · 第五步 · 完成" }
-copy heading { class: vocabulary, en: "办好了，剩下交给我", zh: "办好了，剩下交给我" }
+copy heading { class: vocabulary, en: "记下了。别的没动，等你点头", zh: "记下了。别的没动，等你点头" }
 
-copy r1 { class: vocabulary, en: "行程已排 · 周三 08:12 G1234 深圳北", zh: "行程已排 · 周三 08:12 G1234 深圳北" }
-copy r2 { class: vocabulary, en: "日历已加 · 周三 05:40 出门", zh: "日历已加 · 周三 05:40 出门" }
-copy r3 { class: vocabulary, en: "提醒已设 · 周二 21:00 收行李", zh: "提醒已设 · 周二 21:00 收行李" }
+copy r1 { class: vocabulary, en: "写了记忆 · 去深圳默认早班，从家里出发", zh: "写了记忆 · 去深圳默认早班，从家里出发" }
+copy r2 { class: vocabulary, en: "行程没动 · 周三那班只是方案里的样例", zh: "行程没动 · 周三那班只是方案里的样例" }
+copy r3 { class: vocabulary, en: "日历与提醒没动 · 没碰系统", zh: "日历与提醒没动 · 没碰系统" }
 
-copy foot { class: vocabulary, en: "三处都能点开自己看。改动随时说，我不自己乱动。", zh: "三处都能点开自己看。改动随时说，我不自己乱动。" }
+copy foot { class: vocabulary, en: "只有第一行真写进去了，后两行一个字没动。", zh: "只有第一行真写进去了，后两行一个字没动。" }
 
 copy act_again { class: vocabulary, en: "重开一条", zh: "重开一条" }
 copy act_open  { class: vocabulary, en: "看行程", zh: "看行程" }
