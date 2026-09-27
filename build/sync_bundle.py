@@ -17,7 +17,7 @@ rendered. Run render_cards.py first: a screen with no capture is a failure,
 not something to paper over.
 
 Usage:
-    python build/sync_bundle.py [--version 0.2.0]
+    python build/sync_bundle.py [--version 0.2.1]
 """
 
 import argparse
@@ -42,7 +42,7 @@ SCREENS = [
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--version", default="0.2.0")
+    ap.add_argument("--version", default="0.2.1")
     args = ap.parse_args()
 
     # 1. The opening screen is the bundle's card.

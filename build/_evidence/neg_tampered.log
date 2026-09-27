@@ -1,9 +1,9 @@
 [I] F:\gosim_build\octosense-org\makepad\platform\src\web_socket.rs:321:13 - studio websocket disabled: empty studio_http
-[makepad-remote] listening on 127.0.0.1:53911 pid=28776 app=card-host.exe grabs=C:\Users\adves\AppData\Local\Temp\makepad-remote\card-host.exe-28776
-[I] F:\gosim_build\octosense-org\makepad\platform\src\remote.rs:547:9 - [makepad-remote] listening on 127.0.0.1:53911 pid=28776 app=card-host.exe grabs=C:\Users\adves\AppData\Local\Temp\makepad-remote\card-host.exe-28776
+[makepad-remote] listening on 127.0.0.1:52988 pid=18356 app=card-host.exe grabs=C:\Users\adves\AppData\Local\Temp\makepad-remote\card-host.exe-18356
+[I] F:\gosim_build\octosense-org\makepad\platform\src\remote.rs:547:9 - [makepad-remote] listening on 127.0.0.1:52988 pid=18356 app=card-host.exe grabs=C:\Users\adves\AppData\Local\Temp\makepad-remote\card-host.exe-18356
 [I] F:\gosim_build\octosense-org\makepad\platform\src\cx.rs:686:9 - memory budget: 16226 MiB (GlobalMemoryStatusEx)
 [I] F:\gosim_build\octosense-org\makepad\platform\src\thread.rs:928:9 - UI thread priority UserInteractive: Applied
-[E] crates\card-host\src\main.rs:132:17 - card-host: refused: bundle digest c3cdb257ffe61b48bfe927ab8d0259be3c241aa4dc806cbc5507f87d5ff17fe2 does not match the manifest's 701bf509bd105eecb0dc7f7b428a10840cb7f8620228e8d1f745226825a33daa: app shiyi version 0.2.1
+[E] crates\card-host\src\main.rs:132:17 - card-host: refused: bundle digest 57ac20f9251e12d69f91c3c778be6061e7d8478a3e8264258b3b23bcad5e9edb does not match the manifest's 5725f499ae57c71844028f9bfba2daca4b36b6d9ba75c13ddaf5e3d36bc7d4bb: app shiyi version 0.2.1
 [I] F:\gosim_build\octosense-org\makepad\platform\src\os\windows\d3d11.rs:149:13 - retained-upload budgets: adapter_bytes=16209108992 process_allowance=17014415360 allocation_limit=4052277248 source=DXGI_adapter_budget
 [makepad-remote] remote quit
-[I] F:\gosim_build\octosense-org\makepad\platform\src\thread.rs:942:13 - pool: 6 workers (2 light-only, 6 started), 18 jobs, peak queue light 0 / heavy 13; light 0: wait avg 0.00 ms max 0.00 ms, run avg 0.0 ms max 0.0 ms; heavy 18: wait avg 2.41 ms max 4.08 ms, run avg 1.0 ms max 3.1 ms; priority applied 6/6 (light UserInitiated / heavy Utility); light >2ms 0 offenders=[] overflow=0; heavy >250ms offenders=[]
+[I] F:\gosim_build\octosense-org\makepad\platform\src\thread.rs:942:13 - pool: 6 workers (2 light-only, 6 started), 18 jobs, peak queue light 0 / heavy 14; light 0: wait avg 0.00 ms max 0.00 ms, run avg 0.0 ms max 0.0 ms; heavy 18: wait avg 2.52 ms max 4.23 ms, run avg 1.1 ms max 2.9 ms; priority applied 6/6 (light UserInitiated / heavy Utility); light >2ms 0 offenders=[] overflow=0; heavy >250ms offenders=[]
