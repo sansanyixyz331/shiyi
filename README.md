@@ -150,7 +150,7 @@ python build/verify_flow.py --negative      # 只跑失败态
 **演示短片（A4）**：
 
 ```sh
-python build/record_demo.py                 # 录五屏正流程 → build/_video/shiyi-walkthrough.mp4
+python build/record_demo.py                 # 全片（片头卡 + 五屏正流程 + 两个失败态 + 片尾卡）
 python build/record_demo.py --from-frames   # 只重编码，不重录
 python build/record_demo.py --no-caption    # 不要字幕
 ```
@@ -159,10 +159,14 @@ python build/record_demo.py --no-caption    # 不要字幕
 `/g?raw=1`，10 fps），再用 ffmpeg 合成 mp4。字幕用的全是卡内真实文案，并且先在
 底部 pad 出一条字幕带再画进去 —— 不遮卡片、不盖按钮。
 
-成片：`build/_video/shiyi-walkthrough.mp4`（约 15.6 秒 / 156 帧 / 146 KB）。
-说明：这是**桌面官方参考宿主**里的真实运行录制；手机端要等官方"支持设备／运行包"
-公布（官方那条 HTTP 自动化通道在 Android 上被编译掉了，手机端另有真机触摸注入
-的一套，是几小时级的活）。
+全片四段：① 片头卡 → ② 五屏正流程（每步真点击）→ ③ **两个失败态**（未签名 /
+包被改过一个字符 → 真起宿主、真被拒、录到拒绝后的空窗口，画面上叠宿主原话）
+→ ④ 片尾卡。
+
+成片：`build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒 / 1373 帧**，满足官方
+初赛"2–3 分钟演示"的要求）。说明：这是**桌面官方参考宿主**里的真实运行录制；
+手机端要等官方"支持设备／运行包"公布（官方那条 HTTP 自动化通道在 Android 上被
+编译掉了，手机端另有真机触摸注入的一套，是几小时级的活）。
 
 ## 6. 当前状态
 
@@ -180,7 +184,7 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 服务逻辑 | ✅ 五屏流程状态机（`src/shiyi_flow.py`）**已与官方参考宿主串成端到端** |
 | 端到端验证（A3） | ✅ `build/verify_flow.py`：五屏逐屏真渲染 + 每步真实点击命中控件 + 事件链推进 → `build/_evidence/` |
 | 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），日志与抓图留证 |
-| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（15.6 秒 / 156 帧，**真实宿主逐帧录制，非动画**） |
+| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒 / 1373 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
 | 签名 / 提交 | ⬜ 待做（需发布者密钥） |
 
 ## 7. 实测记录（2026-09-26 跑通的关键契约）
