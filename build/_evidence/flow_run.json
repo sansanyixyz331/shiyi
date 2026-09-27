@@ -1,0 +1,178 @@
+{
+  "message": "下周三我得去趟深圳",
+  "room": "家庭群",
+  "steps": [
+    {
+      "screen": "shiyi-01-read",
+      "control": "action_yes",
+      "event": "intent.confirmed",
+      "click": {
+        "x": 206,
+        "y": 827
+      },
+      "rect": [
+        24,
+        800,
+        364,
+        54
+      ],
+      "widget_present": true,
+      "widget_clickable": true,
+      "click_inside_widget": true,
+      "host_answer": "{\"ok\":1,\"f\":21}",
+      "shot": "build/_evidence/shots/shiyi-01-read.png",
+      "bundle_blake3": "bff100e95e2007ad85412aaed018279e1189e01e20809234f0ced84a6204edd4"
+    },
+    {
+      "screen": "shiyi-02-ask",
+      "control": "opt_a1",
+      "event": "ask.when.morning",
+      "click": {
+        "x": 120,
+        "y": 254
+      },
+      "rect": [
+        44,
+        232,
+        152,
+        44
+      ],
+      "widget_present": true,
+      "widget_clickable": true,
+      "click_inside_widget": true,
+      "host_answer": "{\"ok\":1,\"f\":22}",
+      "shot": "build/_evidence/shots/shiyi-02-ask.png",
+      "bundle_blake3": "d738697ec2f98dd42a27960af5de587a6462b378c011f013d12cd47a302717b0"
+    },
+    {
+      "screen": "shiyi-02-ask",
+      "control": "opt_b1",
+      "event": "ask.from.home",
+      "click": {
+        "x": 120,
+        "y": 394
+      },
+      "rect": [
+        44,
+        372,
+        152,
+        44
+      ],
+      "widget_present": true,
+      "widget_clickable": true,
+      "click_inside_widget": true,
+      "host_answer": "{\"ok\":1,\"f\":25}",
+      "shot": "build/_evidence/shots/shiyi-02-ask.png",
+      "bundle_blake3": "d738697ec2f98dd42a27960af5de587a6462b378c011f013d12cd47a302717b0"
+    },
+    {
+      "screen": "shiyi-02-ask",
+      "control": "action_go",
+      "event": "ask.settled",
+      "click": {
+        "x": 206,
+        "y": 827
+      },
+      "rect": [
+        24,
+        800,
+        364,
+        54
+      ],
+      "widget_present": true,
+      "widget_clickable": true,
+      "click_inside_widget": true,
+      "host_answer": "{\"ok\":1,\"f\":28}",
+      "shot": "build/_evidence/shots/shiyi-02-ask.png",
+      "bundle_blake3": "d738697ec2f98dd42a27960af5de587a6462b378c011f013d12cd47a302717b0"
+    },
+    {
+      "screen": "shiyi-03-plan",
+      "control": "action_take",
+      "event": "plan.take_recommended",
+      "click": {
+        "x": 206,
+        "y": 827
+      },
+      "rect": [
+        24,
+        800,
+        364,
+        54
+      ],
+      "widget_present": true,
+      "widget_clickable": true,
+      "click_inside_widget": true,
+      "host_answer": "{\"ok\":1,\"f\":18}",
+      "shot": "build/_evidence/shots/shiyi-03-plan.png",
+      "bundle_blake3": "9bc5b8c598dd1eb52f81c12b84d44f9a3cd94533f31b3e2a5591cbe371de3311"
+    },
+    {
+      "screen": "shiyi-04-memo",
+      "control": "action_keep",
+      "event": "memo.keep",
+      "click": {
+        "x": 206,
+        "y": 827
+      },
+      "rect": [
+        24,
+        800,
+        364,
+        54
+      ],
+      "widget_present": true,
+      "widget_clickable": true,
+      "click_inside_widget": true,
+      "host_answer": "{\"ok\":1,\"f\":21}",
+      "shot": "build/_evidence/shots/shiyi-04-memo.png",
+      "bundle_blake3": "942b4e3c141f3b3939fccb744b48622777ab05117c89fef3720a72dfaec6c9e9"
+    },
+    {
+      "screen": "shiyi-05-done",
+      "control": "action_open",
+      "event": "trip.open",
+      "click": {
+        "x": 206,
+        "y": 827
+      },
+      "rect": [
+        24,
+        800,
+        364,
+        54
+      ],
+      "widget_present": true,
+      "widget_clickable": true,
+      "click_inside_widget": true,
+      "host_answer": "{\"ok\":1,\"f\":20}",
+      "shot": "build/_evidence/shots/shiyi-05-done.png",
+      "bundle_blake3": "40f6f2e3a7a22b8d6779e204e00840f41881e31665c822fd552a087c4b766cfd"
+    }
+  ],
+  "negative": [
+    {
+      "case": "unsigned",
+      "refused": true,
+      "log": "card-host: refused: app shiyi is unsigned and this host requires a signature",
+      "rendered_any": false,
+      "capture": "抓到的只是空白窗口（5440 字节，无卡片内容）—— 一张都没画 ✓"
+    },
+    {
+      "case": "tampered",
+      "refused": true,
+      "log": "card-host: refused: bundle digest 8e9922b2c7dad3eb27c28cf4fedb343fbea410b235133c9749920f24c0c8a649 does not match the manifest's bff100e95e2007ad85412aaed018279e1189e01e20809234f0ced84a6204edd4: app shiyi version 0.2.0",
+      "rendered_any": false
+    }
+  ],
+  "decisions": [
+    "intent.confirmed",
+    "ask.when.morning",
+    "ask.from.home",
+    "ask.settled",
+    "plan.take_recommended",
+    "memo.keep",
+    "trip.open"
+  ],
+  "final_stage": "done"
+}

@@ -134,6 +134,36 @@ python build/sync_bundle.py
 python src/shiyi_flow.py        # 走完五屏，打印每屏内容与走过的决定
 ```
 
+**端到端验证（A3 + B4 一次跑完）**：
+
+```sh
+python build/verify_flow.py                 # 正流程 + 两个失败态
+python build/verify_flow.py --positive      # 只跑正流程
+python build/verify_flow.py --negative      # 只跑失败态
+```
+
+它把「一条消息 → 逐屏卡 → 用户点按钮 → 下一屏」在官方参考宿主里真跑一遍：
+每屏先组包盖章、起宿主、等稳定帧、抓图，再用 `/snap` 证实目标控件**在、可见、可点**，
+然后 `/click` 打到它的中心，取该控件在 `service-actions.json` 里声明的事件名推下一屏。
+证据落在 `build/_evidence/`：`flow_run.json`（全步骤）+ `shots/*.png`（每屏宿主内截图）+ 宿主日志。
+
+**演示短片（A4）**：
+
+```sh
+python build/record_demo.py                 # 录五屏正流程 → build/_video/shiyi-walkthrough.mp4
+python build/record_demo.py --from-frames   # 只重编码，不重录
+python build/record_demo.py --no-caption    # 不要字幕
+```
+
+跑的是上面同一条链路，区别只在**一边跑一边逐帧录宿主窗口本身**（宿主自带的
+`/g?raw=1`，10 fps），再用 ffmpeg 合成 mp4。字幕用的全是卡内真实文案，并且先在
+底部 pad 出一条字幕带再画进去 —— 不遮卡片、不盖按钮。
+
+成片：`build/_video/shiyi-walkthrough.mp4`（约 15.6 秒 / 156 帧 / 146 KB）。
+说明：这是**桌面官方参考宿主**里的真实运行录制；手机端要等官方"支持设备／运行包"
+公布（官方那条 HTTP 自动化通道在 Android 上被编译掉了，手机端另有真机触摸注入
+的一套，是几小时级的活）。
+
 ## 6. 当前状态
 
 | 项 | 状态 |
@@ -147,7 +177,10 @@ python src/shiyi_flow.py        # 走完五屏，打印每屏内容与走过的�
 | 真实截图 | ✅ 五张 `515×1073`（实拍后裁掉宿主标题栏，入 bundle 与各屏目录） |
 | 门禁 | ✅ `hub check` **PASSED**（唯一告警 = 未签名，开发期正常） |
 | 审查包 | ✅ `build/review.json`（7 个审查问题，放 bundle 之外） |
-| 服务逻辑 | 🟡 五屏流程状态机可跑（`src/shiyi_flow.py` 自测全过）；接入宿主内运行时待做 |
+| 服务逻辑 | ✅ 五屏流程状态机（`src/shiyi_flow.py`）**已与官方参考宿主串成端到端** |
+| 端到端验证（A3） | ✅ `build/verify_flow.py`：五屏逐屏真渲染 + 每步真实点击命中控件 + 事件链推进 → `build/_evidence/` |
+| 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），日志与抓图留证 |
+| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（15.6 秒 / 156 帧，**真实宿主逐帧录制，非动画**） |
 | 签名 / 提交 | ⬜ 待做（需发布者密钥） |
 
 ## 7. 实测记录（2026-09-26 跑通的关键契约）
@@ -189,6 +222,16 @@ layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
 就是 `412×892`。抓到的图是 `515×1073`，那是 **125% DPI**（412×1.25=515），
 裁掉宿主自绘标题栏（42 物理像素）后与画布正好成 1.25 倍关系：
 `物理 = 逻辑 × 1.25 - 42`。按这个反推排版才准。
+
+### 三条 2026-09-27 做端到端验证时才踩到的坑
+
+- **`--allow-unsigned` 不能漏。** 宿主默认 `require_signature`，漏了就 `refused: … is unsigned`，
+  表现为"窗口起来了但一直是空白"——很容易误判成"隐藏窗口不绘制"。看宿主日志一眼就能认出来。
+- **抓图必须"等稳定帧"。** 宿主刚起时先给一帧空白（**5440 字节**，只有窗口底色+标题栏），
+  所以"抓到 PNG 就算数"或阈值取 5 KB 都会假成功。判定 = 字节数 ≥ 20 KB **且**连续两次 sha 相同
+  （真卡 49–77 KB）。
+- **`MAKEPAD_HIDE_WINDOWS=1` 在这个 Windows 后端下不绘制**（本机实测：始终只有那帧 5440 空白）。
+  自动化要抓图就用**可见窗口**；窗口只在脚本运行期间存在，跑完即退。
 
 ## 8. 两条红线
 

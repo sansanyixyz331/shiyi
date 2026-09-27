@@ -1,0 +1,8 @@
+[I] F:\gosim_build\octosense-org\makepad\platform\src\web_socket.rs:321:13 - studio websocket disabled: empty studio_http
+[makepad-remote] listening on 127.0.0.1:60504 pid=17552 app=card-host.exe grabs=C:\Users\adves\AppData\Local\Temp\makepad-remote\card-host.exe-17552
+[I] F:\gosim_build\octosense-org\makepad\platform\src\remote.rs:547:9 - [makepad-remote] listening on 127.0.0.1:60504 pid=17552 app=card-host.exe grabs=C:\Users\adves\AppData\Local\Temp\makepad-remote\card-host.exe-17552
+[I] F:\gosim_build\octosense-org\makepad\platform\src\cx.rs:686:9 - memory budget: 16226 MiB (GlobalMemoryStatusEx)
+[I] F:\gosim_build\octosense-org\makepad\platform\src\thread.rs:928:9 - UI thread priority UserInteractive: Applied
+[E] crates\card-host\src\main.rs:132:17 - card-host: refused: app shiyi is unsigned and this host requires a signature
+[I] F:\gosim_build\octosense-org\makepad\platform\src\os\windows\d3d11.rs:149:13 - retained-upload budgets: adapter_bytes=16209108992 process_allowance=17014415360 allocation_limit=4052277248 source=DXGI_adapter_budget
+[makepad-remote] remote quit

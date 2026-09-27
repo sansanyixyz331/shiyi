@@ -1,0 +1,9 @@
+[I] F:\gosim_build\octosense-org\makepad\platform\src\web_socket.rs:321:13 - studio websocket disabled: empty studio_http
+[makepad-remote] listening on 127.0.0.1:60534 pid=18740 app=card-host.exe grabs=C:\Users\adves\AppData\Local\Temp\makepad-remote\card-host.exe-18740
+[I] F:\gosim_build\octosense-org\makepad\platform\src\remote.rs:547:9 - [makepad-remote] listening on 127.0.0.1:60534 pid=18740 app=card-host.exe grabs=C:\Users\adves\AppData\Local\Temp\makepad-remote\card-host.exe-18740
+[I] F:\gosim_build\octosense-org\makepad\platform\src\cx.rs:686:9 - memory budget: 16226 MiB (GlobalMemoryStatusEx)
+[I] F:\gosim_build\octosense-org\makepad\platform\src\thread.rs:928:9 - UI thread priority UserInteractive: Applied
+[E] crates\card-host\src\main.rs:132:17 - card-host: refused: bundle digest 8e9922b2c7dad3eb27c28cf4fedb343fbea410b235133c9749920f24c0c8a649 does not match the manifest's bff100e95e2007ad85412aaed018279e1189e01e20809234f0ced84a6204edd4: app shiyi version 0.2.0
+[I] F:\gosim_build\octosense-org\makepad\platform\src\os\windows\d3d11.rs:149:13 - retained-upload budgets: adapter_bytes=16209108992 process_allowance=17014415360 allocation_limit=4052277248 source=DXGI_adapter_budget
+[makepad-remote] remote quit
+[I] F:\gosim_build\octosense-org\makepad\platform\src\thread.rs:942:13 - pool: 6 workers (2 light-only, 6 started), 18 jobs, peak queue light 0 / heavy 13; light 0: wait avg 0.00 ms max 0.00 ms, run avg 0.0 ms max 0.0 ms; heavy 18: wait avg 1.62 ms max 3.54 ms, run avg 0.9 ms max 2.4 ms; priority applied 6/6 (light UserInitiated / heavy Utility); light >2ms 0 offenders=[] overflow=0; heavy >250ms offenders=[]

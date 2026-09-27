@@ -10,3 +10,10 @@ target/
 .DS_Store
 __pycache__/
 *.pyc
+
+# 录制产物：只留成片（build/_video/shiyi-walkthrough.mp4），原始帧/字体/校验帧不进仓库
+build/_run_verify/
+build/_video/frames/
+build/_video/check/
+build/_video/msyh.ttc
+build/_video/marks.json
