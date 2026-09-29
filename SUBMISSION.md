@@ -8,8 +8,8 @@
 |---|---|
 | app id | `shiyi` |
 | 名称 | 拾意 Pickup |
-| 版本 | `0.2.1`（`manifest.json`） |
-| 发布版本 | **tag `v0.2.1`** |
+| 版本 | `0.2.2`（`manifest.json`） |
+| 发布版本 | **tag `v0.2.2`** |
 | 固定提交号 | 见本仓库 `main` 分支 HEAD（提交时锁定） |
 | 许可证 | **Apache-2.0**（`LICENSE`） |
 | 公开仓库 | <https://github.com/sansanyixyz331/shiyi> |
@@ -28,7 +28,7 @@
 |---|---|---|---|
 | 1 | **简短需求** | `README.md` §1–§2（一句话 + 赛题对应，≤300 字） | ✅ |
 | 2 | **可运行最小原型及启动说明** | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5 | ✅ |
-| 3 | **固定版本源码或包** | 源码 = 本仓库；包 = `bundle/`（`manifest.bundle_blake3` 内容寻址）；版本 = tag `v0.2.1` | ✅ |
+| 3 | **固定版本源码或包** | 源码 = 本仓库；包 = `bundle/`（`manifest.bundle_blake3` 内容寻址）；版本 = tag `v0.2.2` | ✅ |
 | 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 16 秒**，含五屏正流程 + 两个失败态） | ✅ |
 | 5 | **两张关键截图** | ① `bundle/screenshots/01-read.png`（识别：从消息读出时间/地点/类型 + 来源）② `bundle/screenshots/03-plan.png`（记忆命中"坐高铁不坐飞机"→ 只给高铁方案） | ✅ |
 | 6 | **数据来源与限制** | `docs/数据来源与限制.md`（逐字段来源 + **限制：车次为演示样例**） | ✅ |
@@ -41,7 +41,7 @@
 
 | # | 官方要求 | 我方对应 | 状态 |
 |---|---|---|---|
-| 1 | 公开源码仓库、**固定提交号或发布版本**、**Apache-2.0** | 仓库公开；tag `v0.2.1`；`LICENSE` = Apache-2.0 | ✅ |
+| 1 | 公开源码仓库、**固定提交号或发布版本**、**Apache-2.0** | 仓库公开；tag `v0.2.2`；`LICENSE` = Apache-2.0 | ✅ |
 | 2 | 应用**目标、适用场景、图标、运行截图、作者与支持方式** | 目标/场景 = `README.md` §1–2；图标 = `bundle/assets/icon.svg`；截图 = `bundle/screenshots/`×5；作者/支持 = `listing.json` publisher + 本文件顶部 | ✅ |
 | 3 | **宿主版本、支持平台、依赖与启动说明**（让评审复现同一版本） | 见下方 §C「复现」——含宿主修订、平台、依赖、逐步命令 | ✅ |
 | 4 | **数据来源、申请权限、隐私处理，以及用户授权、拒绝和失败时的行为** | `docs/数据来源与限制.md`（来源+限制+权限=零）+ `PRIVACY.md`（隐私）+ 该文件的「授权 / 拒绝 / 失败」三表 + §5.4 长期记忆的存储位置与写入行为 | ✅ |
@@ -58,7 +58,7 @@
 | `kit/` | `bundle/kit/native/light/kit.json`（16 组件 / 12 token） | ✅ |
 | 图标 `assets/` | `bundle/assets/icon.svg` | ✅ |
 | 截图 `screenshots/`（≥1 张 PNG） | `bundle/screenshots/01..05-*.png`（5 张） | ✅ |
-| **预检结果** | `build/review.json`（`hub scan` 产物，7 问）+ `hub check` **PASSED**（0.2.1 改动后已重跑） | ✅ |
+| **预检结果** | `build/review.json`（`hub scan` 产物，7 问）+ `hub check` **PASSED**（0.2.2 改动后已重跑） | ✅ |
 | **实际运行证据** | `build/_evidence/`（`flow_run.json`〔含 `memory` 记忆取证段〕+ 5 张宿主内截图 + 宿主日志） | ✅ |
 
 ## D. 复现（评审照这个走，能拿到同一版本）

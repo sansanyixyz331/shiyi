@@ -26,7 +26,7 @@
     "support": "https://github.com/sansanyixyz331/shiyi",
     "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
   },
-  "release_notes": "0.2.1 — five screens (read, ask, plan, remember, done), each one a hand-written L0 card rendered through the reference host.",
+  "release_notes": "0.2.2 — five screens (read, ask, plan, remember, done), each one a hand-written L0 card rendered through the reference host.",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

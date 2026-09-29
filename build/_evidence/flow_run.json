@@ -19,9 +19,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":23}",
+      "host_answer": "{\"ok\":1,\"f\":21}",
       "shot": "build/_evidence/shots/shiyi-01-read.png",
-      "bundle_blake3": "5725f499ae57c71844028f9bfba2daca4b36b6d9ba75c13ddaf5e3d36bc7d4bb"
+      "bundle_blake3": "b193bcd9dc4c65b928af48de1f00d8f95a92b9b2a72ce45757b93671be1048ba"
     },
     {
       "screen": "shiyi-02-ask",
@@ -42,7 +42,7 @@
       "click_inside_widget": true,
       "host_answer": "{\"ok\":1,\"f\":21}",
       "shot": "build/_evidence/shots/shiyi-02-ask.png",
-      "bundle_blake3": "f1647553b065d66e89e57456a762b3487d91b26879cd659f2f05b6428fad53f5"
+      "bundle_blake3": "974a155498610247c999727de4bbd3e46b379c73f3e5292d4a94c763aab8431a"
     },
     {
       "screen": "shiyi-02-ask",
@@ -61,9 +61,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":24}",
+      "host_answer": "{\"ok\":1,\"f\":25}",
       "shot": "build/_evidence/shots/shiyi-02-ask.png",
-      "bundle_blake3": "f1647553b065d66e89e57456a762b3487d91b26879cd659f2f05b6428fad53f5"
+      "bundle_blake3": "974a155498610247c999727de4bbd3e46b379c73f3e5292d4a94c763aab8431a"
     },
     {
       "screen": "shiyi-02-ask",
@@ -82,9 +82,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":27}",
+      "host_answer": "{\"ok\":1,\"f\":29}",
       "shot": "build/_evidence/shots/shiyi-02-ask.png",
-      "bundle_blake3": "f1647553b065d66e89e57456a762b3487d91b26879cd659f2f05b6428fad53f5"
+      "bundle_blake3": "974a155498610247c999727de4bbd3e46b379c73f3e5292d4a94c763aab8431a"
     },
     {
       "screen": "shiyi-03-plan",
@@ -105,7 +105,7 @@
       "click_inside_widget": true,
       "host_answer": "{\"ok\":1,\"f\":20}",
       "shot": "build/_evidence/shots/shiyi-03-plan.png",
-      "bundle_blake3": "a5c1af67461b27db5ca5c2d49d44181518df07330c098951b959e3267e09cf97"
+      "bundle_blake3": "ab58d4380ca23eb8c871982bf60d8c832fee02c6b638c653b8ed0fdc3506ce51"
     },
     {
       "screen": "shiyi-04-memo",
@@ -124,9 +124,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":22}",
+      "host_answer": "{\"ok\":1,\"f\":23}",
       "shot": "build/_evidence/shots/shiyi-04-memo.png",
-      "bundle_blake3": "899adb4ced7d3e87a5fc66bcfa769d51603071f0bacd99c70ec074f5d6a19f54"
+      "bundle_blake3": "d95c4603efcf23169c92385023a22b92853320fc2842451e8581dd4be5fbe245"
     },
     {
       "screen": "shiyi-05-done",
@@ -145,9 +145,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":22}",
+      "host_answer": "{\"ok\":1,\"f\":23}",
       "shot": "build/_evidence/shots/shiyi-05-done.png",
-      "bundle_blake3": "3fce31686ac1283d69bf2046af0bd3630e8e08c0307b1ea0b87ed7ad915f81fd"
+      "bundle_blake3": "0fe99dc3c425e86039a77e1c5989e864327f06a8d28f5d5ac58ec8e963e13781"
     }
   ],
   "negative": [
@@ -161,7 +161,7 @@
     {
       "case": "tampered",
       "refused": true,
-      "log": "card-host: refused: bundle digest 57ac20f9251e12d69f91c3c778be6061e7d8478a3e8264258b3b23bcad5e9edb does not match the manifest's 5725f499ae57c71844028f9bfba2daca4b36b6d9ba75c13ddaf5e3d36bc7d4bb: app shiyi version 0.2.1",
+      "log": "card-host: refused: bundle digest 0637abd80462441eef5b765b14760efcd3e349fd2f0ddcd1597583513c35166c does not match the manifest's b193bcd9dc4c65b928af48de1f00d8f95a92b9b2a72ce45757b93671be1048ba: app shiyi version 0.2.2",
       "rendered_any": false
     }
   ],
@@ -173,7 +173,7 @@
       "write_receipt": {
         "path": ".local-state/memory.json",
         "abs_path": "C:\\gosim_agentic\\05_app\\shiyi\\.local-state\\memory.json",
-        "written_at": "2026-09-28T00:06:41",
+        "written_at": "2026-09-29T21:37:22",
         "place": "深圳",
         "default_depart": "早班",
         "from": "家里",
@@ -181,20 +181,20 @@
         "log_entries": 1,
         "line": "去深圳默认早班，从家里出发"
       },
-      "file_sha16": "591c10162ed34db5"
+      "file_sha16": "8d589e043ee28e0d"
     },
     "second_run": {
       "remembered_before": {
         "default_depart": "早班",
         "from": "家里",
-        "learned_at": "2026-09-28T00:06:41",
+        "learned_at": "2026-09-29T21:37:22",
         "learned_from": "下周三我得去趟深圳",
         "room": "家庭群"
       }
     },
     "third_run_skip": {
-      "sha_before16": "591c10162ed34db5",
-      "sha_after16": "591c10162ed34db5"
+      "sha_before16": "8d589e043ee28e0d",
+      "sha_after16": "8d589e043ee28e0d"
     },
     "assertions": {
       "keep_wrote_file": true,
@@ -204,8 +204,8 @@
     "file_content": {
       "version": 1,
       "seeded_from": "builtin_initial",
-      "seeded_at": "2026-09-28T00:06:41",
-      "updated_at": "2026-09-28T00:06:41",
+      "seeded_at": "2026-09-29T21:37:22",
+      "updated_at": "2026-09-29T21:37:22",
       "prefs": {
         "prefers_rail": true,
         "no_flight": true,
@@ -215,14 +215,14 @@
         "深圳": {
           "default_depart": "早班",
           "from": "家里",
-          "learned_at": "2026-09-28T00:06:41",
+          "learned_at": "2026-09-29T21:37:22",
           "learned_from": "下周三我得去趟深圳",
           "room": "家庭群"
         }
       },
       "log": [
         {
-          "at": "2026-09-28T00:06:41",
+          "at": "2026-09-29T21:37:22",
           "event": "memo.keep",
           "place": "深圳",
           "default_depart": "早班",

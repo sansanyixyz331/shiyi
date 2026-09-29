@@ -299,7 +299,7 @@ layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
 | 作者 / 发布者 | **sansanyixyz331**（队伍 `三三Claw`） |
 | 支持 | <https://github.com/sansanyixyz331/shiyi/issues> |
 | 仓库 | <https://github.com/sansanyixyz331/shiyi> |
-| 版本 | `0.2.1`（tag `v0.2.1`） |
+| 版本 | `0.2.2`（tag `v0.2.2`） |
 | 许可 | Apache-2.0 |
 
 ## License

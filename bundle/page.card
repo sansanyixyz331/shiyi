@@ -1,4 +1,4 @@
-# ledger shiyi-01-read@0.2.1
+# ledger shiyi-01-read@0.2.2
 # level: L0
 # profile: ui/l0
 # model: shiyi
@@ -42,6 +42,12 @@ copy f_open    { class: vocabulary, en: "还没定：坐哪班、几点。这一
 
 copy memo_lbl  { class: vocabulary, en: "从本机记忆里读到：你坐高铁，不坐飞机。", zh: "从本机记忆里读到：你坐高铁，不坐飞机。" }
 copy memo_eff  { class: vocabulary, en: "所以往下只会给你高铁方案。", zh: "所以往下只会给你高铁方案。" }
+
+# Where this reading came from. This screen was read by the app's local rules,
+# because no OctoSense shell answers the `model` service yet; when the device's
+# assistant is available the same screen is read by it instead. Which one ran is
+# part of the record, so it is printed, not implied.
+copy f_src     { class: vocabulary, en: "识别来源 · 本地规则（设备助手可用时改由它做）", zh: "识别来源 · 本地规则（设备助手可用时改由它做）" }
 
 copy act_yes   { class: vocabulary, en: "对，就是这件事", zh: "对，就是这件事" }
 copy act_fix   { class: vocabulary, en: "不对，改一下", zh: "不对，改一下" }
@@ -113,6 +119,9 @@ view root Page(instance: "page") {
   Line(instance: "row_where", text: copy.f_where)
   Line(instance: "row_kind",  text: copy.f_kind)
   Note(instance: "row_open",  text: copy.f_open)
+
+  # The reading's source line: the record of who did this step, printed.
+  Note(instance: "row_src",   text: copy.f_src)
 
   Hairline(instance: "rule_2")
 

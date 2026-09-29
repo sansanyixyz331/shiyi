@@ -18,11 +18,12 @@
       "row_where":        { "component": "row",            "layout": { "x": 24,  "y": 318, "w": 364, "h": 22 } },
       "row_kind":         { "component": "row",            "layout": { "x": 24,  "y": 344, "w": 364, "h": 22 } },
       "row_open":         { "component": "note",           "layout": { "x": 24,  "y": 374, "w": 364, "h": 44 } },
+      "row_src":          { "component": "note",           "layout": { "x": 24,  "y": 422, "w": 364, "h": 20 } },
 
-      "rule_2":           { "component": "hairline",       "layout": { "x": 24,  "y": 434, "w": 364, "h": 1 } },
+      "rule_2":           { "component": "hairline",       "layout": { "x": 24,  "y": 460, "w": 364, "h": 1 } },
 
-      "memo_lbl":         { "component": "note",           "layout": { "x": 24,  "y": 452, "w": 364, "h": 20 } },
-      "memo_eff":         { "component": "note",           "layout": { "x": 24,  "y": 476, "w": 364, "h": 20 } },
+      "memo_lbl":         { "component": "note",           "layout": { "x": 24,  "y": 478, "w": 364, "h": 20 } },
+      "memo_eff":         { "component": "note",           "layout": { "x": 24,  "y": 502, "w": 364, "h": 20 } },
 
       "action_fix":       { "component": "action",         "layout": { "x": 24,  "y": 740, "w": 364, "h": 46 } },
       "action_fix_bg":    { "component": "action_ghost",   "layout": { "x": 24,  "y": 740, "w": 364, "h": 46 } },

@@ -2,9 +2,9 @@
   "capabilities": [],
   "id": "shiyi",
   "integrity": {
-    "bundle_blake3": "846f6aee1c0d15835e33860ed90f205a8bc50b0590c6f7497829f7a06ff1f20b"
+    "bundle_blake3": "94f6610781790c6e7f0b7a28f193598d1289354ec955957dfa9596da069624b5"
   },
   "name": "拾意 Pickup",
   "schema": 1,
-  "version": "0.2.1"
+  "version": "0.2.2"
 }
