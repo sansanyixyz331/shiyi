@@ -33,8 +33,8 @@
 | app id | `shiyi` |
 | 名称 | 拾意 Pickup |
 | 版本 | `0.2.2`（`manifest.json`） |
-| 发布版本 | **tag `v0.2.2`** |
-| 固定提交号 | 见本仓库 `main` 分支 HEAD（提交时锁定） |
+| 发布版本 | **tag `v0.2.2`**（初赛冻结版；与本仓 `main` HEAD 同源，含 README 30 秒版 / 本文件 / 评审速览） |
+| 固定提交号 | 本仓库 `main` 分支 HEAD（提交入口 = 官方 issue #13，已提交仓库地址） |
 | 许可证 | **Apache-2.0**（`LICENSE`） |
 | 公开仓库 | <https://github.com/sansanyixyz331/shiyi> |
 | 作品形态 | **Hub 卡片包**（manifest + listing + page.card + kit） |
