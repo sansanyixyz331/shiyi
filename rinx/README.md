@@ -20,6 +20,7 @@
 | `bindings.json` | **能力接线**：`on_open` 里声明"打开即发一条"，把卡片动作接到宿主服务 |
 | `证据/演示视频_Rinx执行链_拾意.mp4` | **全流程实录（43 秒，带字幕）**：导入 → 填房间 → Review → Run → **消息出现在聊天里** |
 | `证据/`（其余） | 真机实证：Review 通过（显示已授权能力与房间）/ Run 后卡片 / **房间消息 JSON** |
+| [`L0卡接宿主服务_实战指南.md`](L0卡接宿主服务_实战指南.md) | **可复用指南**：L0 卡调宿主服务的完整接线（`bindings.json` → 数据槽 → `page.data.json` 预置 → `when X.is_ok` guard），含三条 fail-closed 失败语义与提交检查清单。已整理成上游 issue：[OctoScript-App-Design-Flow#150](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/issues/150) |
 
 ## 2. 为什么单独放这儿，不塞进 `bundle/`
 
