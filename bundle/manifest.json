@@ -10,10 +10,10 @@
   },
   "id": "shiyi",
   "integrity": {
-    "bundle_blake3": "1263666026839803387f09743244a9911fa36bbdd0552b44a0d70b6e838f9437",
+    "bundle_blake3": "5fb22d9b9cf87753f09127422ddf7f6dfd7f619b94485e6d16802bb48e811caa",
     "signature": {
       "key_id": "sansanyixyz331",
-      "value": "e29bea0c14a4db9cf21170393ec7b48dadfb0f4e7f6d84bb7f666212bfbb2b3cd0ced74060ab5235c7ddf765cc88c7cdd6bd2eb49379fa37e495a035effcfa06"
+      "value": "4571740d54e1555822d6a3507393341a240bf3d0e1fb67626029d257f8c8b9187cb5d4441d49191d8d6f59079403a57acc0e23afa4e00e03072bb7274530430d"
     }
   },
   "name": "拾意 Pickup",
@@ -24,5 +24,5 @@
   "storage": {
     "max_bytes": null
   },
-  "version": "0.3.1"
+  "version": "0.3.2"
 }

@@ -49,6 +49,10 @@
     "c_accent_soft": {
       "value": 4293456365,
       "property": "bg"
+    },
+    "f_body": {
+      "value": "makepad_widgets:resources/LXGWWenKaiRegular.ttf",
+      "property": "font_src"
     }
   },
   "components": {
@@ -103,7 +107,9 @@
           "$token": "c_soft"
         },
         "tracking": 1.4,
-        "font_src": "kit/native/light/fonts/shiyi.ttf"
+        "font_src": {
+          "$token": "f_body"
+        }
       },
       "props": {
         "text": "text"
@@ -121,7 +127,9 @@
         "color": {
           "$token": "c_ink"
         },
-        "font_src": "kit/native/light/fonts/shiyi.ttf"
+        "font_src": {
+          "$token": "f_body"
+        }
       },
       "props": {
         "text": "text"
@@ -139,7 +147,9 @@
         "color": {
           "$token": "c_ink"
         },
-        "font_src": "kit/native/light/fonts/shiyi.ttf"
+        "font_src": {
+          "$token": "f_body"
+        }
       },
       "props": {
         "text": "text"
@@ -157,7 +167,9 @@
         "color": {
           "$token": "c_soft"
         },
-        "font_src": "kit/native/light/fonts/shiyi.ttf"
+        "font_src": {
+          "$token": "f_body"
+        }
       },
       "props": {
         "text": "text"
@@ -175,7 +187,9 @@
         "color": {
           "$token": "c_ink"
         },
-        "font_src": "kit/native/light/fonts/shiyi.ttf"
+        "font_src": {
+          "$token": "f_body"
+        }
       },
       "props": {
         "text": "text"
@@ -193,7 +207,9 @@
         "color": {
           "$token": "c_soft"
         },
-        "font_src": "kit/native/light/fonts/shiyi.ttf"
+        "font_src": {
+          "$token": "f_body"
+        }
       },
       "props": {
         "text": "text"
@@ -256,7 +272,9 @@
         "color": {
           "$token": "c_onacc"
         },
-        "font_src": "kit/native/light/fonts/shiyi.ttf"
+        "font_src": {
+          "$token": "f_body"
+        }
       },
       "props": {
         "text": "text"
@@ -274,7 +292,9 @@
         "color": {
           "$token": "c_ink"
         },
-        "font_src": "kit/native/light/fonts/shiyi.ttf"
+        "font_src": {
+          "$token": "f_body"
+        }
       },
       "props": {
         "text": "text"

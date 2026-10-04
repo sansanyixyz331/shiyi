@@ -113,6 +113,15 @@ def make_bundle(screen, dest=None):
     os.makedirs(b)
     for name in ("manifest.json", "listing.json"):
         shutil.copy2(os.path.join(BUNDLE, name), os.path.join(b, name))
+    # The published manifest is signed; card-host verifies no publisher keys, so
+    # a signed manifest is refused even with --allow-unsigned. Clear the
+    # signature in this throw-away copy only; it is re-stamped below.
+    mp = os.path.join(b, "manifest.json")
+    m = json.load(open(mp, encoding="utf-8"))
+    m["integrity"]["signature"] = None
+    with open(mp, "w", encoding="utf-8") as f:
+        json.dump(m, f, ensure_ascii=False, indent=2, sort_keys=True)
+        f.write("\n")
     shutil.copytree(os.path.join(BUNDLE, "kit"), os.path.join(b, "kit"))
     if os.path.isdir(os.path.join(BUNDLE, "assets")):
         shutil.copytree(os.path.join(BUNDLE, "assets"), os.path.join(b, "assets"))
@@ -128,6 +137,26 @@ def stamp(bundle):
     if r.returncode != 0:
         raise RuntimeError("stamp 失败：" + (r.stdout or "") + (r.stderr or ""))
     return (r.stdout or "").strip()
+
+
+def tamper(bundle):
+    """Change one character of a stamped bundle so its digest no longer matches.
+
+    The target must exist in page.data.json: a replace that matches nothing is a
+    silent no-op and the "tampered" case would render as if nothing were wrong
+    (this is how it once regressed, when the copy moved out of page.data.json).
+    """
+    p = os.path.join(bundle, "page.data.json")
+    with open(p, encoding="utf-8") as f:
+        raw = f.read()
+    changed = raw.replace('"light"', '"light "', 1)
+    if changed == raw:
+        raise RuntimeError(
+            "tamper target not found in page.data.json — the negative case "
+            "would be a silent no-op")
+    with open(p, "w", encoding="utf-8") as f:
+        f.write(changed)
+    return p
 
 
 def placements(screen):
@@ -406,11 +435,7 @@ def run_negative():
     log("▨ 失败态 ②：卡片包被改过（改 page.data.json 一个字符）")
     b = make_bundle("shiyi-01-read", dest=os.path.join(RUN, "neg_tampered"))
     stamp(b)
-    p = os.path.join(b, "page.data.json")
-    with open(p, encoding="utf-8") as f:
-        raw = f.read()
-    with open(p, "w", encoding="utf-8") as f:
-        f.write(raw.replace("拾意", "拾意 ", 1))
+    tamper(b)
     logf = os.path.join(EVID, "neg_tampered.log")
     with Host(b, logf, os.path.join(RUN, "neg_tampered", "state"),
               extra=["--allow-unsigned"]) as h:

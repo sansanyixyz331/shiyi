@@ -380,11 +380,7 @@ def record():
         else:
             b = VF.make_bundle("shiyi-01-read", dest=os.path.join(VF.RUN, "neg_tampered"))
             VF.stamp(b)
-            p = os.path.join(b, "page.data.json")
-            with open(p, encoding="utf-8") as f:
-                raw = f.read()
-            with open(p, "w", encoding="utf-8") as f:
-                f.write(raw.replace("拾意", "拾意 ", 1))
+            VF.tamper(b)
             extra = ("--allow-unsigned",)
         logf = os.path.join(VF.EVID, "neg_%s.log" % case)
         state = os.path.join(VF.RUN, "neg_%s" % case, "state")

@@ -26,7 +26,7 @@
     "support": "https://github.com/sansanyixyz331/shiyi",
     "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
   },
-  "release_notes": "0.3.1 — five screens (read, ask, plan, remember, done), each one a hand-written L0 card rendered through the reference host.",
+  "release_notes": "0.3.2 — five screens (read, ask, plan, remember, done), each one a hand-written L0 card rendered through the reference host. The kit now names the host's built-in CJK face through a token, so Chinese renders as text in the host instead of falling back to boxes; no font file ships inside the bundle. The screen captures were re-rendered from this bundle.",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

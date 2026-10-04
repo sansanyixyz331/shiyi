@@ -68,6 +68,15 @@ def make_run_bundle(screen):
 
     for name in ("manifest.json", "listing.json"):
         shutil.copy2(os.path.join(BUNDLE, name), os.path.join(b, name))
+    # The published manifest is signed; card-host verifies no publisher keys, so
+    # a signed manifest is refused even with --allow-unsigned. The scratch copy
+    # is re-stamped and run unsigned; clear the signature here only.
+    mp = os.path.join(b, "manifest.json")
+    m = json.load(open(mp, encoding="utf-8"))
+    m["integrity"]["signature"] = None
+    with open(mp, "w", encoding="utf-8") as f:
+        json.dump(m, f, ensure_ascii=False, indent=2, sort_keys=True)
+        f.write("\n")
     shutil.copytree(os.path.join(BUNDLE, "kit"), os.path.join(b, "kit"))
     if os.path.isdir(os.path.join(BUNDLE, "assets")):
         shutil.copytree(os.path.join(BUNDLE, "assets"), os.path.join(b, "assets"))

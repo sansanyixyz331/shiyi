@@ -130,7 +130,7 @@ shiyi/
 - **两条路都真实，且卡不依赖任何服务成功**：助手在 → 多渲染一行助手答案；
   助手不在 / 回合失败（例如宿主没配 provider）→ `when read.is_ok` guard 为假，**那条路径根本不求值** ⇒
   卡片照常显示、**不报错**（这条是实测出来的：见 [`ai/证据/`](ai/证据/) 的两张对照图）。
-- 官方门禁实测：`hub check` → **`shiyi 0.3.1 — PASSED`**（**发布者签名版，无告警**；未签名包在开发期需加 `--allow-unsigned`），`grants: capabilities {octos.session.open, octos.turn.start}`；
+- 官方门禁实测：`hub check` → **`shiyi 0.3.2 — PASSED`**（**发布者签名版，无告警**；未签名包在开发期需加 `--allow-unsigned`），`grants: capabilities {octos.session.open, octos.turn.start}`；
   官方参考宿主 `card-host` 也正常 admit + 渲染（**23 节点、0 诊断**）。
 - **在官方 `card-host` 里长什么样（重要，避免误判为缺陷）**：官方参考宿主**不提供任何 host service**，
   所以它渲染的是**本地规则行**（23 节点）——**这就是官方要求的"不依赖服务也完整可用"**，不是缺功能。
@@ -205,7 +205,7 @@ export APP_REPO=C:/gosim_agentic/05_app/shiyi
 # 1. 盖章（每次改完 bundle 都要重盖；改动会改变摘要）
 "$HUB_BIN" stamp "$APP_REPO/bundle"
 
-# 2. 门禁自检（v0.3.1 已签名；未签名包加 --allow-unsigned 的告警属开发期正常）
+# 2. 门禁自检（v0.3.2 已签名；未签名包加 --allow-unsigned 的告警属开发期正常）
 "$HUB_BIN" check "$APP_REPO/bundle" --allow-unsigned
 # 2b. 复检发布者签名（可选）
 # "$HUB_BIN" check "$APP_REPO/bundle" --publisher-key sansanyixyz331=<公钥>
@@ -299,16 +299,16 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 卡外动作 | ✅ 每屏 `service-actions.json`（**14 个控件 / 14 个事件**，与流程同源） |
 | 宿主运行 | ✅ `card-host` 逐屏跑通（五屏 `[SPLASH] … view=true`，零 lower 错误） |
 | 真实截图 | ✅ 五张 `515×1073`（实拍后裁掉宿主标题栏，入 bundle 与各屏目录） |
-| 门禁 | ✅ `hub check` **PASSED**（**v0.3.1 发布者签名版，无告警**） |
+| 门禁 | ✅ `hub check` **PASSED**（**v0.3.2 发布者签名版，无告警**） |
 | 审查包 | ✅ `build/review.json`（7 个审查问题，放 bundle 之外） |
 | 服务逻辑 | ✅ 五屏流程状态机（`src/shiyi_flow.py`）**已与官方参考宿主串成端到端** |
 | 端到端验证（A3） | ✅ `build/verify_flow.py`：五屏逐屏真渲染 + 每步真实点击命中控件 + 事件链推进 → `build/_evidence/` |
 | 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），日志与抓图留证 |
-| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 16 秒 / 1355 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
+| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒 / 1350 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
 | **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
 | **设备助手（AI，已进提交物）** | ✅ `bundle/` 声明 `octos.session.open`+`octos.turn.start` + `bindings.json` 接线；首屏卡多一行助手答案，助手不在时 guard 兜底、**不报错**。`hub check` **PASSED**；实证 [`ai/证据/`](ai/证据/) |
 | **扩展能力 · 宿主执行（备件）** | ✅ [`rinx/`](rinx/)：`matrix.send_message` **本机真跑通** —— 迷你应用经 Rinx 宿主把消息发进真实 Matrix 房间（实证在 `rinx/证据/`） |
-| 签名 / 提交 | ✅ **已签名**（`sansanyixyz331`；`hub sign-manifest` + 公钥复检 `PASSED`）· **已提交** App Hub issue **#76**（`Submit shiyi 0.3.1`） |
+| 签名 / 提交 | ✅ **已签名**（`sansanyixyz331`；`hub sign-manifest` + 公钥复检 `PASSED`）· **已提交** App Hub issue **#76**（`Submit shiyi 0.3.2`） |
 
 ## 7. 实测记录（2026-09-26 跑通的关键契约）
 
@@ -326,6 +326,11 @@ python build/record_demo.py --no-caption    # 不要字幕
    **`crate名:路径`**（冒号，不是斜杠）—— 写成斜杠会静默找不到字体、
    中文全部渲染成豆腐块。本宿主是 `font_set: International`，自带中文
    （霞鹜文楷）：`makepad_widgets:resources/LXGWWenKaiRegular.ttf`。
+   这条在 `v0.3.1` 上被踩过一次：为过门禁把字体换成**包内**子集，
+   门禁过了、运行时却读不到（`font_src` 走 `crate_resource(<font_src>)`，
+   只认编译进二进制的 crate 资源）⇒ 汉字全变方块。`v0.3.2` 的解法是把内置
+   字体写成 **token**、组件用 `{"$token": …}` 对象引用（门禁只把字符串当引用），
+   两条规则同时满足、**包里不带字体文件**。落点 `build/builtin_font.py`。
 
 另外三个已踩的坑：
 
@@ -398,7 +403,7 @@ layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
 | 作者 / 发布者 | **sansanyixyz331**（队伍 `三三Claw`） |
 | 支持 | <https://github.com/sansanyixyz331/shiyi/issues> |
 | 仓库 | <https://github.com/sansanyixyz331/shiyi> |
-| 版本 | `0.3.1`（tag `v0.3.1`） |
+| 版本 | `0.3.2`（tag `v0.3.2`；`v0.3.1` 为前一版冻结） |
 | 许可 | Apache-2.0 |
 
 ## License
