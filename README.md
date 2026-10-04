@@ -79,7 +79,8 @@ shiyi/
     tools.json           #   三个工具：intent.read / memo.read / memo.save
     manifest.ai.json     #   AI 版清单（capabilities: storage, model + agent 块）
     本地跑通_20261004.md  #   ★ 本地 AI 跑通实证与配方（Rinx → 本地 octos 内核 → DeepSeek）
-    证据/                 #   内核会话 / 内核日志 / Review 截图（已脱敏）
+    证据/                 #   内核会话 / 内核日志 / 验收截图 / **卡片显示回复**实拍（已脱敏）
+    templates/            #   ★ 显示 AI 回复的卡 + bindings + data 占位（可直接复用）
   rinx/                  # ★ 不进 bundle：宿主执行扩展 + 真机实证
     manifest.send.json   #   执行版清单（capabilities: matrix.send_message）
     bindings.json        #   能力接线：on_open 声明
@@ -119,6 +120,7 @@ shiyi/
 **已在本机打通**：`拾意 bundle → Rinx 宿主 → 本地 octos 助手内核（自公开源码编译）→ DeepSeek → 回复回写`，
 **连续 4 轮成功、4 次回复各不相同**（真模型输出）。
 - 实证与配方：[`ai/本地跑通_20261004.md`](ai/本地跑通_20261004.md)（原始证据 [`ai/证据/`](ai/证据/)）
+- **回复真的渲染进卡片**（实拍 3 张，每轮文字不同）；复用三件在 [`ai/templates/`](ai/templates/)
 - 契约侧：OctoSense Shell 走 **`model`**（app 只报档位 + JSON Schema，**宿主挑模型、校验回复、控预算，app 看不到 key**）；
   Rinx 走 **`octos.*`**（`octos.session.open` / `octos.turn.start` …）。
 - 设计上识别层做**两条路**：助手可用走模型，不可用退本地规则 —— **卡片形态不变，变的只是卡上那行
@@ -271,7 +273,7 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），日志与抓图留证 |
 | 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 16 秒 / 1355 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
 | **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
-| **扩展能力 · AI（设备助手）** | ✅ [`ai/`](ai/)：契约三件 + **本地真跑通**（Rinx 宿主 → 本地 octos 内核 → DeepSeek，4 轮回复各不相同；实证 [`ai/证据/`](ai/证据/)） |
+| **扩展能力 · AI（设备助手）** | ✅ [`ai/`](ai/)：契约三件 + **本地真跑通**（Rinx 宿主 → 本地 octos 内核 → DeepSeek，多轮回复各不相同，**且已渲染进卡片**；实证 [`ai/证据/`](ai/证据/)） |
 | **扩展能力 · 宿主执行（备件）** | ✅ [`rinx/`](rinx/)：`matrix.send_message` **本机真跑通** —— 迷你应用经 Rinx 宿主把消息发进真实 Matrix 房间（实证在 `rinx/证据/`） |
 | 签名 / 提交 | ⬜ 待做（需发布者密钥） |
 

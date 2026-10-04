@@ -1,0 +1,39 @@
+# ledger shiyi-ai-demo@0.2.4
+# level: L0
+# profile: ui/l0
+# model: shiyi-ai-demo
+#
+# 演示卡：把本机设备助手（octos 内核）实时返回的回复显示出来。
+# `reply` 是 bindings.on_open 里 octos.turn.start 的 target：
+# 宿主把服务结果写成 data[target] = {"is_ok":…,"data":…}；
+# 卡片用 state 声明根名，再按点号路径取到模型回复。
+theme light
+
+state reply { shape: text }
+
+copy eyebrow { class: vocabulary, en: "拾意 · 设备助手（本机）", zh: "拾意 · 设备助手（本机）" }
+copy heading { class: vocabulary, en: "设备助手已应答", zh: "设备助手已应答" }
+copy caption { class: vocabulary, en: "下面这段由本机助手内核实时返回：", zh: "下面这段由本机助手内核实时返回：" }
+
+component Page(instance: text) {
+  view Kit(component: "page", instance: instance) { slot }
+}
+component Eyebrow(instance: text, text: text) {
+  view Kit(component: "eyebrow", instance: instance, text: text)
+}
+component Heading(instance: text, text: text) {
+  view Kit(component: "heading", instance: instance, text: text)
+}
+component Line(instance: text, text: text) {
+  view Kit(component: "row", instance: instance, text: text)
+}
+component Note(instance: text, text: text) {
+  view Kit(component: "note", instance: instance, text: text)
+}
+
+view root Page(instance: "page") {
+  Eyebrow(instance: "eyebrow", text: copy.eyebrow)
+  Heading(instance: "heading", text: copy.heading)
+  Line(instance: "row_when", text: copy.caption)
+  Note(instance: "row_open", text: reply.data.text)
+}

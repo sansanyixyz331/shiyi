@@ -1,0 +1,15 @@
+{
+  "on_open": [
+    {
+      "service": "octos.session.open",
+      "target": "session"
+    },
+    {
+      "service": "octos.turn.start",
+      "target": "reply",
+      "args": {
+        "text": "你是拾意（Pickup）的设备助手，负责把聊天里的一句话整理成等用户确认的卡片。请用一句中文确认你已就位。"
+      }
+    }
+  ]
+}
