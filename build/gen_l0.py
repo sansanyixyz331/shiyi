@@ -554,10 +554,19 @@ def render_listing(app_id, version, n_screens):
 
 # ==================================================================== 生成 + 自评闭环
 
-def build_with_review(text, room, prefs, version, app_id, name, max_rounds=3):
-    """能力④ 落地：生成一版 -> 自评 -> 有问题就改 -> 直到干净或用尽轮次。"""
+def build_with_review(text, room, prefs, version, app_id, name, max_rounds=3, tighten=0):
+    """能力④ 落地：生成一版 -> 自评 -> 有问题就改 -> 直到干净或用尽轮次。
+
+    tighten>0：先按视觉/几何反馈收紧一版（更短的文案、更少的原文行）。
+    """
     card = build_card(text, room=room, prefs=prefs)
     p = plan(card)
+    if tighten:
+        p["open_line"] = clean(p["open_line"], max(16, len(p["open_line"]) - 14 * tighten))
+        qd = p.get("quote_disp", "")
+        rows = quote_rows(qd)
+        if rows > 1:
+            p["quote_disp"] = clean(qd, max(QUOTE_PER_LINE, (rows - tighten) * QUOTE_PER_LINE))
     review = {"rounds": [], "converged": False}
     review_note = "clean on first pass"
     for r in range(max_rounds):
@@ -615,8 +624,9 @@ def lint(bundle_dir):
     return r.returncode, (r.stdout or "") + (r.stderr or "")
 
 
-def generate_one(text, room, out_dir, app_id, name, version, prefs, memory_note):
-    card, p, P, review, review_note = build_with_review(text, room, prefs, version, app_id, name)
+def generate_one(text, room, out_dir, app_id, name, version, prefs, memory_note, tighten=0):
+    card, p, P, review, review_note = build_with_review(text, room, prefs, version, app_id, name,
+                                                       tighten=tighten)
     b = write_bundle(out_dir, card, p, P, review, review_note, memory_note, app_id, name, version)
     code, log = lint(b)
     n_issues = sum(len(x["issues"]) for x in review["rounds"])

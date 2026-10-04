@@ -25,6 +25,7 @@ BUILD = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BUILD)
 import gen_l0          # noqa: E402
 import shot_bundle     # noqa: E402
+import visual_review   # noqa: E402
 
 WSL = ["wsl.exe", "-d", "Ubuntu-24.04", "-e", "bash", "-lc"]
 LINUX_HUB = "$HOME/gosim_check/target/debug/hub"
@@ -52,10 +53,17 @@ def stage(src_dir, bundle_dir, report):
         return False
     shot_bundle.shot(bundle_dir)
     report["stages"]["render"] = "ok"
+    # 看渲染出来的那一帧 —— 视觉自评
+    vr = visual_review.review_bundle(bundle_dir)
+    kinds = [i["kind"] for i in vr["issues"]]
+    high = [i for i in vr["issues"] if i.get("severity") == "high"]
+    report["stages"]["visual"] = "FAIL" if high else ("warn" if kinds else "ok")
+    report["visual"] = {"issues": kinds, "blocks": vr["debug"].get("n_blocks"),
+                        "coverage": vr["debug"].get("coverage")}
     passed, out = linux_stamp_check(bundle_dir)
     report["stages"]["hub_check"] = "PASSED" if passed else "REFUSED"
     report["hub_check_output"] = out
-    return passed
+    return passed and not high
 
 
 def main():
@@ -94,17 +102,20 @@ def main():
     report = {"memory": memory_note, "cards": []}
     all_ok = True
     for text, room, out_dir in jobs:
-        code, review = gen_l0.generate_one(text, room, out_dir, args.id, args.name,
-                                           args.version, prefs, memory_note)
-        b = os.path.join(out_dir, "bundle")
-        rec = {"text": text, "bundle": b.replace("\\", "/"),
-               "review_converged": review["converged"],
-               "issues_fixed": sum(len(x["issues"]) for x in review["rounds"]),
-               "stages": {"gen": "ok" if code == 0 else "FAIL"}}
-        if args.no_render:
-            ok = code == 0
-        else:
-            ok = stage(out_dir, b, rec)
+        rec = None
+        ok = False
+        for attempt in range(2):        # 视觉不通过 -> 收紧重来一次
+            code, review = gen_l0.generate_one(text, room, out_dir, args.id, args.name,
+                                               args.version, prefs, memory_note, tighten=attempt)
+            b = os.path.join(out_dir, "bundle")
+            rec = {"text": text, "bundle": b.replace("\\", "/"),
+                   "attempt": attempt + 1,
+                   "review_converged": review["converged"],
+                   "issues_fixed": sum(len(x["issues"]) for x in review["rounds"]),
+                   "stages": {"gen": "ok" if code == 0 else "FAIL"}}
+            ok = (code == 0) if args.no_render else stage(out_dir, b, rec)
+            if ok:
+                break
         all_ok = all_ok and ok
         report["cards"].append(rec)
 
@@ -116,8 +127,9 @@ def main():
     print("\n===== pipeline 汇总 =====")
     for c in report["cards"]:
         st = c["stages"]
-        print("  %-26s gen:%s render:%s hub:%s" %
-              (c["text"][:24], st.get("gen"), st.get("render", "-"), st.get("hub_check", "-")))
+        print("  %-24s gen:%s lint:%s render:%s visual:%s hub:%s" %
+              (c["text"][:22], st.get("gen"), st.get("lint"), st.get("render"),
+               st.get("visual"), st.get("hub_check", "-")))
     print("  记忆: %s" % report["memory"])
     print("  报告: %s" % rp)
     return 0 if all_ok else 1
