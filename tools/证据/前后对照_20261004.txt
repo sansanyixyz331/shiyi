@@ -1,0 +1,36 @@
+# l0-bindings-lint · 前后对照（本机实测 2026-10-04）
+
+## ① 出货 bundle（好卡）—— 应 0 error / exit 0
+```
+  ok   on_open[0]: service 'octos.session.open' granted
+  ok   on_open[1]: service 'octos.turn.start' granted
+  ok   page.card: 'read' is seeded and guarded
+  warn on_open[0]: target 'session' is neither referenced by page.card nor seeded — harmless today (an unread name is never resolved), but seed it so that a later reference cannot fail the whole card.
+  warn on_open[1]: target 'read' is seeded as is_ok:false — fine while every read of it is guarded, else the card shows nothing for it
+
+l0-bindings-lint: 3 ok, 2 warn, 0 error
+exit=0
+```
+
+## ② 坏卡 A：从 page.data.json 删掉 read 预置 —— 应报 read 未预置
+```
+  ok   on_open[0]: service 'octos.session.open' granted
+  ok   on_open[1]: service 'octos.turn.start' granted
+  warn on_open[0]: target 'session' is neither referenced by page.card nor seeded — harmless today (an unread name is never resolved), but seed it so that a later reference cannot fail the whole card.
+  ERR  page.card references 'read' but page.data.json has no such key — the first frame lowers before any reply, and a path into an absent name fails the WHOLE card ('unresolved or unsupported kit property'). Seed 'read' in page.data.json.
+
+l0-bindings-lint: 2 ok, 1 warn, 1 error
+exit=1
+```
+
+## ③ 坏卡 B：去掉 when read.is_ok guard —— 应报未 guard
+```
+  ok   on_open[0]: service 'octos.session.open' granted
+  ok   on_open[1]: service 'octos.turn.start' granted
+  warn on_open[0]: target 'session' is neither referenced by page.card nor seeded — harmless today (an unread name is never resolved), but seed it so that a later reference cannot fail the whole card.
+  warn on_open[1]: target 'read' is seeded as is_ok:false — fine while every read of it is guarded, else the card shows nothing for it
+  ERR  page.card reads 'read' (a binding target) with no `when read.is_ok { … }` guard — a failed turn writes {is_ok:false,error:…} (no `data`) and the whole card fails to lower instead of just that line.
+
+l0-bindings-lint: 2 ok, 2 warn, 1 error
+exit=1
+```
