@@ -36,7 +36,7 @@
 | 线 | 接官方能力 | 备件 | 实证 |
 |---|---|---|---|
 | **宿主执行（确认后真发出消息）** | `matrix.send_message` | `rinx/`（`manifest.send.json` + `bindings.json`） | ✅ **本机跑通**：[`rinx/证据/演示视频_Rinx执行链_拾意.mp4`](rinx/证据/演示视频_Rinx执行链_拾意.mp4) + 房间消息 JSON |
-| **接入设备助手（AI）** | `model` / `agent` | `ai/`（`AGENT.md` / `tools.json` / `manifest.ai.json`） | 契约对齐官方 App Hub `main` 的 `KNOWN_CAPABILITIES`；本机 Shell 未就绪，故暂不合入 |
+| **接入设备助手（AI）** | `octos.*`（Rinx）/ `model`·`agent`（Shell） | `ai/`（契约三件 + 本地跑通实证） | ✅ **本地真跑通**：Rinx → 本地 octos 内核 → DeepSeek，**4 轮回复各不相同**（[`ai/本地跑通_20261004.md`](ai/本地跑通_20261004.md)） |
 
 > 为什么不直接写进 `bundle/`：现行多数 Shell 只认 7 项能力、**拒收未知字段** ⇒ 硬塞会导致
 > "作品在评审宿主里打不开"。**保命版提交物 + 独立备件**是刻意的风险控制。

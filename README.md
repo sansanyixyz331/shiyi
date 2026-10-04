@@ -78,6 +78,8 @@ shiyi/
     AGENT.md             #   应用自己的 Agent 契约（角色 / 输入 / 验收 / 记忆 / 降级）
     tools.json           #   三个工具：intent.read / memo.read / memo.save
     manifest.ai.json     #   AI 版清单（capabilities: storage, model + agent 块）
+    本地跑通_20261004.md  #   ★ 本地 AI 跑通实证与配方（Rinx → 本地 octos 内核 → DeepSeek）
+    证据/                 #   内核会话 / 内核日志 / Review 截图（已脱敏）
   rinx/                  # ★ 不进 bundle：宿主执行扩展 + 真机实证
     manifest.send.json   #   执行版清单（capabilities: matrix.send_message）
     bindings.json        #   能力接线：on_open 声明
@@ -110,14 +112,17 @@ shiyi/
 
 | 线 | 接到哪（官方能力） | 状态 | 备件 |
 |---|---|---|---|
-| **设备助手（AI）** | `model` / `agent` 契约 | 契约已备好（本机 Shell 未就绪，故暂不合入） | [`ai/`](ai/) |
+| **设备助手（AI）** | `octos.*`（Rinx）/ `model`·`agent`（Shell 契约） | ✅ **本地真跑通**（4 轮，回复各不相同） | [`ai/`](ai/) |
 | **宿主执行** | `matrix.send_message` | ✅ **本机真跑通**（消息进真实 Matrix 房间） | [`rinx/`](rinx/) |
 
 **① AI 线 —— 接"设备助手"**
-官方 App Hub `main` 的 `KNOWN_CAPABILITIES` 已含 **`model`**：app 只报**模型档位 + JSON Schema**，
-**宿主挑模型、校验回复、控预算，app 永远看不到 key**。识别层据此做**两条路**：
-助手可用走 `model.complete`，不可用退本地规则 —— **卡片形态不变，变的只是卡上那行
-「识别来源：设备助手 / 本地规则」（如实标注，不假装）**。契约三件见 [`ai/README.md`](ai/README.md)。
+**已在本机打通**：`拾意 bundle → Rinx 宿主 → 本地 octos 助手内核（自公开源码编译）→ DeepSeek → 回复回写`，
+**连续 4 轮成功、4 次回复各不相同**（真模型输出）。
+- 实证与配方：[`ai/本地跑通_20261004.md`](ai/本地跑通_20261004.md)（原始证据 [`ai/证据/`](ai/证据/)）
+- 契约侧：OctoSense Shell 走 **`model`**（app 只报档位 + JSON Schema，**宿主挑模型、校验回复、控预算，app 看不到 key**）；
+  Rinx 走 **`octos.*`**（`octos.session.open` / `octos.turn.start` …）。
+- 设计上识别层做**两条路**：助手可用走模型，不可用退本地规则 —— **卡片形态不变，变的只是卡上那行
+  「识别来源：设备助手 / 本地规则」（如实标注，不假装）**。契约三件见 [`ai/README.md`](ai/README.md)。
 
 **② 执行线 —— 让确认"真的发生"**
 官方契约认 **`matrix.send_message`**。这一条**已在本机跑通**：第三方（本地未签名）迷你应用
@@ -266,7 +271,7 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），日志与抓图留证 |
 | 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 16 秒 / 1355 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
 | **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
-| **扩展能力 · AI 契约（备件）** | ✅ [`ai/`](ai/)：`AGENT.md` / `tools.json` / `manifest.ai.json` 对齐官方 `model` / `agent` 契约（保命版 `bundle/` 不含未知字段） |
+| **扩展能力 · AI（设备助手）** | ✅ [`ai/`](ai/)：契约三件 + **本地真跑通**（Rinx 宿主 → 本地 octos 内核 → DeepSeek，4 轮回复各不相同；实证 [`ai/证据/`](ai/证据/)） |
 | **扩展能力 · 宿主执行（备件）** | ✅ [`rinx/`](rinx/)：`matrix.send_message` **本机真跑通** —— 迷你应用经 Rinx 宿主把消息发进真实 Matrix 房间（实证在 `rinx/证据/`） |
 | 签名 / 提交 | ⬜ 待做（需发布者密钥） |
 
