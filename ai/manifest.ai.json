@@ -1,0 +1,28 @@
+{
+  "agent": {
+    "background": false,
+    "instructions": "AGENT.md",
+    "max_iterations": 6,
+    "model": {
+      "needs": [
+        "structured_output",
+        "multilingual"
+      ],
+      "tier": "standard"
+    },
+    "profile": "read-only",
+    "token_budget": 60000,
+    "tools": []
+  },
+  "capabilities": [
+    "storage",
+    "model"
+  ],
+  "id": "shiyi",
+  "integrity": {
+    "bundle_blake3": "846f6aee1c0d15835e33860ed90f205a8bc50b0590c6f7497829f7a06ff1f20b"
+  },
+  "name": "拾意 Pickup",
+  "schema": 1,
+  "version": "0.3.0"
+}

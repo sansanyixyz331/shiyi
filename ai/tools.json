@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "tools": [
+    {
+      "name": "shiyi.intent.read",
+      "description": "Read one chat message and return the arrangement it holds: when, where and what kind, each with where it came from. Recognises and organises only; invents nothing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "maxLength": 2000 },
+          "room": { "type": "string", "maxLength": 64 },
+          "at": { "type": "string", "maxLength": 40 }
+        },
+        "required": ["text"],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "when": { "type": "string", "maxLength": 40 },
+          "where": { "type": "string", "maxLength": 40 },
+          "kind": { "type": "string", "maxLength": 20 },
+          "open": { "type": "array", "maxItems": 4, "items": { "type": "string", "maxLength": 20 } },
+          "source": { "type": "string", "enum": ["rules", "assistant"] }
+        },
+        "required": ["kind", "source"],
+        "additionalProperties": false
+      },
+      "risk": "read",
+      "background": false,
+      "implemented_by": "app"
+    },
+    {
+      "name": "shiyi.memo.read",
+      "description": "Read the long-term preferences this app remembers, and the places it has learned.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "places": { "type": "array", "maxItems": 64, "items": { "type": "string", "maxLength": 40 } },
+          "prefs": { "type": "array", "maxItems": 16, "items": { "type": "string", "maxLength": 40 } }
+        },
+        "required": ["places"],
+        "additionalProperties": false
+      },
+      "risk": "read",
+      "background": false,
+      "implemented_by": "app"
+    },
+    {
+      "name": "shiyi.memo.save",
+      "description": "Save one long-term rule the person just confirmed. Runs only after the person taps Keep; never inferred.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "place": { "type": "string", "maxLength": 40 },
+          "depart": { "type": "string", "maxLength": 20 },
+          "from": { "type": "string", "maxLength": 20 },
+          "message": { "type": "string", "maxLength": 600 },
+          "room": { "type": "string", "maxLength": 64 }
+        },
+        "required": ["place"],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "saved": { "type": "boolean" },
+          "path": { "type": "string", "maxLength": 200 },
+          "replaced_previous": { "type": "boolean" }
+        },
+        "required": ["saved"],
+        "additionalProperties": false
+      },
+      "risk": "act",
+      "background": false,
+      "implemented_by": "app"
+    }
+  ]
+}
