@@ -26,6 +26,7 @@ sys.path.insert(0, BUILD)
 import gen_l0          # noqa: E402
 import shot_bundle     # noqa: E402
 import visual_review   # noqa: E402
+import builtin_font    # noqa: E402
 
 WSL = ["wsl.exe", "-d", "Ubuntu-24.04", "-e", "bash", "-lc"]
 LINUX_HUB = "$HOME/gosim_check/target/debug/hub"
@@ -53,13 +54,12 @@ def stage(src_dir, bundle_dir, report):
         return False
     shot_bundle.shot(bundle_dir)
     report["stages"]["render"] = "ok"
-    # 字形硬验证：卡片里每个字都必须在自带字体里（缺字=乱码，不能靠肉眼）
-    fc = subprocess.run([sys.executable, os.path.join(BUILD, "font_check.py"), bundle_dir],
-                        capture_output=True, text=True, encoding="utf-8", errors="replace")
-    font_ok = fc.returncode == 0
+    # 字体闸门：确认 kit 用的是「内置中文字体 + token 引用」形式
+    # （包内字体文件宿主读不到会变方块；token 形式既过门禁又能显示中文）
+    font_ok, fmsg = builtin_font.verify(bundle_dir)
     report["stages"]["font"] = "ok" if font_ok else "FAIL"
     if not font_ok:
-        report["font_missing"] = (fc.stdout or "").strip().splitlines()[-12:]
+        report["font_problem"] = fmsg
     # 看渲染出来的那一帧 —— 视觉自评
     vr = visual_review.review_bundle(bundle_dir)
     kinds = [i["kind"] for i in vr["issues"]]

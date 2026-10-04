@@ -50,9 +50,13 @@ try:
 except Exception:                             # pragma: no cover
     MemoryStore = None
 try:
-    import make_font                          # noqa: E402  字体跟着内容走
+    import make_font                          # noqa: E402  备用：自带字体子集
 except Exception:                             # pragma: no cover
     make_font = None
+try:
+    import builtin_font                       # noqa: E402  内置中文字体（token 形式）
+except Exception:                             # pragma: no cover
+    builtin_font = None
 
 WD = ["一", "二", "三", "四", "五", "六", "日"]
 TYPE_ZH = {
@@ -621,10 +625,11 @@ def write_bundle(out_dir, card, p, P, review, review_note, memory_note, app_id, 
         json.dump(review, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
 
-    # 字体必须跟着这份卡的文字走（旧的固定子集会缺字 -> 乱码）
-    if make_font:
+    # 字体用宿主内置中文字体，写成 token 引用 —— 既过门禁、又能在宿主里显示中文。
+    # （包内字体文件宿主读不到；原因与做法见 builtin_font.py 顶部说明。）
+    if builtin_font:
         try:
-            make_font.build(b, [b])
+            builtin_font.apply(b)
         except Exception:  # noqa: BLE001
             pass
     return b

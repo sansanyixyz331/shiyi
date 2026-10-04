@@ -32,7 +32,8 @@ import sys
 BUILD = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BUILD)
 import gen_l0      # noqa: E402
-import make_font   # noqa: E402
+import make_font   # noqa: E402  备用：自带字体子集
+import builtin_font  # noqa: E402  内置中文字体（token 形式）
 
 clean = gen_l0.clean
 fmt_when = gen_l0.fmt_when
@@ -404,8 +405,8 @@ def gen_all(text, room, prefs, places, version, out_dir):
     for src, nm in ((gen_l0.SHARED_KIT, "kit"), (gen_l0.SHARED_ASSETS, "assets")):
         if os.path.isdir(src):
             shutil.copytree(src, os.path.join(b, nm), dirs_exist_ok=True)
-    # 字体必须跟着内容走：按这批卡真正用到的字符重做子集（否则缺字=乱码）
-    okf, msgf = make_font.build(b, [cards_dir])
+    # 字体用宿主内置中文字体（token 引用），既过门禁又能在宿主里显示中文
+    okf, msgf = builtin_font.apply(b)
     print("   font :", msgf)
     return specs
 
@@ -433,7 +434,7 @@ def probe_all(out_dir, version, tag=""):
                 fh.write("\n")
         for fn in ("page.card", "page.data.json"):
             shutil.copy2(os.path.join(src, fn), os.path.join(b, fn))
-        make_font.build(b, [src])          # 每屏字体也要跟着这屏的文字走
+        builtin_font.apply(b)              # 每屏也用内置中文字体（token 形式）
         try:
             shot_bundle.shot(b)
             vr = visual_review.review_bundle(b)

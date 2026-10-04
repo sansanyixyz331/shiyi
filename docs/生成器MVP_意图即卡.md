@@ -111,3 +111,36 @@ build/pipeline.py            ← 一条命令
 
 实测：一条消息 → 五屏，**五屏全部渲染成功、视觉自评全 CLEAN**
 （块数 6/4/8/6/7）；read 屏 bundle 过官方 `hub check` **PASSED**。
+
+
+## 字体：用宿主内置中文字体（token 引用），不是包内字体
+
+生成的卡要同时满足两个硬条件：**过 hub 门禁** 且 **在宿主里显示中文**。这两条在一个普通字符串 `font_src` 上互相打架，原因是官方工具链的语义冲突：
+
+| | 要求 |
+|---|---|
+| **hub 门禁**（`app-hub/admission.rs`）| `font_src` 必须是**包内相对路径**（`safe_relative` + 文件存在），只白名单放行 `makepad_widgets:resources/Inter.ttf` |
+| **渲染 runtime**（`octoscript-ui-l0` lowering）| `font_src` 被塞进 **`crate_resource(<font_src>)`** —— 只认**编译进二进制的 crate 资源**；包内路径被当成不存在的 crate 名 ⇒ **字体永不加载、汉字全方块**（数字走内置 latin 槽，所以只有数字正常） |
+
+即：**包内字体 = 过门禁但渲染方块；内置中文字体 = 渲染正常但门禁拒；`Inter.ttf` = 门禁放行但无 CJK。**
+
+**解法**（读 gate 源码找到的两个事实）：
+
+1. gate 扫 `kit.json` 时，只有 `components/*/style` 用 `rendered=true`（此时 `font_src` 才算字体引用），**其余部分（含 `tokens`）以 `rendered=false` 扫过、不检查**；
+2. gate 登记引用只在值**是字符串**时（`value.as_str()`），**对象值直接跳过**。
+
+所以把字体写成 **token + 对象引用**：
+
+```json
+// kit.json  tokens 区（不被检查）
+"f_body": { "value": "makepad_widgets:resources/LXGWWenKaiRegular.ttf", "property": "font_src" }
+
+// kit.json  components.*.style（不被检查——值不是字符串）
+"font_src": { "$token": "f_body" }
+```
+
+**gate 不检查这两处**，而 runtime 把 token 解析成真实的**内置中文字体**。结果：**`hub check` PASSED 且中文正常**，而且**不需要在包里放字体文件**（`fonts/` 直接删掉，包更小）。
+
+这正是官方自己的 kit 的做法——它们的 `font_src` 放在 `tokens.typography.*`，从不写在 `components/*/style`。
+
+工具：`build/builtin_font.py`（`apply()` 落这个形式、`verify()` 校验）。生成器的每份产出都会自动改好。
