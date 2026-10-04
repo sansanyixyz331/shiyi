@@ -1,0 +1,11 @@
+{
+  "on_open": [
+    {
+      "service": "matrix.send_message",
+      "target": "sent",
+      "args": {
+        "body": "【拾意 Pickup】下周三去深圳 — 已确认，日程已记下。（经 Rinx 迷你应用发出）"
+      }
+    }
+  ]
+}

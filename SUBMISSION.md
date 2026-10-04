@@ -28,6 +28,21 @@
 
 ---
 
+## 🔬 深度扩展（独立备件 · 不进提交包）
+
+除"出卡"外，另备两条**已核实 / 已跑通**的深度线。两条都是**独立备件，不改变提交物 `bundle/`**
+（`capabilities = []`，任何 Shell 都能开；备件随宿主就绪再合入）：
+
+| 线 | 接官方能力 | 备件 | 实证 |
+|---|---|---|---|
+| **宿主执行（确认后真发出消息）** | `matrix.send_message` | `rinx/`（`manifest.send.json` + `bindings.json`） | ✅ **本机跑通**：[`rinx/证据/演示视频_Rinx执行链_拾意.mp4`](rinx/证据/演示视频_Rinx执行链_拾意.mp4) + 房间消息 JSON |
+| **接入设备助手（AI）** | `model` / `agent` | `ai/`（`AGENT.md` / `tools.json` / `manifest.ai.json`） | 契约对齐官方 App Hub `main` 的 `KNOWN_CAPABILITIES`；本机 Shell 未就绪，故暂不合入 |
+
+> 为什么不直接写进 `bundle/`：现行多数 Shell 只认 7 项能力、**拒收未知字段** ⇒ 硬塞会导致
+> "作品在评审宿主里打不开"。**保命版提交物 + 独立备件**是刻意的风险控制。
+
+---
+
 | 作品标识 | 值 |
 |---|---|
 | app id | `shiyi` |

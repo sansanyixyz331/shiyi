@@ -15,6 +15,7 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
 | **怎么跑（零依赖）** | 解压 `拾意_便携演示包_完整版_20260930.zip` → 双击 **`一键运行.cmd`** → 五个窗口依次弹出、结束打印 `Exit code = 0`（自带宿主与运行库，**不用装任何东西**）；官方参考宿主跑法见 **§5** |
 | **形态 / 场景** | Hub 卡片包 · 官方 12 场景之「**即时消息**」（宿主 **Rinx**，即早期 `robrix2`） |
 | **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅ · 2 分 15 秒演示 ✅ |
+| **扩展能力** | 除"出卡"外另备两条**已核实/已跑通**的深度线：接**设备助手（AI）**、在宿主里**真执行**（消息真发进聊天）→ 见 **§4c**，备件在 [`ai/`](ai/) 与 [`rinx/`](rinx/) |
 | **一页速览** | [`评审速览.md`](评审速览.md) —— 3 分钟看懂这个作品；材料逐项对照见 [`SUBMISSION.md`](SUBMISSION.md) |
 
 ---
@@ -73,6 +74,14 @@ shiyi/
   docs/
     作品设计_拾意.md      # 选题 / 流程 / 数据来源 / no-facts 声明
     小程序机制笔记.md      # Hub app / Card bundle / Image-to-AppCard 机制
+  ai/                    # ★ 不进 bundle：接设备助手（AI）的契约备件
+    AGENT.md             #   应用自己的 Agent 契约（角色 / 输入 / 验收 / 记忆 / 降级）
+    tools.json           #   三个工具：intent.read / memo.read / memo.save
+    manifest.ai.json     #   AI 版清单（capabilities: storage, model + agent 块）
+  rinx/                  # ★ 不进 bundle：宿主执行扩展 + 真机实证
+    manifest.send.json   #   执行版清单（capabilities: matrix.send_message）
+    bindings.json        #   能力接线：on_open 声明
+    证据/                 #   真机实证（Review / Run 截图 + 房间消息 JSON）
   build/                 # ★ 不进 bundle
     render_cards.py      # 逐屏渲染：组临时 bundle → 盖章 → 起宿主 → 抓图 → 裁图
     sync_bundle.py       # 首屏 + 五张截图 → bundle（单一真源，防止两份不一致）
@@ -93,6 +102,42 @@ shiyi/
 | 3 方案 | `cards/shiyi-03-plan` | 把老规矩摆出来，再给一版被它筛过的候选 → 选 |
 | 4 记忆 | `cards/shiyi-04-memo` | 旧规矩 vs 这次要加的，都可读可改 → 记 / 不记 |
 | 5 完成 | `cards/shiyi-05-done` | 回执三行：**一件真做了、两件明说没动**（不摆"已完成"的样子），无积分无徽章 → 看行程 / 重开 |
+
+## 4c. 扩展能力：设备助手（AI）与宿主执行
+
+`bundle/` 停在"出卡"（`capabilities = []`，**任何 Shell 都能开**）。**深度以两支独立备件证明** ——
+它们不是提交物，但都已**对着官方契约核实、并在本机实跑**：
+
+| 线 | 接到哪（官方能力） | 状态 | 备件 |
+|---|---|---|---|
+| **设备助手（AI）** | `model` / `agent` 契约 | 契约已备好（本机 Shell 未就绪，故暂不合入） | [`ai/`](ai/) |
+| **宿主执行** | `matrix.send_message` | ✅ **本机真跑通**（消息进真实 Matrix 房间） | [`rinx/`](rinx/) |
+
+**① AI 线 —— 接"设备助手"**
+官方 App Hub `main` 的 `KNOWN_CAPABILITIES` 已含 **`model`**：app 只报**模型档位 + JSON Schema**，
+**宿主挑模型、校验回复、控预算，app 永远看不到 key**。识别层据此做**两条路**：
+助手可用走 `model.complete`，不可用退本地规则 —— **卡片形态不变，变的只是卡上那行
+「识别来源：设备助手 / 本地规则」（如实标注，不假装）**。契约三件见 [`ai/README.md`](ai/README.md)。
+
+**② 执行线 —— 让确认"真的发生"**
+官方契约认 **`matrix.send_message`**。这一条**已在本机跑通**：第三方（本地未签名）迷你应用
+经 **Rinx** 宿主，把消息**真的发进 Matrix 房间** —— Review 界面明写
+`Services: matrix.send_message` 与 `Allowed room`；房间消息 **API 可查**（见 [`rinx/证据/`](rinx/证据/)）：
+
+- **全流程实录**：[`rinx/证据/演示视频_Rinx执行链_拾意.mp4`](rinx/证据/演示视频_Rinx执行链_拾意.mp4)（43 秒，带字幕：导入 → 填房间 → Review → Run → 消息进聊天）
+
+```json
+{ "content": { "body": "【拾意 Pickup】下周三去深圳 — 已确认，日程已记下。",
+               "msgtype": "m.text" },
+  "sender": "@sansanyi331:matrix.rinx.chat",
+  "room_id": "!6OTFycyqxSkwYHJuBr:matrix.rinx.chat",
+  "type": "m.room.message" }
+```
+
+> **为什么不直接写进 `bundle/`**：现行多数 Shell 只认 7 项能力、**拒收未知字段**。
+> 硬塞进去的风险是 **"作品在评审用的宿主里打不开"** ⇒ **保命版 `bundle/` 保持不变，
+> 能力放独立备件，随宿主就绪再合入。**（与官方 AI 文档口径一致：「想现在就在 OctoSense 中
+> 打开的应用包，请不要使用它们。」）
 
 ## 5. 怎么跑（官方参考宿主）
 
@@ -221,6 +266,8 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），日志与抓图留证 |
 | 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 16 秒 / 1355 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
 | **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
+| **扩展能力 · AI 契约（备件）** | ✅ [`ai/`](ai/)：`AGENT.md` / `tools.json` / `manifest.ai.json` 对齐官方 `model` / `agent` 契约（保命版 `bundle/` 不含未知字段） |
+| **扩展能力 · 宿主执行（备件）** | ✅ [`rinx/`](rinx/)：`matrix.send_message` **本机真跑通** —— 迷你应用经 Rinx 宿主把消息发进真实 Matrix 房间（实证在 `rinx/证据/`） |
 | 签名 / 提交 | ⬜ 待做（需发布者密钥） |
 
 ## 7. 实测记录（2026-09-26 跑通的关键契约）

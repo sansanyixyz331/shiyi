@@ -1,0 +1,12 @@
+{
+  "capabilities": [
+    "matrix.send_message"
+  ],
+  "id": "shiyi",
+  "integrity": {
+    "bundle_blake3": "3235e8f36978facda63eddc818741875051e016b29508ec5727a287e518d7110"
+  },
+  "name": "拾意 Pickup",
+  "schema": 1,
+  "version": "0.2.2"
+}
