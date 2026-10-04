@@ -28,6 +28,13 @@ theme light
 
 state act_enabled { shape: bool, initial: true }
 
+# What the device assistant (the host's local octos kernel) says is still
+# missing. `read` is the target of `octos.turn.start` in bindings.json: the
+# host writes each service result as data[target] = {"is_ok": …, "data": …}.
+# Seeded in page.data.json as "not answered yet", so the guard below is false
+# until a real reply lands — the card never depends on a call succeeding.
+state read { shape: text }
+
 # ── copy ─────────────────────────────────────────────────────────────────────
 copy eyebrow   { class: vocabulary, en: "拾意 · 第一步 · 识别", zh: "拾意 · 第一步 · 识别" }
 copy heading   { class: vocabulary, en: "从你发过的话里，读出了一个安排", zh: "从你发过的话里，读出了一个安排" }
@@ -40,14 +47,18 @@ copy f_where   { class: vocabulary, en: "地点 · 广东深圳 · 出自原文"
 copy f_kind    { class: vocabulary, en: "类型 · 出行安排 · 识别所得", zh: "类型 · 出行安排 · 识别所得" }
 copy f_open    { class: vocabulary, en: "还没定：坐哪班、几点。这一步我不猜。", zh: "还没定：坐哪班、几点。这一步我不猜。" }
 
+# Both sources are stated, never merged: time/place/type are read by the app's
+# local rules, while "what is still missing" is supplied by the device
+# assistant when one is available — and stays the local rule's line when it is
+# not. Which one ran is printed, not implied.
 copy memo_lbl  { class: vocabulary, en: "从本机记忆里读到：你坐高铁，不坐飞机。", zh: "从本机记忆里读到：你坐高铁，不坐飞机。" }
 copy memo_eff  { class: vocabulary, en: "所以往下只会给你高铁方案。", zh: "所以往下只会给你高铁方案。" }
 
-# Where this reading came from. This screen was read by the app's local rules,
-# because no OctoSense shell answers the `model` service yet; when the device's
-# assistant is available the same screen is read by it instead. Which one ran is
-# part of the record, so it is printed, not implied.
-copy f_src     { class: vocabulary, en: "识别来源 · 本地规则（设备助手可用时改由它做）", zh: "识别来源 · 本地规则（设备助手可用时改由它做）" }
+# Where this reading came from. The time/place/type above were read by the app's
+# local rules; the "what's still missing" line below is supplemented by the
+# device assistant when one is available, and falls back to the local rule when
+# it is not. Which one ran is part of the record, so it is printed, not implied.
+copy f_src     { class: vocabulary, en: "识别来源 · 本地规则（设备助手可用时另加一行）", zh: "识别来源 · 本地规则（设备助手可用时另加一行）" }
 
 copy act_yes   { class: vocabulary, en: "对，就是这件事", zh: "对，就是这件事" }
 copy act_fix   { class: vocabulary, en: "不对，改一下", zh: "不对，改一下" }
@@ -118,7 +129,14 @@ view root Page(instance: "page") {
   Line(instance: "row_when",  text: copy.f_when)
   Line(instance: "row_where", text: copy.f_where)
   Line(instance: "row_kind",  text: copy.f_kind)
+  # The local rule's answer: always rendered. The card depends on no service
+  # succeeding, so a host with no assistant shows this screen unchanged.
   Note(instance: "row_open",  text: copy.f_open)
+
+  # The device assistant's answer, rendered only when it actually replied
+  # (read.is_ok). On a failed or unconfigured turn this guard is false and the
+  # path is never evaluated, so a dead assistant cannot break the card.
+  when read.is_ok { Note(instance: "row_ai", text: read.data.text) }
 
   # The reading's source line: the record of who did this step, printed.
   Note(instance: "row_src",   text: copy.f_src)

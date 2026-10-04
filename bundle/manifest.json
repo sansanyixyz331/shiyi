@@ -1,10 +1,13 @@
 {
-  "capabilities": [],
+  "capabilities": [
+    "octos.session.open",
+    "octos.turn.start"
+  ],
   "id": "shiyi",
   "integrity": {
-    "bundle_blake3": "94f6610781790c6e7f0b7a28f193598d1289354ec955957dfa9596da069624b5"
+    "bundle_blake3": "b8f0a805384d39a8b7f2931ec3df1f6e7f108e76448077443295692de533561d"
   },
   "name": "拾意 Pickup",
   "schema": 1,
-  "version": "0.2.2"
+  "version": "0.3.0"
 }

@@ -1,0 +1,12 @@
+{
+  "on_open": [
+    { "service": "octos.session.open", "target": "session" },
+    {
+      "service": "octos.turn.start",
+      "target": "read",
+      "args": {
+        "text": "你是拾意（Pickup）的设备助手。用户发来一句话：「下周三我得去趟深圳」。要把它排成一次行程，还缺哪两样信息？只回一行，不超过 28 个字，直接给答案，不要解释，不要使用任何工具。"
+      }
+    }
+  ]
+}
