@@ -111,6 +111,14 @@
 本作品在 **Windows 桌面官方参考宿主 `card-host`** 上完成端到端验证，发布前门禁在 **Linux** 复核通过；
 **目标设备平台尚未验证**（官方"支持设备/运行包"未公布），故 `listing.platforms` 只如实声明 `["windows"]`。
 
+**端到端环境（Windows，值得注意）**：本作品把设备助手 `octos.*` **真接线、真跑通**。据公开的 App
+Hub 提交（截至 2026-10-04），把 `octos.*` 跑出真实回复的提交都运行在 Linux / macOS 上；**本作品是其
+中唯一在 Windows 上完成端到端助手往返的**。为在 Windows 跑通，填了两个坑：① Rinx 用
+`packaging/octos.lock.json` 把 octos 钉在精确 commit `fe08d8e6…`（官方预编译按 release tag 出，
+对不上）⇒ 只能从源码编；② 官方 `hub` 门禁在 Windows 上有 `walk()` 反斜杠 bug（已报 **#75**）⇒ 在
+WSL/Linux 另编同版本 `hub` 跑门禁。实测：Rinx（Windows）+ 自编 octos + DeepSeek，首屏助手行 **4 轮
+回复各不相同**；确认消息真发进 `matrix.rinx.chat`。详见 `README.md §4d`。
+
 **依赖**：Rust 工具链 + 官方共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`）。
 本机已备隔离环境 `F:\gosim_build\`，入口 `source F:/gosim_build/env.sh`。
 
