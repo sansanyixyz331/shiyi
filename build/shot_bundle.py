@@ -87,7 +87,7 @@ def fetch(port, path, out=None, timeout=30):
     return data
 
 
-def shot(bundle):
+def shot(bundle, static=None):
     log("── %s ──" % bundle)
     stamp(bundle)
 
@@ -95,10 +95,11 @@ def shot(bundle):
     logf = open(os.path.join(work, "host.log"), "wb")
     state = os.path.join(work, "state")
     os.makedirs(state, exist_ok=True)
-    proc = subprocess.Popen(
-        [CARD_HOST_EXE, "--bundle", bundle, "--app-data", state,
-         "--allow-unsigned", "--remote"],
-        cwd=HUB_REPO, stdout=logf, stderr=subprocess.STDOUT)
+    argv = [CARD_HOST_EXE, "--bundle", bundle, "--app-data", state,
+            "--allow-unsigned", "--remote"]
+    for s in (static or []):          # 例如 self=<bundle 目录>：把包内文件挂成资源
+        argv += ["--static", s]
+    proc = subprocess.Popen(argv, cwd=HUB_REPO, stdout=logf, stderr=subprocess.STDOUT)
 
     port = None
     deadline = time.time() + 40
