@@ -43,11 +43,16 @@ SHARED_KIT = os.path.join(ROOT, "bundle", "kit")
 SHARED_ASSETS = os.path.join(ROOT, "bundle", "assets")
 
 sys.path.insert(0, SRC)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from intent_card import build_card            # noqa: E402  能力①
 try:
     from memory_store import MemoryStore      # noqa: E402  能力②
 except Exception:                             # pragma: no cover
     MemoryStore = None
+try:
+    import make_font                          # noqa: E402  字体跟着内容走
+except Exception:                             # pragma: no cover
+    make_font = None
 
 WD = ["一", "二", "三", "四", "五", "六", "日"]
 TYPE_ZH = {
@@ -615,6 +620,13 @@ def write_bundle(out_dir, card, p, P, review, review_note, memory_note, app_id, 
     with open(os.path.join(out_dir, "review.json"), "w", encoding="utf-8") as fh:
         json.dump(review, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
+
+    # 字体必须跟着这份卡的文字走（旧的固定子集会缺字 -> 乱码）
+    if make_font:
+        try:
+            make_font.build(b, [b])
+        except Exception:  # noqa: BLE001
+            pass
     return b
 
 

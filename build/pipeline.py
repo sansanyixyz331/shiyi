@@ -53,6 +53,13 @@ def stage(src_dir, bundle_dir, report):
         return False
     shot_bundle.shot(bundle_dir)
     report["stages"]["render"] = "ok"
+    # 字形硬验证：卡片里每个字都必须在自带字体里（缺字=乱码，不能靠肉眼）
+    fc = subprocess.run([sys.executable, os.path.join(BUILD, "font_check.py"), bundle_dir],
+                        capture_output=True, text=True, encoding="utf-8", errors="replace")
+    font_ok = fc.returncode == 0
+    report["stages"]["font"] = "ok" if font_ok else "FAIL"
+    if not font_ok:
+        report["font_missing"] = (fc.stdout or "").strip().splitlines()[-12:]
     # 看渲染出来的那一帧 —— 视觉自评
     vr = visual_review.review_bundle(bundle_dir)
     kinds = [i["kind"] for i in vr["issues"]]
@@ -63,7 +70,7 @@ def stage(src_dir, bundle_dir, report):
     passed, out = linux_stamp_check(bundle_dir)
     report["stages"]["hub_check"] = "PASSED" if passed else "REFUSED"
     report["hub_check_output"] = out
-    return passed and not high
+    return passed and not high and font_ok
 
 
 def main():
@@ -127,9 +134,9 @@ def main():
     print("\n===== pipeline 汇总 =====")
     for c in report["cards"]:
         st = c["stages"]
-        print("  %-24s gen:%s lint:%s render:%s visual:%s hub:%s" %
-              (c["text"][:22], st.get("gen"), st.get("lint"), st.get("render"),
-               st.get("visual"), st.get("hub_check", "-")))
+        print("  %-22s gen:%s lint:%s render:%s font:%s visual:%s hub:%s" %
+              (c["text"][:20], st.get("gen"), st.get("lint"), st.get("render"),
+               st.get("font"), st.get("visual"), st.get("hub_check", "-")))
     print("  记忆: %s" % report["memory"])
     print("  报告: %s" % rp)
     return 0 if all_ok else 1
