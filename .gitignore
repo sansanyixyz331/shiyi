@@ -19,3 +19,6 @@ build/_video/msyh.ttc
 build/_video/marks.json
 build/_video/_intro.png
 build/_video/_outro.png
+
+# 临时证据（issue 素材，不进仓）
+build/_evidence/

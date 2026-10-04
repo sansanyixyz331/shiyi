@@ -1,13 +1,28 @@
 {
+  "agent": null,
   "capabilities": [
     "octos.session.open",
     "octos.turn.start"
   ],
+  "compute": {
+    "instruction_budget": null,
+    "memory_bytes": null
+  },
   "id": "shiyi",
   "integrity": {
-    "bundle_blake3": "b8f0a805384d39a8b7f2931ec3df1f6e7f108e76448077443295692de533561d"
+    "bundle_blake3": "1263666026839803387f09743244a9911fa36bbdd0552b44a0d70b6e838f9437",
+    "signature": {
+      "key_id": "sansanyixyz331",
+      "value": "e29bea0c14a4db9cf21170393ec7b48dadfb0f4e7f6d84bb7f666212bfbb2b3cd0ced74060ab5235c7ddf765cc88c7cdd6bd2eb49379fa37e495a035effcfa06"
+    }
   },
   "name": "拾意 Pickup",
+  "network": {
+    "hosts": []
+  },
   "schema": 1,
-  "version": "0.3.0"
+  "storage": {
+    "max_bytes": null
+  },
+  "version": "0.3.1"
 }
