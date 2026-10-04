@@ -22,3 +22,6 @@ build/_video/_outro.png
 
 # 临时证据（issue 素材，不进仓）
 build/_evidence/
+
+# 生成器产物（build/gen_l0.py 的产出，样例可随时重跑；源码进仓）
+build/_gen/
