@@ -131,7 +131,12 @@ shiyi/
   助手不在 / 回合失败（例如宿主没配 provider）→ `when read.is_ok` guard 为假，**那条路径根本不求值** ⇒
   卡片照常显示、**不报错**（这条是实测出来的：见 [`ai/证据/`](ai/证据/) 的两张对照图）。
 - 官方门禁实测：`hub check` → **`shiyi 0.3.0 — PASSED`**，`grants: capabilities {octos.session.open, octos.turn.start}`；
-  官方参考宿主 `card-host` 也正常 admit + 渲染（23/24 节点、0 诊断）。
+  官方参考宿主 `card-host` 也正常 admit + 渲染（**23 节点、0 诊断**）。
+- **在官方 `card-host` 里长什么样（重要，避免误判为缺陷）**：官方参考宿主**不提供任何 host service**，
+  所以它渲染的是**本地规则行**（23 节点）——**这就是官方要求的"不依赖服务也完整可用"**，不是缺功能。
+  助手行只在**配了本机助手的宿主**（如 Rinx + 本机 octos 内核）里多出来。**两处都是设计意图**：
+  官方原文 "`card-host` provides no host services … **build the app to be complete without them**"，
+  我方用 `when read.is_ok` guard 兑现了这一点。
 - 完整实证与配方：[`ai/本地跑通_20261004.md`](ai/本地跑通_20261004.md)（内核往返 4 轮 + 出货版实拍）、
   [`ai/templates/`](ai/templates/)（可复用三件）、[`ai/README.md`](ai/README.md)（接入面说明）。
 
@@ -150,10 +155,11 @@ shiyi/
   "type": "m.room.message" }
 ```
 
-> **为什么不直接写进 `bundle/`**：现行多数 Shell 只认 7 项能力、**拒收未知字段**。
-> 硬塞进去的风险是 **"作品在评审用的宿主里打不开"** ⇒ **保命版 `bundle/` 保持不变，
-> 能力放独立备件，随宿主就绪再合入。**（与官方 AI 文档口径一致：「想现在就在 OctoSense 中
-> 打开的应用包，请不要使用它们。」）
+> **为什么发送不写进 `bundle/`**：`matrix.send_message` **在官方封闭能力清单里**（45 个 `matrix.*` 之一），
+> 声明它是**合法**的。但它要**绑定一个房间**才能发（房间在导入时手填），且官方 `card-host`
+> **不提供 host service、发不出去**。放进提交包只会**多一个评审环境里必然失败的调用**，没有收益。
+> ⇒ **保留了发送能力，但放在独立备件 `rinx/` 里展示**（随宿主就绪再合入）。这与官方口径一致：
+> 「要把应用做成不依赖它们也完整可用」。
 
 ## 5. 怎么跑（官方参考宿主）
 
