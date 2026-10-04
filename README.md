@@ -163,9 +163,9 @@ shiyi/
 
 ## 4d. 端到端环境：这条线是在 Windows 上跑通的
 
-本作品把设备助手 `octos.*` **真接线、真跑通**。据公开的 App Hub 提交（截至 2026-10-04），把 `octos.*` 跑出真实回复的提交都运行在 Linux / macOS 上；**本作品是其中唯一在 Windows 上完成端到端助手往返的**。
+本作品把设备助手 `octos.*` **真接线、真跑通**，整条链（宿主 → 内核 → 模型 → 回复上卡）是在 **Windows** 上走完的。
 
-在 Windows 上跑通，要自己填两个坑：
+在 Windows 上跑通，我们遇到了两个坑、各自填掉：
 
 1. **官方预编译的 octos 对不上。** Rinx 用 `packaging/octos.lock.json` 把内核钉在一个**精确 commit**（`fe08d8e6…`）上；而官方发行的预编译包是按 **release tag** 出的（rc.10–rc.13 对应的 commit 都不是它）⇒ **只能按 lock 从源码编**（`tools/package-octos.py desktop`）。
 2. **官方 `hub` 门禁在 Windows 上自身有 bug。** 新准入门（PR #56）里，目录遍历产出的相对路径在 Windows 是 `\`，紧接着的校验又**禁止路径含 `\`** ⇒ **Windows 上任何带子目录的包都会被拒**（Linux/macOS 出 `/`，不触发）。我们在 **WSL/Linux** 另编一份同版本 `hub` 来跑门禁（官方判据环境本就是 Linux/macOS），并把该 bug 报给了官方（**issue #75**）。
@@ -175,7 +175,7 @@ shiyi/
 - **Rinx（Windows）+ 本机自编 octos 内核 + DeepSeek**：首屏卡的助手行**连续 4 轮渲染出各不相同的真实回复**（[`ai/本地跑通_20261004.md`](ai/本地跑通_20261004.md)）。
 - **消息真发出**：经 Rinx 把确认消息发进 Matrix 房间 `!6OTFycyqxSkwYHJuBr:matrix.rinx.chat`（[`rinx/证据/`](rinx/证据/)，房间消息 API 可查）。
 
-> 跑通 `octos.*` 的提交里，我们是在 **Windows**——官方支持最弱的平台——上完成端到端往返的那一个，还顺手替官方抓到了一个 Windows 专属的门禁 bug。这是**实测填坑**，不是配置出来的。
+> 这一版是在 **Windows**——官方工具支持相对弱的平台——上完成的端到端助手往返；过程中顺手替官方抓到一个 Windows 专属的门禁 bug（#75）。这是**实测填坑**，不是配置出来的。
 
 ## 5. 怎么跑（官方参考宿主）
 
