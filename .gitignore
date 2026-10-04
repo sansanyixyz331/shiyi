@@ -26,3 +26,5 @@ build/_evidence/
 # 生成器产物（build/gen_l0.py 的产出，样例可随时重跑；源码进仓）
 build/_gen/
 build/_screens/
+
+build/_probe/
