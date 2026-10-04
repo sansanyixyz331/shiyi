@@ -130,7 +130,7 @@ shiyi/
 - **两条路都真实，且卡不依赖任何服务成功**：助手在 → 多渲染一行助手答案；
   助手不在 / 回合失败（例如宿主没配 provider）→ `when read.is_ok` guard 为假，**那条路径根本不求值** ⇒
   卡片照常显示、**不报错**（这条是实测出来的：见 [`ai/证据/`](ai/证据/) 的两张对照图）。
-- 官方门禁实测：`hub check` → **`shiyi 0.3.0 — PASSED`**，`grants: capabilities {octos.session.open, octos.turn.start}`；
+- 官方门禁实测：`hub check` → **`shiyi 0.3.1 — PASSED`**（**发布者签名版，无告警**；未签名包在开发期需加 `--allow-unsigned`），`grants: capabilities {octos.session.open, octos.turn.start}`；
   官方参考宿主 `card-host` 也正常 admit + 渲染（**23 节点、0 诊断**）。
 - **在官方 `card-host` 里长什么样（重要，避免误判为缺陷）**：官方参考宿主**不提供任何 host service**，
   所以它渲染的是**本地规则行**（23 节点）——**这就是官方要求的"不依赖服务也完整可用"**，不是缺功能。
@@ -168,9 +168,9 @@ shiyi/
 | 项 | 值 |
 |---|---|
 | **宿主** | 官方 OctoSense App Hub 参考实现 `card-host` |
-| **宿主修订** | 本地 checkout `e86d43f5`（2026-09-23）；**比官方文档页脚钉定的核查依据 `97c2a1fd`（09-20）更新** |
-| **构建** | `hub` / `card-host` 于 2026-09-26 从源码构建（本机隔离环境） |
-| **支持平台** | 卡片包**与平台无关**（纯数据）；本作品在 **Windows 桌面参考宿主**完成端到端验证；目标设备平台 **Android** |
+| **宿主修订** | 本地 checkout 最新 `e014fa9`（2026-10-04，含结构化准入门禁）；早期端到端验证在 `e86d43f5`（09-23）上完成 |
+| **构建** | `hub` / `card-host` 自 2026-09-26 起从源码构建（本机隔离环境）；发布前门禁另在 **WSL/Linux** 重建同版本复核 |
+| **支持平台** | 卡片包**与平台无关**（纯数据）；本作品在 **Windows 桌面参考宿主**完成端到端验证，发布前门禁在 **Linux** 复核通过；**目标设备平台尚未验证**（官方运行包未公布）——故 `listing.platforms` 只如实声明 `["windows"]` |
 | **依赖** | Rust 工具链 + 共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`） |
 
 ### 5.2 启动说明
@@ -189,8 +189,10 @@ export APP_REPO=C:/gosim_agentic/05_app/shiyi
 # 1. 盖章（每次改完 bundle 都要重盖；改动会改变摘要）
 "$HUB_BIN" stamp "$APP_REPO/bundle"
 
-# 2. 门禁自检（未签名告警属开发期正常——官方原话）
+# 2. 门禁自检（v0.3.1 已签名；未签名包加 --allow-unsigned 的告警属开发期正常）
 "$HUB_BIN" check "$APP_REPO/bundle" --allow-unsigned
+# 2b. 复检发布者签名（可选）
+# "$HUB_BIN" check "$APP_REPO/bundle" --publisher-key sansanyixyz331=<公钥>
 
 # 3. 生成审查包（必须放 bundle 之外）
 "$HUB_BIN" scan "$APP_REPO/bundle" --packet "$APP_REPO/build/review.json"
@@ -281,7 +283,7 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 卡外动作 | ✅ 每屏 `service-actions.json`（**14 个控件 / 14 个事件**，与流程同源） |
 | 宿主运行 | ✅ `card-host` 逐屏跑通（五屏 `[SPLASH] … view=true`，零 lower 错误） |
 | 真实截图 | ✅ 五张 `515×1073`（实拍后裁掉宿主标题栏，入 bundle 与各屏目录） |
-| 门禁 | ✅ `hub check` **PASSED**（唯一告警 = 未签名，开发期正常） |
+| 门禁 | ✅ `hub check` **PASSED**（**v0.3.1 发布者签名版，无告警**） |
 | 审查包 | ✅ `build/review.json`（7 个审查问题，放 bundle 之外） |
 | 服务逻辑 | ✅ 五屏流程状态机（`src/shiyi_flow.py`）**已与官方参考宿主串成端到端** |
 | 端到端验证（A3） | ✅ `build/verify_flow.py`：五屏逐屏真渲染 + 每步真实点击命中控件 + 事件链推进 → `build/_evidence/` |
@@ -290,7 +292,7 @@ python build/record_demo.py --no-caption    # 不要字幕
 | **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
 | **设备助手（AI，已进提交物）** | ✅ `bundle/` 声明 `octos.session.open`+`octos.turn.start` + `bindings.json` 接线；首屏卡多一行助手答案，助手不在时 guard 兜底、**不报错**。`hub check` **PASSED**；实证 [`ai/证据/`](ai/证据/) |
 | **扩展能力 · 宿主执行（备件）** | ✅ [`rinx/`](rinx/)：`matrix.send_message` **本机真跑通** —— 迷你应用经 Rinx 宿主把消息发进真实 Matrix 房间（实证在 `rinx/证据/`） |
-| 签名 / 提交 | ⬜ 待做（需发布者密钥） |
+| 签名 / 提交 | ✅ **已签名**（`sansanyixyz331`；`hub sign-manifest` + 公钥复检 `PASSED`）· **已提交** App Hub issue **#76**（`Submit shiyi 0.3.1`） |
 
 ## 7. 实测记录（2026-09-26 跑通的关键契约）
 

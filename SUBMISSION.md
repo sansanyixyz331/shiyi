@@ -16,7 +16,7 @@
 | 4 | 简短需求 | ✅ | `README.md` §1–§2 |
 | 5 | 可运行最小原型 + **启动说明** | ✅ | 便携包（双击 `一键运行.cmd`）+ `README.md` §5 |
 | 6 | **固定版本源码或包** | ✅ | tag `v0.3.1` · `bundle/manifest.json` 内容寻址摘要 |
-| 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒**，五屏正流程 + 两个失败态） |
+| 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 16 秒**，五屏正流程 + 两个失败态） |
 | 8 | **两张关键截图** | ✅ | `bundle/screenshots/01-read.png`、`03-plan.png`（另附 5 张） |
 | 9 | 数据来源与限制 | ✅ | `docs/数据来源与限制.md` |
 | 10 | 已报名成员名单 | ✅ | 官方 issue #5 报名评论（队伍 `三三Claw`） |
@@ -57,7 +57,7 @@
 
 ---
 
-## A. 初赛提交物（官方赛程「初赛：需求成立、作品能跑」，10/4 23:59 前）
+## A. 初赛提交物（官方赛程「初赛：需求成立、作品能跑」，**截止 10/6 23:59**〔原定 10/4，官方群公告顺延两天〕）
 
 > 官方原话：*10/4 23:59 前提交**简短需求、可运行最小原型及启动说明、固定版本源码或包、
 > 2–3 分钟演示、两张关键截图、数据来源与限制、已报名成员名单**。至少展示一次操作及可核对的
@@ -97,19 +97,19 @@
 | `kit/` | `bundle/kit/native/light/kit.json`（16 组件 / 12 token） | ✅ |
 | 图标 `assets/` | `bundle/assets/icon.svg` | ✅ |
 | 截图 `screenshots/`（≥1 张 PNG） | `bundle/screenshots/01..05-*.png`（5 张） | ✅ |
-| **预检结果** | `build/review.json`（`hub scan` 产物）+ `hub check` **PASSED**（0.3.0 改动后已重跑；`grants: capabilities {octos.session.open, octos.turn.start}`） | ✅ |
+| **预检结果** | `build/review.json`（`hub scan` 产物）+ `hub check` **PASSED**（v0.3.1 **签名版、无告警**；`grants: capabilities {octos.session.open, octos.turn.start}`） | ✅ |
 | **实际运行证据** | `build/_evidence/`（`flow_run.json`〔含 `memory` 记忆取证段〕+ 5 张宿主内截图 + 宿主日志） | ✅ |
 
 ## D. 复现（评审照这个走，能拿到同一版本）
 
 **宿主版本**：官方 OctoSense App Hub 参考实现，本作品在本地 checkout 修订
-`e86d43f5`（2026-09-23）上验证——**该修订比官方文档页脚钉定的核查依据
-`97c2a1fd`（2026-09-20）更新**，故不与官方核查版本冲突。
-`hub` 与 `card-host` 均于 2026-09-26 在本地从源码构建。
+`e014fa9`（2026-10-04，含结构化准入门禁）上做发布前门禁复核——**该修订比官方文档页脚钉定的核查依据
+`97c2a1fd`（2026-09-20）更新**，故不与官方核查版本冲突；早期端到端验证在 `e86d43f5`（09-23）上完成。
+`hub` 与 `card-host` 自 2026-09-26 起在本地从源码构建（释放前另于 WSL/Linux 重建同版本复核门禁）。
 
 **支持平台**：卡片包**与平台无关**（纯 manifest + card + kit 数据）。
-本作品在 **Windows 桌面官方参考宿主 `card-host`** 上完成端到端验证；
-目标设备平台为 **Android**（官方"支持设备/运行包"公布后直接适用）。
+本作品在 **Windows 桌面官方参考宿主 `card-host`** 上完成端到端验证，发布前门禁在 **Linux** 复核通过；
+**目标设备平台尚未验证**（官方"支持设备/运行包"未公布），故 `listing.platforms` 只如实声明 `["windows"]`。
 
 **依赖**：Rust 工具链 + 官方共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`）。
 本机已备隔离环境 `F:\gosim_build\`，入口 `source F:/gosim_build/env.sh`。
@@ -150,6 +150,7 @@ python build/record_demo.py                                  # → build/_video/
 - **车次数据为演示样例**（`source: sample`）：`src/shiyi_flow.py` 的 S3 三个班次
   是**示例**，接真实票务服务前**不当作事实**（见 `docs/数据来源与限制.md`）。
 - **长期记忆存在本机文件里**：`.local-state/memory.json`（零权限、不联网）；**首次运行用内建初始值播种**并如实标注来源。点「记下」真写、点「这次别记」不写 —— 三条断言见 `flow_run.json` 的 `memory` 段。**注意：记忆不改变“车次为演示样例”这条限制**。
-- **未签名**：`bundle/` 未做发布者签名（`hub check` 的唯一告警）；
-  官方明示未签名包可本地预检、`--allow-unsigned` 即为该场景。
+- **签名**：`bundle/` **已做发布者签名**（`key_id: sansanyixyz331`，见 `bundle/manifest.json`
+  的 `integrity.signature`）；`hub check` 带公钥复检 **PASSED、无告警**。未签名包仅用于开发期本地预检
+  （`--allow-unsigned`）。
 - **演示在桌面参考宿主**：手机端官方运行包未公布，故演示记录自桌面官方参考宿主。
