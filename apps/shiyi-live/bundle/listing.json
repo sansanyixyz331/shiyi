@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "subtitle": "一句话，现场造一张卡",
-  "description": "输入一句话，应用在本机识别出时间/地点/类型，现场长出一张按场景各不相同的卡，并把确认过的卡与偏好写进本机长期记忆（memory.json）。也可以在导入时绑定一个房间，直接读到那里的最近消息，挑一条就造卡。不依赖任何服务也完整可用。",
+  "description": "输入一句话，应用在本机识别出时间/地点/类型，现场长出一张按场景各不相同的卡，并把确认过的卡与偏好写进本机长期记忆（memory.json）。也可以在导入时绑定一个房间，直接读到那里的最近消息，挑一条就造卡；读到你的 Matrix 名字后，还会把聊天里「你自己发的」那几条标出来。不依赖任何服务也完整可用。",
   "category": "utilities",
   "keywords": [
     "intent",
@@ -22,7 +22,7 @@
     "support": "https://github.com/sansanyixyz331/shiyi",
     "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
   },
-  "release_notes": "0.7.1 - the two read switches are ON: read the attached room (matrix.read_messages) and read the assistant's session (octos.session.history). Recognition stays on-device; model.complete is implemented and locally verified but left off, because Rinx grants the capability name `model` while the service is `model.complete` and so refuses it - enable it on a host that serves the model service.",
+  "release_notes": "0.7.2 - adds matrix.profile, so the app knows which messages in the room are your own and marks them. The two read switches stay ON (matrix.read_messages, octos.session.history); recognition stays on-device; model.complete is implemented and locally verified but left off, because Rinx grants the capability name `model` while the service is `model.complete` and so refuses it - enable it on a host that serves the model service.",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

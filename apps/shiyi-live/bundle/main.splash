@@ -1,4 +1,4 @@
-// 拾意 · 现场造卡（shiyi-live）0.7.1
+// 拾意 · 现场造卡（shiyi-live）0.7.2
 // 一句话进去，一张卡出来。识别在本机做，不依赖任何服务。
 //
 // 长期记忆：存在应用自己的 jail 里（memory.json），与生成器同一套 schema
@@ -7,6 +7,7 @@
 //   ① 本机记住的（你造的卡）—— 永远可用，不依赖任何服务
 //   ② 设备助手的会话（octos.session.history）+ 一次性模型（model.complete）
 //   ③ 绑定房间里的聊天（matrix.read_messages）—— 读一条直接造卡
+//   ④ 你在 Matrix 上的名字（matrix.profile）—— 认出聊天里哪条是「你自己说的」
 // 记忆用在三处：
 //   ① 造卡时给出「记忆行」（包括和记忆冲突的提醒）—— 这才叫「知道用户喜好」
 //   ② 确认时写回（偏好 / 常去的地方 / 卡片流水）
@@ -73,7 +74,20 @@ let chat_ok = false
 let chat_count = 0
 let chat_rows = []           // 展示用：最近几条（说话人 + 截断后的话）
 let chat_texts = []          // 与 chat_rows 一一对应：原始消息文本（点了就当成输入）
+let chat_msgs = []           // 原始消息数组（profile 回来后重算「（你）」标记用）
 let chat_state = ""          // 读不到时的如实说明
+
+// ---- 你在 Matrix 上的名字（matrix.profile）—— 「认自己」
+// 官方契约（Rinx crates/miniapp-core/src/matrix.rs:185）：服务名就是 `matrix.profile`；
+//   args {}（**不用绑房间**，属 room_free 组）；返回 {user_id, display_name}；成本 1.0。
+// 用途：读聊天时把「你自己发的」在列表里标出来 —— 自己说的 vs 别人说的，在「拾意」里是两回事。
+// 同一组 room_free 的还有 rooms_list / account_info / device / spaces，先只接最稳、牵线也用过的那一个。
+let READ_PROFILE = true      // 🚩 复赛已开：读你自己的名字（manifest 已声明同名能力）
+let PROFILE_STANDIN = false  // 开发期替身：从 jail 的 profile-stub.json 读（card-host 没有 matrix 服务）
+let me_ok = false
+let me_id = ""
+let me_name = ""
+let me_state = ""            // 读不到时的如实说明
 
 // ---------------------------------------------------------------- 长期记忆
 let MEM = "memory.json"
@@ -376,13 +390,24 @@ fn ahist_fetch(){
 // ---------------------------------------------------------------- 从聊天拾意
 // 把 matrix.read_messages 的返回嚼成展示行 —— 一律「枚举」，不点缺失的键（缺字段在 splash 里是报错不是 nil）
 fn chat_ingest(doc){
-    chat_rows = []
-    chat_texts = []
-    chat_count = 0
+    chat_msgs = []
     chat_ok = true
     chat_state = ""
-    if !has_key(doc, "messages") { return }
-    let msgs = doc.messages
+    if !has_key(doc, "messages") {
+        chat_rows = []
+        chat_texts = []
+        chat_count = 0
+        return
+    }
+    chat_msgs = doc.messages
+    chat_build()
+}
+
+// 从原始消息造展示行（存了原始，所以 profile 回来后能重算「（你）」标记）
+fn chat_build(){
+    chat_rows = []
+    chat_texts = []
+    let msgs = chat_msgs
     let n = msgs.len()
     chat_count = n
     let from = 0
@@ -392,13 +417,20 @@ fn chat_ingest(doc){
         if i >= from {
             let b = ""
             let who = ""
+            let sid = ""
             for fk fv in m {
                 if fk == "body" { b = fv }
                 if fk == "sender" { who = fv }
+                if fk == "sender_id" { sid = fv }
             }
             if b != "" {
                 let tag = who
                 if tag == "" { tag = "有人" }
+                if me_ok {
+                    if me_id != "" {
+                        if sid == me_id { tag = tag + "（你）" }
+                    }
+                }
                 chat_rows.push(tag + "：" + clip(b, 20))
                 chat_texts.push(b)
             }
@@ -444,6 +476,57 @@ fn chat_fetch(){
         chat_state = "宿主没提供读消息这项服务"
         ui.chatbox.render()
         ui.card.render()
+    }
+}
+
+// 把 matrix.profile 的返回嚼成「我是谁」—— 一律枚举字段
+fn profile_ingest(doc){
+    me_ok = false
+    me_id = ""
+    me_name = ""
+    me_state = ""
+    if doc == nil { return }
+    for fk fv in doc {
+        if fk == "user_id" { me_id = fv }
+        if fk == "display_name" { me_name = fv }
+    }
+    if me_name == "" {
+        if me_id != "" { me_name = me_id }
+    }
+    if me_name != "" { me_ok = true }
+    if chat_count > 0 { chat_build() }   // 名字回来后，把聊天行的「（你）」补上
+}
+
+// 读你自己的名字（matrix.profile）：默认不读（READ_PROFILE=false）。开了才动。
+// 与 chat_fetch 各走各的、互不阻塞 —— 它挂了也不挡造卡。
+fn profile_fetch(){
+    if !READ_PROFILE { return }
+    me_state = ""
+    if PROFILE_STANDIN {
+        if fs.exists("profile-stub.json") {
+            let doc = fs.read("profile-stub.json").parse_json()
+            if doc != nil { profile_ingest(doc) }
+        } else {
+            me_state = "没有替身数据"
+        }
+        ui.membox.render()
+        ui.chatbox.render()
+        return
+    }
+    if host.has("matrix.profile") {
+        host.request("matrix.profile", {}, fn(r){
+            if r.is_ok {
+                profile_ingest(r.data)
+            } else {
+                me_state = "这次没读到 · 宿主没这项服务"
+            }
+            ui.membox.render()
+            ui.chatbox.render()
+        })
+    } else {
+        me_state = "宿主没提供名字这项服务"
+        ui.membox.render()
+        ui.chatbox.render()
     }
 }
 
@@ -786,7 +869,7 @@ fn reset(){
     ui.card.render()
 }
 
-start_timeout(0.05, || { mem_load() ahist_fetch() chat_fetch() ui.membox.render() ui.card.render() })
+start_timeout(0.05, || { mem_load() ahist_fetch() profile_fetch() chat_fetch() ui.membox.render() ui.card.render() })
 
 // ---------------------------------------------------------------- 界面
 SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
@@ -832,6 +915,10 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
             Label{width: Fill text: "助手记忆 · " + ahist_state
               draw_text.color: dim draw_text.text_style.font_size: 11}
         }
+        if me_state != "" {
+            Label{width: Fill text: "Matrix 名字 · " + me_state
+              draw_text.color: dim draw_text.text_style.font_size: 11}
+        }
       }
     }
 
@@ -842,6 +929,10 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
             SolidView{width: Fill height: Fit flow: Down spacing: 4 padding: 8 show_bg: true
               draw_bg.color: membg draw_bg.border_radius: 12.0
               Label{width: Fill text: chat_head() draw_text.color: accent draw_text.text_style.font_size: 11}
+              if me_ok {
+                  Label{width: Fill text: "你是 " + me_name + " · 带「（你）」的是你自己发的"
+                    draw_text.color: faint draw_text.text_style.font_size: 10}
+              }
               if chat_state != "" {
                   Label{width: Fill text: chat_state draw_text.color: dim draw_text.text_style.font_size: 11}
               }

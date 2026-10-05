@@ -37,7 +37,7 @@
 | 形态 | 位置 | 能力 | 实证 |
 |---|---|---|---|
 | **① L0 卡片包**（主提交） | `bundle/`（`page.card` + `bindings.json`） | 打开即渲染五屏 + 三条**总线调用**（`octos.session.history` 读助手记忆 · `octos.turn.start` 问助手 · `matrix.send_message` 真发消息） | `hub check PASSED`（Linux） · [`rinx/证据/`](rinx/证据/) |
-| **② 脚本应用 · 现场造卡** | `apps/shiyi-live/bundle/`（`main.splash`） | **四条能力、默认关**：`matrix.read_messages` 读**绑定房间**的消息 → 点一条 → 当场造卡；`octos.session.history` 读助手会话；`model.complete` 接模型；`storage` 长期记忆 | **Rinx 真机全链路**：导入（绑房间）→Run→读到 4 条真消息→点一条→造卡（真日期+记忆行）→确认→记忆 3→4 张（[`docs/evidence/chat-read/`](docs/evidence/chat-read/)） |
+| **② 脚本应用 · 现场造卡** | `apps/shiyi-live/bundle/`（`main.splash`，**0.7.2**） | **五个能力**（两个"读"开、模型关）：`matrix.read_messages` 读**绑定房间**的消息 → 点一条 → 当场造卡；`matrix.profile` 读你的名字 → 聊天列表里标出「（你）」；`octos.session.history` 读助手会话；`storage` 长期记忆；`model`（服务名 `model.complete`）代码就位、出厂关（宿主不服务它） | **Rinx 真机全链路**：导入（绑房间）→Review 列出 **5 个服务**→Run→读到 4 条真消息、显示「你是 三三Claw」、每条带「（你）」→点一条→造卡（真日期+记忆行）→确认→记忆 3→4 张（[`docs/evidence/chat-read/`](docs/evidence/chat-read/)、[`docs/evidence/profile/`](docs/evidence/profile/)） |
 
 > **摘要分平台**：形态一交 **Linux 评测** ⇒ 留 Linux digest；形态二跑在 **Windows 宿主（Rinx）**
 > ⇒ 留 Windows digest（**谁运行它，就用谁那一侧的 hub 盖章**）。
