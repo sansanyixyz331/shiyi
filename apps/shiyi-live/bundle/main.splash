@@ -1,0 +1,833 @@
+// 拾意 · 现场造卡（shiyi-live）0.6.0
+// 一句话进去，一张卡出来。识别在本机做，不依赖任何服务。
+//
+// 长期记忆：存在应用自己的 jail 里（memory.json），与生成器同一套 schema
+//   version / prefs / places / log
+// 记忆用在三处：
+//   ① 造卡时给出「记忆行」（包括和记忆冲突的提醒）—— 这才叫「知道用户喜好」
+//   ② 确认时写回（偏好 / 常去的地方 / 卡片流水）
+//   ③ 接模型时当上下文（mem_brief()：真接上助手，这就是喂给它的那段）
+// 注释只能用 // 或 /* */（`#` 是颜色记号，不是注释）。
+
+// ---------------------------------------------------------------- 配色
+let bg      = #x0e1a16
+let surface = #x16251f
+let cardbg  = #x1b2c24
+let membg   = #x14231d
+let line    = #x274036
+let ink     = #xeaf3ee
+let dim     = #x9db3aa
+let faint   = #x6d847b
+let accent  = #x7fd1b9
+let accentD = #x5fb9a2
+let warn    = #xe6b06a
+
+// ---------------------------------------------------------------- 状态
+let raw = ""
+let when = ""
+let where = ""
+let kind = ""
+let built = false
+let done = false
+let note = "写一句话，或点下面的例子"
+let hints = []          // 这次卡上「记忆参与」的行
+
+// ---- 识别来源（复赛接 AI 就走这条）
+let src = "rules"              // rules | model | model-standin
+let model_state = ""           // 助手不可用时的说明，如实显示在卡上
+let MODEL_STANDIN = false      // 开发期替身：从 jail 的 model-stub.json 读一条回复，
+                               // 用来验证「回复 → 卡」这一整条链（本机没有 model 服务）。
+let ASK_MODEL = false          // 🚩 总开关：**复赛把它改成 true**，就会真的调设备助手（model.complete）。
+                               // 现在保持 false —— 不把用户的话发给任何助手。
+
+// ---- 读设备助手的会话记忆（octos.session.history）—— 第二个「长期记忆」来源
+// 本机记住的是「你造的卡」；助手那边记住的是「你在对话里说过的」。两个合起来才叫真知道你是谁。
+// 官方契约：capability 就是同名的 `octos.session.history`；args {}；
+//   返回 {session_id, messages:[{…, lane, speaker, role, content}, …]}（两条车道按时间合并）。
+// 脚本 app 不许用 bindings.json，只能像这样直接 host.request（HOST-SERVICES.md）。
+let READ_ASSIST_HISTORY = false  // 🚩 复赛打开：读设备助手与你的会话（manifest 已声明同名能力）
+let HIST_STANDIN = false         // 开发期替身：从 jail 的 history-stub.json 读一段会话，
+                                 // 用来验「读 → 用」这条链（card-host 没有助手服务）。
+let ahist_ok = false
+let ahist_count = 0
+let ahist_lines = []             // 展示用：最近几条（说话人 + 截断后的话）
+let ahist_state = ""             // 读不到时的如实说明
+
+// ---------------------------------------------------------------- 长期记忆
+let MEM = "memory.json"
+let mem = {}            // 与生成器同 schema
+let mem_ok = false
+let mem_count = 0
+let mem_lines = []      // 偏好（展示用）
+let mem_places = []     // 常去的地方（展示用）
+
+// ---------------------------------------------------------------- 样式
+let Pill = ButtonFlat{height: 36
+    draw_bg +: {border_radius: 18.0 color: accent color_hover: #x8fdec9 color_down: accentD border_size: 0.0}
+    draw_text +: {color: #x0e1a16 font_size: 13}}
+let Ghost = ButtonFlat{height: 36
+    draw_bg +: {border_radius: 18.0 color: #x22352c color_hover: #x2c463a color_down: #x1a2a23 border_size: 0.0}
+    draw_text +: {color: dim font_size: 13}}
+let Tiny = ButtonFlat{height: 30
+    draw_bg +: {border_radius: 15.0 color: #x1d2f27 color_hover: #x2c463a color_down: #x16251f border_size: 0.0}
+    draw_text +: {color: accent font_size: 12}}
+let Mini = ButtonFlat{height: 26
+    draw_bg +: {border_radius: 13.0 color: #x22352c color_hover: #x2c463a color_down: #x1a2a23 border_size: 0.0}
+    draw_text +: {color: faint font_size: 11}}
+let Field = TextInput{width: Fill height: 42
+    empty_text: "写一句话，比如：下周三去深圳"
+    draw_bg +: {color: #x0f1b17 color_hover: #x0f1b17 color_focus: #x0f1b17 color_empty: #x0f1b17
+        border_color: #x2a4238 border_color_hover: #x33513f border_color_focus: accent border_color_empty: #x2a4238
+        border_radius: 10.0 border_size: 1.0}
+    draw_text +: {color: ink color_hover: ink color_focus: ink color_empty: faint color_empty_hover: faint}}
+
+// ---------------------------------------------------------------- 词表
+let CITIES = ["深圳","北京","上海","广州","杭州","成都","重庆","武汉","西安","南京","苏州","天津","长沙","青岛","厦门","香港"]
+let WD_CH = ["一","二","三","四","五","六","日","天"]
+
+// ---------------------------------------------------------------- 小工具
+fn pad2(n){
+    if n < 10 { return "0" + ("" + n) }
+    return "" + n
+}
+
+fn ts(){
+    let lt = local_time()
+    return ("" + lt.year) + "-" + pad2(lt.month) + "-" + pad2(lt.day)
+        + " " + pad2(lt.hour) + ":" + pad2(lt.minute)
+}
+
+fn joined(arr, sep){
+    let s = ""
+    let i = 0
+    for v in arr {
+        if i > 0 { s = s + sep }
+        s = s + v
+        i = i + 1
+    }
+    return s
+}
+
+fn has_key(o, key){
+    for k v in o {
+        if k == key { return true }
+    }
+    return false
+}
+
+fn kind_zh(k){
+    if k == "trip" { return "出行" }
+    if k == "meeting" { return "会面" }
+    if k == "errand" { return "代办" }
+    if k == "purchase" { return "采买" }
+    if k == "reminder" { return "提醒" }
+    if k == "pref" { return "习惯" }
+    return "记录"
+}
+
+fn today_m(){
+    let wd = local_time().weekday
+    if wd == 0 { return 7 }
+    return wd
+}
+
+fn wd_num(ch){
+    if ch == "一" { return 1 }
+    if ch == "二" { return 2 }
+    if ch == "三" { return 3 }
+    if ch == "四" { return 4 }
+    if ch == "五" { return 5 }
+    if ch == "六" { return 6 }
+    return 7
+}
+
+fn date_str(epoch){
+    let lt = local_time(epoch)
+    return ("" + lt.month) + "月" + ("" + lt.day) + "日"
+}
+
+fn week_when(t, ch){
+    let m = today_m()
+    let tgt = wd_num(ch)
+    let nx = tgt - m
+    if nx <= 0 { nx = nx + 7 }
+    let rel = "周" + ch
+    if regex("下下周", "i").test(t) {
+        nx = nx + 14
+        rel = "下下周" + ch
+    } else if regex("下周|下星期|下礼拜", "i").test(t) {
+        if tgt > m {
+            nx = nx + 7
+            rel = "下周" + ch
+        }
+    }
+    return rel + " · " + date_str(time_now() + nx * 86400.0)
+}
+
+// ---------------------------------------------------------------- 记忆：读
+// 读一律用「枚举」，不点字段 —— 缺字段在 splash 里是**报错**不是 nil
+fn pref_on(key){
+    if !has_key(mem, "prefs") { return false }
+    for k v in mem.prefs {
+        if k == key { return v == true }
+    }
+    return false
+}
+
+fn place_seen(name){
+    if !has_key(mem, "places") { return 0 }
+    for k v in mem.places {
+        if k == name {
+            for fk fv in v {
+                if fk == "seen" { return fv }
+            }
+        }
+    }
+    return 0
+}
+
+fn place_field(name, field){
+    if !has_key(mem, "places") { return "" }
+    for k v in mem.places {
+        if k == name {
+            for fk fv in v {
+                if fk == field { return "" + fv }
+            }
+        }
+    }
+    return ""
+}
+
+fn mem_load(){
+    mem = {}
+    mem_ok = false
+    mem_count = 0
+    mem_lines = []
+    mem_places = []
+
+    if fs.exists(MEM) {
+        let doc = fs.read(MEM).parse_json()
+        if doc != nil {
+            mem = doc
+            mem_ok = true
+        }
+    }
+    if !has_key(mem, "prefs") { mem.prefs = {} }
+    if !has_key(mem, "places") { mem.places = {} }
+    if !has_key(mem, "log") { mem.log = [] }
+
+    for k v in mem.prefs {
+        if v == true {
+            if k == "no_flight" { mem_lines.push("不坐飞机") }
+            if k == "prefers_rail" { mem_lines.push("坐高铁") }
+            if k == "no_wednesday_pm" { mem_lines.push("周三下午别安排") }
+        }
+    }
+    for k v in mem.places {
+        let dep = place_field(k, "default_depart")
+        let ln = k
+        if dep != "" { ln = ln + " · 通常" + dep }
+        let seen = place_seen(k)
+        if seen > 0 { ln = ln + " · 去过 " + ("" + seen) + " 次" }
+        mem_places.push(ln)
+    }
+    mem_count = mem.log.len()
+}
+
+// 第 i 条（从最新往回数）：只枚举字段，不点缺的键
+fn mem_log_line(i){
+    if !has_key(mem, "log") { return "" }
+    let n = mem.log.len()
+    let idx = n - 1 - i
+    if idx < 0 { return "" }
+    if idx >= n { return "" }
+    let e = mem.log[idx]
+    let k = ""
+    let t = ""
+    let msg = ""
+    let plc = ""
+    for fk fv in e {
+        if fk == "kind" { k = fv }
+        if fk == "text" { t = fv }
+        if fk == "message" { msg = fv }
+        if fk == "place" { plc = fv }
+    }
+    if t == "" { t = msg }
+    if t == "" {
+        if plc != "" { t = "去了" + plc }
+    }
+    if t == "" { t = "一条早期记录" }
+    return kind_zh(k) + " · " + t
+}
+
+// 供「接模型」用：真接上助手时，这段就是随用户那句话一起发给模型的上下文。
+// 两个来源合起来：本机记住的（你造的卡）+ 助手会话里读到的（你在对话里说过的）。
+fn mem_brief(){
+    let parts = []
+    if mem_lines.len() > 0 { parts.push("偏好：" + joined(mem_lines, "、")) }
+    if mem_places.len() > 0 { parts.push("常去 " + joined(mem_places, "；")) }
+    if ahist_lines.len() > 0 { parts.push("助手会话里提到：" + joined(ahist_lines, "；")) }
+    let s = "用户长期记忆：" + joined(parts, "。")
+    if parts.len() == 0 { s = "用户长期记忆：（暂时空白）" }
+    return s
+}
+
+// ---------------------------------------------------------------- 助手会话记忆
+// 截断：splash 没有 slice，用 regex 取前 n 个字（match_str 非全局返回 {value,…}）。
+fn clip(s, n){
+    let m = s.match_str(regex("^.{0," + ("" + n) + "}", ""))
+    if m == nil { return s }
+    if m.value.len() < s.len() { return m.value + "…" }
+    return m.value
+}
+
+// 把 octos.session.history 的返回嚼成展示行 —— 一律「枚举」，不点缺失的键（缺字段在 splash 里是报错不是 nil）
+fn ahist_ingest(doc){
+    ahist_lines = []
+    ahist_count = 0
+    ahist_ok = true
+    ahist_state = ""
+    if !has_key(doc, "messages") { return }
+    let msgs = doc.messages
+    let n = msgs.len()
+    ahist_count = n
+    let from = 0
+    if n > 3 { from = n - 3 }
+    let i = 0
+    for m in msgs {
+        if i >= from {
+            let c = ""
+            let who = ""
+            for fk fv in m {
+                if fk == "content" { c = fv }
+                if fk == "speaker" { who = fv }
+                if fk == "role" { if who == "" { who = fv } }
+            }
+            if c != "" {
+                let tag = "助手"
+                if who == "person" { tag = "你" }
+                if who == "user" { tag = "你" }
+                ahist_lines.push(tag + "：" + clip(c, 26))
+            }
+        }
+        i = i + 1
+    }
+}
+
+// 记忆盒上那行标题：读到了 N 条 / 会话是空的
+fn ahist_head(){
+    if ahist_count == 0 { return "助手记忆 · 助手会话是空的" }
+    return "助手记忆 · 读到 " + ("" + ahist_count) + " 条会话"
+}
+
+// 读助手会话：默认不读（READ_ASSIST_HISTORY=false）。开了才动。
+fn ahist_fetch(){
+    if !READ_ASSIST_HISTORY { return }
+    ahist_state = ""
+    if HIST_STANDIN {
+        if fs.exists("history-stub.json") {
+            let doc = fs.read("history-stub.json").parse_json()
+            if doc != nil { ahist_ingest(doc) }
+        }
+        ui.membox.render()
+        ui.card.render()
+        return
+    }
+    if host.has("octos.session.history") {
+        host.request("octos.session.history", {}, fn(r){
+            if r.is_ok {
+                ahist_ingest(r.data)
+            } else {
+                ahist_state = "这次读不到"
+            }
+            ui.membox.render()
+            ui.card.render()
+        })
+    } else {
+        ahist_state = "本机没有设备助手"
+    }
+}
+
+// ---------------------------------------------------------------- 记忆：学
+// 只认几条明确的说法 —— 不猜
+fn learn_from(t){
+    if regex("不坐飞机|不飞|怕飞|晕机|不坐飞机场", "i").test(t) { mem.prefs.no_flight = true }
+    if regex("高铁|动车|坐火车", "i").test(t) {
+        if !regex("不坐高铁|不坐动车|不坐火车", "i").test(t) { mem.prefs.prefers_rail = true }
+    }
+    if regex("周三下午.*(不行|没空|别|不要|不方便)|别(安排|约|定)周三下午", "i").test(t) {
+        mem.prefs.no_wednesday_pm = true
+    }
+}
+
+// 记忆参与这次识别 → 写在卡上的「记忆行」
+fn mem_hints(t){
+    hints = []
+    if kind == "trip" {
+        if pref_on("no_flight") { hints.push("记忆 · 你不坐飞机 → 这次只给高铁") }
+    }
+    if pref_on("no_wednesday_pm") {
+        if regex("周三下午|星期三下午|礼拜三下午", "i").test(t) {
+            hints.push("⚠ 记忆里说「周三下午别安排」→ 这次要不要改天？")
+        }
+    }
+    if where != "" {
+        let dep = place_field(where, "default_depart")
+        if dep != "" {
+            hints.push("记忆 · " + where + " 通常" + dep)
+        } else {
+            if place_seen(where) > 0 {
+                hints.push("记忆 · " + where + " 去过 " + ("" + place_seen(where)) + " 次")
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- 记忆：写
+fn mem_write(){
+    if !has_key(mem, "version") { mem.version = 1 }
+    mem.updated_at = ts()
+    if !mem_ok { mem.seeded_from = "shiyi-live" }
+    if mem.log.len() > 200 {
+        let keep = []
+        let n = 200
+        for i in n { keep.push(mem.log[mem.log.len() - n + i]) }
+        mem.log = keep
+    }
+    fs.write(MEM, mem.to_json())
+    mem_ok = true
+}
+
+fn place_obj(name){
+    let r = {}
+    r.seen = 1
+    r.at = ts()
+    r.last_kind = kind
+    if has_key(mem, "places") {
+        for k v in mem.places {
+            if k == name {
+                for fk fv in v {
+                    if fk == "seen" { r.seen = fv + 1 }
+                    if fk == "default_depart" { r.default_depart = fv }
+                    if fk == "from" { r.from = fv }
+                }
+            }
+        }
+    }
+    return r
+}
+
+fn mem_remember(){
+    let e = {}
+    e.at = ts()
+    e.kind = kind
+    e.text = raw
+    e.when = when
+    e.where = where
+    e.confirmed = true
+    mem.log.push(e)
+    if where != "" { mem.places[where] = place_obj(where) }
+    learn_from(raw)
+    mem_write()
+    mem_load()
+}
+
+fn forget(){
+    if fs.exists(MEM) { fs.remove(MEM) }
+    mem = {}
+    mem_load()
+    ui.membox.render()
+    ui.card.render()
+}
+
+// ---------------------------------------------------------------- 识别
+// ---------------------------------------------------------------- 接 AI（model.complete）
+// 官方契约（AI-SERVICES.md）：一次性、回复必须过 schema、应用看不到 provider/model/key。
+// 失败是 "<code>: <句子>"（no_provider / budget / rate / bad_request / invalid_output / …）。
+// 本地 card-host 没有 model 服务，会答 no service answers "model" —— 那就回退规则。
+fn model_task(){
+    return "把用户这句话里的事，识别成一张卡需要的四个字段。"
+        + "kind 只能是 trip / meeting / errand / purchase / reminder / pref / none 之一；"
+        + "when_text 写中文时间，能确定日期就写成「周X · N月N日」；"
+        + "where 只写地点名，没有就留空串；why 一句话说明依据。"
+        + "不要输出 URL。只输出符合 schema 的 JSON。"
+}
+
+fn model_schema(){
+    return {type: "object" additionalProperties: false
+        required: ["kind" "when_text" "where" "why"]
+        properties: {
+            kind: {type: "string"}
+            when_text: {type: "string"}
+            where: {type: "string"}
+            why: {type: "string"}
+        }}
+}
+
+// 本地替身：从 jail 里读一条回复（没有就空对象 → 走"回复不合预期"的兜底）
+fn standin_output(){
+    if fs.exists("model-stub.json") {
+        let o = fs.read("model-stub.json").parse_json()
+        if o != nil { return o }
+    }
+    return {}
+}
+
+fn apply_model_output(o, t){
+    let k = ""
+    let wt = ""
+    let wh = ""
+    for fk fv in o {
+        if fk == "kind" { k = fv }
+        if fk == "when_text" { wt = fv }
+        if fk == "where" { wh = fv }
+    }
+    if k == "none" { k = "" }
+    raw = t
+    kind = k
+    when = wt
+    where = wh
+    done = false
+    hints = []
+    if kind == "" {
+        note = "助手也没看准 —— 换个说法再试"
+    } else {
+        note = "读出一张「" + kind_zh(kind) + "」卡"
+    }
+    mem_hints(t)
+    built = true
+    ui.card.render()
+}
+
+fn ask_model(t){
+    host.request("model.complete", {
+        task: model_task()
+        input: {text: t memory: mem_brief()}
+        schema: model_schema()
+        class: "fast"
+    }, fn(r){
+        if r.is_ok {
+            if has_key(r.data, "output") {
+                src = "model"
+                model_state = ""
+                apply_model_output(r.data.output, t)
+            } else {
+                src = "rules"
+                model_state = "助手回复不合预期"
+                identify_rules(t)
+            }
+        } else {
+            src = "rules"
+            model_state = "设备助手不可用"
+            identify_rules(t)
+        }
+        ui.card.render()
+    })
+}
+
+fn src_line(){
+    if src == "model" { return "识别来源 · 设备助手（长期记忆已带上）" }
+    if src == "model-standin" { return "识别来源 · 设备助手（本地替身：本机没有 model 服务）" }
+    if model_state != "" { return "识别来源 · 本机规则（" + model_state + "）" }
+    if !ASK_MODEL { return "识别来源 · 本机规则（不依赖任何服务）" }
+    return "识别来源 · 本机规则（不依赖任何服务）"
+}
+
+fn act_of(){
+    if kind == "trip" { return "确认行程" }
+    if kind == "meeting" { return "加进日程" }
+    if kind == "errand" { return "记下来" }
+    if kind == "purchase" { return "去比价" }
+    if kind == "reminder" { return "设提醒" }
+    if kind == "pref" { return "记住这条习惯" }
+    return "记下来"
+}
+
+fn label_of(k){
+    if k == "when" {
+        if kind == "trip" { return "出发" }
+        return "什么时候"
+    }
+    if kind == "trip" { return "目的地" }
+    return "在哪"
+}
+
+fn recognize(t){
+    if t == "" {
+        built = false
+        done = false
+        raw = ""
+        hints = []
+        note = "先写一句话，再点「造卡」"
+        ui.card.render()
+        return
+    }
+    if !ASK_MODEL {
+        src = "rules"
+        model_state = ""
+        identify_rules(t)
+        return
+    }
+    if MODEL_STANDIN {
+        src = "model-standin"
+        model_state = ""
+        let payload = {}
+        payload.task = model_task()
+        payload.input = {text: t memory: mem_brief()}
+        payload["class"] = "fast"
+        fs.write("model-prompt.json", payload.to_json())   // 本该发出去的东西，落盘备查
+        apply_model_output(standin_output(), t)
+        return
+    }
+    if host.has("model") {
+        src = "rules"
+        model_state = ""
+        built = false
+        note = "问设备助手…"
+        ui.card.render()
+        ask_model(t)
+        return
+    }
+    src = "rules"
+    model_state = "本机没有设备助手"
+    identify_rules(t)
+}
+
+// 兜底那一路：本机规则（与生成器同一套口径）
+fn identify_rules(t){
+    raw = t
+    when = ""
+    where = ""
+    kind = ""
+    done = false
+
+    // 先说习惯（「我不坐飞机」这类）—— 优先于任何场景
+    if regex("^我(不|讨厌|怕|喜欢|习惯)|^(别|不要)(安排|约|定)", "i").test(t) {
+        kind = "pref"
+    }
+
+    if kind == "" {
+        if regex("提醒|记得|别忘", "i").test(t) { kind = "reminder" }
+        else if regex("买|订|付款|采购", "i").test(t) { kind = "purchase" }
+        else if regex("寄|快递|取件", "i").test(t) { kind = "errand" }
+        else if regex("碰|见面|见|开会|约|谈", "i").test(t) { kind = "meeting" }
+        else if regex("去|出差|飞|高铁|机票|酒店", "i").test(t) { kind = "trip" }
+    }
+
+    let hit = ""
+    for c in WD_CH {
+        if hit == "" {
+            if regex("(周|星期|礼拜)" + c, "i").test(t) { hit = c }
+        }
+    }
+    if regex("今天", "i").test(t) { when = "今天 · " + date_str(time_now()) }
+    else if regex("明天", "i").test(t) { when = "明天 · " + date_str(time_now() + 86400.0) }
+    else if regex("后天", "i").test(t) { when = "后天 · " + date_str(time_now() + 2.0 * 86400.0) }
+    else if regex("周末", "i").test(t) {
+        let m = today_m()
+        let nx = 6 - m
+        if nx < 0 { nx = nx + 7 }
+        when = "这个周末 · " + date_str(time_now() + nx * 86400.0)
+    } else if regex("下个月", "i").test(t) {
+        let l0 = local_time()
+        let mo = l0.month + 1
+        if mo > 12 { mo = 1 }
+        when = "下个月 · " + ("" + mo) + "月"
+    } else if hit != "" {
+        when = week_when(t, hit)
+    }
+
+    for c in CITIES {
+        if regex(c, "i").test(t) { where = c }
+    }
+
+    if kind == "pref" {
+        note = "这是一条习惯 —— 确认就记住"
+    } else if kind == "" {
+        note = "没看准这是什么 —— 换个说法再试"
+    } else {
+        note = "读出一张「" + kind_zh(kind) + "」卡"
+    }
+
+    mem_hints(t)
+    built = true
+    ui.card.render()
+}
+
+fn use_one(t){
+    ui.inp.set_text(t)
+    recognize(t)
+}
+
+fn confirm(){
+    done = true
+    mem_remember()          // ← 确认 = 记住
+    note = "记下了 —— 记忆已更新"
+    ui.membox.render()
+    ui.card.render()
+}
+
+fn back_to_edit(){
+    built = false
+    done = false
+    note = "改好再点「造卡」"
+    ui.card.render()
+}
+
+fn reset(){
+    raw = ""
+    when = ""
+    where = ""
+    kind = ""
+    built = false
+    done = false
+    hints = []
+    note = "写一句话，或点下面的例子"
+    ui.inp.set_text("")
+    ui.card.render()
+}
+
+start_timeout(0.05, || { mem_load() ahist_fetch() ui.membox.render() ui.card.render() })
+
+// ---------------------------------------------------------------- 界面
+SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
+  ScrollYView{width: Fill height: Fill flow: Down spacing: 8
+    padding: Inset{left: 16 right: 16 top: 10 bottom: 20}
+
+    // 头部
+    SolidView{width: Fill height: Fit flow: Down spacing: 2
+      Label{text: "拾意 · 现场造卡" draw_text.color: accent draw_text.text_style: theme.font_bold{font_size: 20}}
+      Label{width: Fill text: "一句话，一张卡。识别在本机做，不依赖任何服务。"
+        draw_text.color: faint draw_text.text_style.font_size: 12}
+    }
+
+    // 长期记忆
+    membox := SolidView{width: Fill height: Fit flow: Down spacing: 3 padding: 8 show_bg: true
+      draw_bg.color: membg draw_bg.border_radius: 12.0
+      on_render: || {
+        SolidView{width: Fill height: Fit flow: Right align: Align{x: 1.0}
+          Label{width: Fill text: "长期记忆 · 记住 " + ("" + mem_count) + " 张卡"
+            draw_text.color: accent draw_text.text_style.font_size: 11}
+          Mini{text: "忘掉" on_click: || forget()}
+        }
+        if mem_count == 0 {
+            Label{width: Fill text: "还没有 —— 说一句你的习惯（比如「我不坐飞机」），确认一张卡就记住了。"
+              draw_text.color: faint draw_text.text_style.font_size: 11}
+        }
+        if mem_lines.len() > 0 {
+            Label{width: Fill text: "你：" + joined(mem_lines, " · ")
+              draw_text.color: ink draw_text.text_style.font_size: 12}
+        }
+        if mem_places.len() > 0 {
+            Label{width: Fill text: "常去：" + joined(mem_places, "  ｜  ")
+              draw_text.color: dim draw_text.text_style.font_size: 11}
+        }
+        if ahist_ok {
+            Label{width: Fill text: ahist_head()
+              draw_text.color: accent draw_text.text_style.font_size: 11}
+            for h in ahist_lines {
+                Label{width: Fill text: "· " + h draw_text.color: dim draw_text.text_style.font_size: 11}
+            }
+        }
+        if ahist_state != "" {
+            Label{width: Fill text: "助手记忆 · " + ahist_state
+              draw_text.color: dim draw_text.text_style.font_size: 11}
+        }
+      }
+    }
+
+    // 输入面板
+    SolidView{width: Fill height: Fit flow: Down spacing: 8 padding: 10 show_bg: true
+      draw_bg.color: surface draw_bg.border_radius: 14.0
+      inp := Field{}
+      SolidView{width: Fill height: Fit flow: Right align: Align{x: 1.0}
+        Pill{text: "造卡" on_click: || recognize(ui.inp.text())}
+        SolidView{width: 8 height: 1}
+        Ghost{text: "清空" on_click: || reset()}
+      }
+    }
+
+    // 例子（窄了就自动换行）
+    SolidView{width: Fill height: Fit flow: Down spacing: 4
+      Label{text: "或点一个例子" draw_text.color: faint draw_text.text_style.font_size: 11}
+      SolidView{width: Fill height: Fit flow: Flow.Right{wrap: true} spacing: 6
+        Tiny{text: "下周三去深圳" on_click: || use_one("下周三我得去趟深圳")}
+        Tiny{text: "周末买显示器" on_click: || use_one("周末去买台新显示器")}
+        Tiny{text: "记得交房租" on_click: || use_one("下周二记得交房租")}
+        Tiny{text: "寄快递到上海" on_click: || use_one("帮我把那个快递寄到上海")}
+        Tiny{text: "我不坐飞机" on_click: || use_one("我不坐飞机")}
+      }
+    }
+
+    // 卡面
+    SolidView{width: Fill height: Fit flow: Down padding: 12 show_bg: true
+      draw_bg.color: cardbg draw_bg.border_radius: 16.0
+
+      card := SolidView{width: Fill height: Fit flow: Down spacing: 6
+        on_render: || {
+          Label{width: Fill text: note draw_text.color: dim draw_text.text_style.font_size: 12}
+
+          if !built {
+              Label{text: "卡会出现在这里" draw_text.color: faint draw_text.text_style.font_size: 12}
+          } else {
+              Label{text: kind_zh(kind) + " · 现场造的卡" draw_text.color: accent draw_text.text_style.font_size: 11}
+              Label{width: Fill text: "「" + raw + "」" draw_text.color: ink
+                draw_text.text_style: theme.font_bold{font_size: 18}}
+
+              if when != "" {
+                  Label{width: Fill text: label_of("when") + " · " + when draw_text.color: ink
+                    draw_text.text_style.font_size: 13}
+              }
+              if where != "" {
+                  Label{width: Fill text: label_of("where") + " · " + where draw_text.color: ink
+                    draw_text.text_style.font_size: 13}
+              }
+              if when == "" {
+                  if where == "" {
+                      if kind != "pref" {
+                          Label{width: Fill text: "原文里没读到时间和地点 —— 只按类型记下"
+                            draw_text.color: faint draw_text.text_style.font_size: 11}
+                      }
+                  }
+              }
+
+              for h in hints {
+                  Label{width: Fill text: h draw_text.color: warn draw_text.text_style.font_size: 12}
+              }
+
+              Label{width: Fill text: src_line()
+                draw_text.color: faint draw_text.text_style.font_size: 10}
+
+              SolidView{width: Fill height: 8}
+
+              if done {
+                  Label{width: Fill text: "✓ 已记下，等你点头再动" draw_text.color: accent
+                    draw_text.text_style.font_size: 13}
+                  SolidView{width: Fill height: Fit flow: Right align: Align{x: 1.0}
+                    Ghost{text: "再来一张" on_click: || reset()}
+                  }
+              } else {
+                  SolidView{width: Fill height: Fit flow: Right align: Align{x: 1.0}
+                    Pill{text: act_of() on_click: || confirm()}
+                    SolidView{width: 8 height: 1}
+                    Ghost{text: "改一下" on_click: || back_to_edit()}
+                  }
+              }
+          }
+
+          SolidView{width: Fill height: 1 draw_bg.color: line}
+          Label{width: Fill text: "本机记住 " + ("" + mem_count) + " 张卡（确认后才会记住）"
+            draw_text.color: faint draw_text.text_style.font_size: 11}
+          if mem_count == 0 {
+              Label{width: Fill text: "还没记住任何卡。" draw_text.color: faint
+                draw_text.text_style.font_size: 11}
+          }
+          for i in min(mem_count, 6) {
+              Label{width: Fill text: "· " + mem_log_line(i) draw_text.color: dim
+                draw_text.text_style.font_size: 12}
+          }
+        }
+      }
+    }
+  }
+}

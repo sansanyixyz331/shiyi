@@ -1,0 +1,25 @@
+{
+  "agent": null,
+  "capabilities": [
+    "storage",
+    "model",
+    "octos.session.history"
+  ],
+  "compute": {
+    "instruction_budget": null,
+    "memory_bytes": null
+  },
+  "id": "shiyi-live",
+  "integrity": {
+    "bundle_blake3": "bdd7addf03f7df2e078a99e847f51f0bc7530e9c0e9612d192fa20096f09e31b"
+  },
+  "name": "拾意 · 现场造卡",
+  "network": {
+    "hosts": []
+  },
+  "schema": 1,
+  "storage": {
+    "max_bytes": 262144
+  },
+  "version": "0.6.0"
+}

@@ -23,23 +23,25 @@
 | 11 | 至少一次**可核对的操作** | ✅ | `build/verify_flow.py` 宿主内真点击 → `build/_evidence/flow_run.json` |
 | 12 | 一个**失败或空状态** | ✅ | 未签名被拒 / 摘要不符被拒（视频 ③ 段 + `_evidence` 抓图） |
 | 13 | **App Hub 提交** | ✅ **已提** | `OctoSense-App-Hub` issue **#76**（Submit shiyi 0.3.3）· `hub check` PASSED（逐字输出见 issue） |
+| 14 | 官方评分口径**逐条对齐**（加分） | ✅ | [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（12 场景 / 三硬点 / AI 总线 / 两形态） |
 
 **⇒ 结论：初赛材料已齐，可提交。**
 
 ---
 
-## 🔬 深度扩展（独立备件 · 不进提交包）
+## 🔬 两种形态（同一件作品，两副面孔）
 
-除"出卡"外，另备两条**已核实 / 已跑通**的深度线。两条都是**独立备件，不改变提交物 `bundle/`**
-（`capabilities = []`，任何 Shell 都能开；备件随宿主就绪再合入）：
+官方赛道一承认**两种交付形态**（进程应用 / App Card）。「拾意」两种都做了 ——
+覆盖官方问答里"不要静态概念稿"的正面回答：
 
-| 线 | 接官方能力 | 备件 | 实证 |
+| 形态 | 位置 | 能力 | 实证 |
 |---|---|---|---|
-| **宿主执行（真发消息 · 已进提交物）** | `matrix.send_message` | `bundle/`（同一条 `bindings.json`）| ✅ **本机跑通**：[`rinx/证据/演示视频_Rinx执行链_拾意.mp4`](rinx/证据/演示视频_Rinx执行链_拾意.mp4) + 房间消息 JSON |
-| **接入设备助手（AI）** | `octos.*`（Rinx）/ `model`·`agent`（Shell） | `ai/`（契约三件 + 本地跑通实证） | ✅ **本地真跑通**：Rinx → 本地 octos 内核 → DeepSeek，**4 轮回复各不相同**（[`ai/本地跑通_20261004.md`](ai/本地跑通_20261004.md)） |
+| **① L0 卡片包**（主提交） | `bundle/`（`page.card` + `bindings.json`） | 打开即渲染五屏 + 三条**总线调用**（`octos.session.history` 读助手记忆 · `octos.turn.start` 问助手 · `matrix.send_message` 真发消息） | `hub check PASSED`（Linux） · [`rinx/证据/`](rinx/证据/) |
+| **② 脚本应用 · 现场造卡** | `apps/shiyi-live/bundle/`（`main.splash`） | **一句话 → 本机识别 → 当场长出卡**；改一下 / 确认 / 再来一张，三种状态**真交互** | **Rinx 真机跑通**：导入→Run→说习惯→确认→记忆更新→造出行卡带记忆行（[`apps/shiyi-live/README.md`](apps/shiyi-live/README.md)） |
 
-> 为什么不直接写进 `bundle/`：现行多数 Shell 只认 7 项能力、**拒收未知字段** ⇒ 硬塞会导致
-> "作品在评审宿主里打不开"。**保命版提交物 + 独立备件**是刻意的风险控制。
+> **摘要分平台**：形态一交 **Linux 评测** ⇒ 留 Linux digest；形态二跑在 **Windows 宿主（Rinx）**
+> ⇒ 留 Windows digest（**谁运行它，就用谁那一侧的 hub 盖章**）。
+> 逐条对官方评分口径见 [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)。
 
 ---
 
@@ -52,7 +54,7 @@
 | 固定提交号 | 本仓库 `main` 分支 HEAD（提交入口 = 官方 issue #13，已提交仓库地址） |
 | 许可证 | **Apache-2.0**（`LICENSE`） |
 | 公开仓库 | <https://github.com/sansanyixyz331/shiyi> |
-| 作品形态 | **Hub 卡片包**（manifest + listing + page.card + kit） |
+| 作品形态 | **两形态**：① Hub 卡片包（`bundle/`）② 脚本应用（`apps/shiyi-live/bundle/`） |
 | 支持方式 | <https://github.com/sansanyixyz331/shiyi/issues> |
 
 ---
