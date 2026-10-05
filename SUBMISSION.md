@@ -22,7 +22,7 @@
 | 10 | 已报名成员名单 | ✅ | 官方 issue #5 报名评论（队伍 `三三Claw`） |
 | 11 | 至少一次**可核对的操作** | ✅ | `build/verify_flow.py` 宿主内真点击 → `build/_evidence/flow_run.json` |
 | 12 | 一个**失败或空状态** | ✅ | 未签名被拒 / 摘要不符被拒（视频 ③ 段 + `_evidence` 抓图） |
-| 13 | **App Hub 提交** | ✅ **已提** | `OctoSense-App-Hub` issue **#76**（Submit shiyi 0.3.3）· `hub check` PASSED（逐字输出见 issue） |
+| 13 | **App Hub 提交** | ✅ **已提** | `OctoSense-App-Hub` issue **#76**（**Submit shiyi 0.7.3**；**一个 issue 覆盖两形态**：主 = L0 卡片包 `bundle/` 0.3.3〔Linux 章〕，附 = 脚本应用 `apps/shiyi-live/` 0.7.3〔Windows 宿主〕）· `hub check` PASSED（逐字输出见 issue） |
 | 14 | 官方评分口径**逐条对齐**（加分） | ✅ | [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（12 场景 / 三硬点 / AI 总线 / 两形态） |
 
 **⇒ 结论：初赛材料已齐，可提交。**
@@ -39,6 +39,7 @@
 | **① L0 卡片包**（主提交） | `bundle/`（`page.card` + `bindings.json`） | 打开即渲染五屏 + 三条**总线调用**（`octos.session.history` 读助手记忆 · `octos.turn.start` 问助手 · `matrix.send_message` 真发消息） | `hub check PASSED`（Linux） · [`rinx/证据/`](rinx/证据/) |
 | **② 脚本应用 · 现场造卡** | `apps/shiyi-live/bundle/`（`main.splash`，**0.7.3**） | **六个能力**（两个"读"开、模型关）：`matrix.read_messages` 读**绑定房间**的消息 → 点一条 → 当场造卡；**`matrix.send_message` 确认后把结论真发回群**（"记下了"→"办成了"）；`matrix.profile` 读你的名字 → 标出「（你）」；`octos.session.history` 读助手会话；`storage` 长期记忆；`model`（服务名 `model.complete`）代码就位、出厂关 | **Rinx 真机全链路**：导入（绑房间）→Review 列出 **6 个服务**→Run→读到 4 条真消息→点一条→造卡→**确认 → 群里真多一条回执**（记忆 0→1）（[`docs/evidence/act/`](docs/evidence/act/) + `chat-read/` + `profile/`） |
 | **③ 真机连续录屏 · 端到端** | [`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/rinx-live-end-to-end.mp4)（**20.7 秒 / 1316×1436 / H.264**，**一段连续真实录屏，非帧拼**）：导入 → Review（5 服务）→ Run → 读房间消息 → 点一条 → 造卡 → **确认行程** → 长期记忆 **0→1**。全程由宿主自带的 `MAKEPAD_REMOTE` 遥控口驱动，无人手介入；复现见 [`docs/evidence/live-run/README.md`](docs/evidence/live-run/README.md) |
+| **④ 真机连续录屏 · 「确认 = 办事」（0.7.3）** | [`docs/evidence/act/rinx-act-end-to-end.mp4`](docs/evidence/act/rinx-act-end-to-end.mp4)（**27 秒 / 2200×1440 / H.264**，一段连续真实录屏、非帧拼）：导入（绑房间）→ Review 列出 **6 个服务** → Run → 读到房间 **4 条真消息** → 点一条 → 造卡 → **确认 → 群里真多一条回执**（长期记忆 0→1）。逐步 5 帧截图见 [`docs/evidence/act/`](docs/evidence/act/)，复现见其 `README.md` |
 
 > **摘要分平台**：形态一交 **Linux 评测** ⇒ 留 Linux digest；形态二跑在 **Windows 宿主（Rinx）**
 > ⇒ 留 Windows digest（**谁运行它，就用谁那一侧的 hub 盖章**）。
@@ -154,6 +155,7 @@ python build/record_demo.py                                  # → build/_video/
 | 演示短片 | `build/_video/shiyi-walkthrough.mp4` | 2 分 15 秒，四段 |
 | **长期记忆文件** | `.local-state/memory.json` | 运行期生成（`.gitignore` 排除）；`flow_run.json` 的 `memory` 段有三条断言的实测值 |
 | 门禁 / 审查包 | `build/review.json` | `hub scan` 7 问 |
+| **「确认 = 办事」真机取证（0.7.3）** | `docs/evidence/act/` | Review 列出 6 服务 / 造卡 / 确认已发回群 / 群里新回执 + **27s 连续录屏** + 复现 README |
 
 ## F. 已知限制（诚实声明）
 
