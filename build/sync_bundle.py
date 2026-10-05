@@ -43,6 +43,8 @@ SCREENS = [
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", default="0.2.2")
+    ap.add_argument("--notes", default=None,
+                    help="replace listing.release_notes; omitted keeps the existing one")
     args = ap.parse_args()
 
     # 1. The opening screen is the bundle's card.
@@ -72,10 +74,11 @@ def main():
     lp = os.path.join(BUNDLE, "listing.json")
     listing = json.load(open(lp, encoding="utf-8"))
     listing["screenshots"] = names
-    listing["release_notes"] = (
-        "%s — five screens (read, ask, plan, remember, done), each one a "
-        "hand-written L0 card rendered through the reference host." % args.version
-    )
+    # A hand-written release note is kept: overwriting it with a template on
+    # every sync throws away what the release actually changed. Pass --notes to
+    # replace it.
+    if args.notes:
+        listing["release_notes"] = args.notes
     with open(lp, "w", encoding="utf-8") as f:
         json.dump(listing, f, ensure_ascii=False, indent=2)
         f.write("\n")

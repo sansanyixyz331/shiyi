@@ -224,5 +224,13 @@
   "read": {
     "is_ok": false,
     "error": "assistant has not answered yet"
+  },
+  "sent": {
+    "is_ok": false,
+    "error": "nothing has been sent yet"
+  },
+  "session": {
+    "is_ok": false,
+    "error": "no session opened yet"
   }
 }

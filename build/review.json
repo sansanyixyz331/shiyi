@@ -148,6 +148,15 @@
             "y": 212
           }
         },
+        "row_ai": {
+          "component": "note",
+          "layout": {
+            "h": 44,
+            "w": 364,
+            "x": 24,
+            "y": 530
+          }
+        },
         "row_kind": {
           "component": "row",
           "layout": {
@@ -213,12 +222,26 @@
         }
       },
       "theme": "light"
+    },
+    "read": {
+      "error": "assistant has not answered yet",
+      "is_ok": false
+    },
+    "sent": {
+      "error": "nothing has been sent yet",
+      "is_ok": false
+    },
+    "session": {
+      "error": "no session opened yet",
+      "is_ok": false
     }
   },
-  "card_source": "# ledger shiyi-01-read@0.2.2\n# level: L0\n# profile: ui/l0\n# model: shiyi\n#\n# 拾意 · Pickup — screen 1 of 5: READ.\n#\n# One message the user already sent. This screen says back only what was taken\n# out of it, and where each piece came from, then asks one question: is this\n# the thing? Nothing is decided here and nothing is guessed — the two facts\n# that are NOT in the message are named as open, not filled in.\n#\n# Screens are separate cards, not states inside one card, because the reference\n# host's card path (kit_pack) carries no tap events: a Kit node cannot declare\n# on_tap, so no card here can move itself to the next screen. What moves the\n# app forward is the Agent, which reads the action the tapped button writes\n# into service-actions.json and hands back the next card. That is also the\n# shape the official aircon app uses — 12 screens, 12 cards, actions declared\n# beside them.\n#\n# No `source` is declared, on purpose. L0 sources name catalogued capabilities\n# (weather, quotes, places…); there is no \"read a chat message\" capability,\n# because reading the message is the Agent's job and the card is what the\n# Agent produces. So every fact printed here is declared `copy`, and each one\n# says where it came from — the no-facts rule honoured, not dodged.\n\ntheme light\n\nstate act_enabled { shape: bool, initial: true }\n\n# ── copy ─────────────────────────────────────────────────────────────────────\ncopy eyebrow   { class: vocabulary, en: \"拾意 · 第一步 · 识别\", zh: \"拾意 · 第一步 · 识别\" }\ncopy heading   { class: vocabulary, en: \"从你发过的话里，读出了一个安排\", zh: \"从你发过的话里，读出了一个安排\" }\n\ncopy quote     { class: user-copy,  en: \"「下周三我得去趟深圳」\", zh: \"「下周三我得去趟深圳」\" }\ncopy quote_src { class: vocabulary, en: \"家庭群 · 9月24日 21:14 · 消息原文\", zh: \"家庭群 · 9月24日 21:14 · 消息原文\" }\n\ncopy f_when    { class: vocabulary, en: \"时间 · 下周三 9月30日 · 出自原文\", zh: \"时间 · 下周三 9月30日 · 出自原文\" }\ncopy f_where   { class: vocabulary, en: \"地点 · 广东深圳 · 出自原文\", zh: \"地点 · 广东深圳 · 出自原文\" }\ncopy f_kind    { class: vocabulary, en: \"类型 · 出行安排 · 识别所得\", zh: \"类型 · 出行安排 · 识别所得\" }\ncopy f_open    { class: vocabulary, en: \"还没定：坐哪班、几点。这一步我不猜。\", zh: \"还没定：坐哪班、几点。这一步我不猜。\" }\n\ncopy memo_lbl  { class: vocabulary, en: \"从本机记忆里读到：你坐高铁，不坐飞机。\", zh: \"从本机记忆里读到：你坐高铁，不坐飞机。\" }\ncopy memo_eff  { class: vocabulary, en: \"所以往下只会给你高铁方案。\", zh: \"所以往下只会给你高铁方案。\" }\n\n# Where this reading came from. This screen was read by the app's local rules,\n# because no OctoSense shell answers the `model` service yet; when the device's\n# assistant is available the same screen is read by it instead. Which one ran is\n# part of the record, so it is printed, not implied.\ncopy f_src     { class: vocabulary, en: \"识别来源 · 本地规则（设备助手可用时改由它做）\", zh: \"识别来源 · 本地规则（设备助手可用时改由它做）\" }\n\ncopy act_yes   { class: vocabulary, en: \"对，就是这件事\", zh: \"对，就是这件事\" }\ncopy act_fix   { class: vocabulary, en: \"不对，改一下\", zh: \"不对，改一下\" }\n\n# ── components ───────────────────────────────────────────────────────────────\ncomponent Page(instance: text) {\n  view Kit(component: \"page\", instance: instance) { slot }\n}\ncomponent Slab(instance: text) {\n  view Kit(component: \"band\", instance: instance) { slot }\n}\ncomponent Hairline(instance: text) {\n  view Kit(component: \"hairline\", instance: instance)\n}\ncomponent Eyebrow(instance: text, text: text) {\n  view Kit(component: \"eyebrow\", instance: instance, text: text)\n}\ncomponent Heading(instance: text, text: text) {\n  view Kit(component: \"heading\", instance: instance, text: text)\n}\ncomponent Quote(instance: text, text: text) {\n  view Kit(component: \"quote\", instance: instance, text: text)\n}\ncomponent Source(instance: text, text: text) {\n  view Kit(component: \"source\", instance: instance, text: text)\n}\ncomponent Line(instance: text, text: text) {\n  view Kit(component: \"row\", instance: instance, text: text)\n}\ncomponent Note(instance: text, text: text) {\n  view Kit(component: \"note\", instance: instance, text: text)\n}\ncomponent Action(instance: text) {\n  view Kit(component: \"action\", instance: instance) { slot }\n}\ncomponent ActionFill(instance: text) {\n  view Kit(component: \"action_fill\", instance: instance) { slot }\n}\ncomponent ActionGhost(instance: text) {\n  view Kit(component: \"action_ghost\", instance: instance) { slot }\n}\ncomponent ActionControl(instance: text, enabled: bool) {\n  view Kit(component: \"action_control\", instance: instance, enabled: enabled)\n}\ncomponent ActionLabel(instance: text, text: text) {\n  view Kit(component: \"action_label\", instance: instance, text: text)\n}\ncomponent GhostLabel(instance: text, text: text) {\n  view Kit(component: \"ghost_label\", instance: instance, text: text)\n}\n\n# ── view ─────────────────────────────────────────────────────────────────────\nview root Page(instance: \"page\") {\n  Eyebrow(instance: \"eyebrow\", text: copy.eyebrow)\n  Heading(instance: \"heading\", text: copy.heading)\n\n  # What was actually said: the user's own words, quoted, with where they came\n  # from — so the reading can be checked against its source.\n  Slab(instance: \"quote_band\") {\n    Quote(instance: \"quote\", text: copy.quote)\n    Source(instance: \"quote_src\", text: copy.quote_src)\n  }\n\n  Hairline(instance: \"rule_1\")\n\n  # What was taken out, each line saying whether it is the message's own words\n  # or something this app worked out.\n  Line(instance: \"row_when\",  text: copy.f_when)\n  Line(instance: \"row_where\", text: copy.f_where)\n  Line(instance: \"row_kind\",  text: copy.f_kind)\n  Note(instance: \"row_open\",  text: copy.f_open)\n\n  # The reading's source line: the record of who did this step, printed.\n  Note(instance: \"row_src\",   text: copy.f_src)\n\n  Hairline(instance: \"rule_2\")\n\n  # The long-term rule this app already remembers, stated before it is used.\n  Note(instance: \"memo_lbl\", text: copy.memo_lbl)\n  Note(instance: \"memo_eff\", text: copy.memo_eff)\n\n  # One question, two answers, neither of them silent.\n  Action(instance: \"action_yes\") {\n    ActionFill(instance: \"action_yes_bg\") {\n\n    }\n    ActionControl(instance: \"action_yes_ctl\", enabled: act_enabled)\n    ActionLabel(instance: \"action_yes_lbl\", text: copy.act_yes)\n  }\n  Action(instance: \"action_fix\") {\n    ActionGhost(instance: \"action_fix_bg\") {\n\n    }\n    ActionControl(instance: \"action_fix_ctl\", enabled: act_enabled)\n    GhostLabel(instance: \"action_fix_lbl\", text: copy.act_fix)\n  }\n}\n",
+  "card_source": "# ledger shiyi-01-read@0.2.2\r\n# level: L0\r\n# profile: ui/l0\r\n# model: shiyi\r\n#\r\n# 拾意 · Pickup — screen 1 of 5: READ.\r\n#\r\n# One message the user already sent. This screen says back only what was taken\r\n# out of it, and where each piece came from, then asks one question: is this\r\n# the thing? Nothing is decided here and nothing is guessed — the two facts\r\n# that are NOT in the message are named as open, not filled in.\r\n#\r\n# Screens are separate cards, not states inside one card, because the reference\r\n# host's card path (kit_pack) carries no tap events: a Kit node cannot declare\r\n# on_tap, so no card here can move itself to the next screen. What moves the\r\n# app forward is the Agent, which reads the action the tapped button writes\r\n# into service-actions.json and hands back the next card. That is also the\r\n# shape the official aircon app uses — 12 screens, 12 cards, actions declared\r\n# beside them.\r\n#\r\n# No `source` is declared, on purpose. L0 sources name catalogued capabilities\r\n# (weather, quotes, places…); there is no \"read a chat message\" capability,\r\n# because reading the message is the Agent's job and the card is what the\r\n# Agent produces. So every fact printed here is declared `copy`, and each one\r\n# says where it came from — the no-facts rule honoured, not dodged.\r\n\r\ntheme light\r\n\r\nstate act_enabled { shape: bool, initial: true }\r\n\r\n# What the device assistant (the host's local octos kernel) says is still\r\n# missing. `read` is the target of `octos.turn.start` in bindings.json: the\r\n# host writes each service result as data[target] = {\"is_ok\": …, \"data\": …}.\r\n# Seeded in page.data.json as \"not answered yet\", so the guard below is false\r\n# until a real reply lands — the card never depends on a call succeeding.\r\nstate read { shape: text }\r\n\r\n# ── copy ─────────────────────────────────────────────────────────────────────\r\ncopy eyebrow   { class: vocabulary, en: \"拾意 · 第一步 · 识别\", zh: \"拾意 · 第一步 · 识别\" }\r\ncopy heading   { class: vocabulary, en: \"从你发过的话里，读出了一个安排\", zh: \"从你发过的话里，读出了一个安排\" }\r\n\r\ncopy quote     { class: user-copy,  en: \"「下周三我得去趟深圳」\", zh: \"「下周三我得去趟深圳」\" }\r\ncopy quote_src { class: vocabulary, en: \"家庭群 · 9月24日 21:14 · 消息原文\", zh: \"家庭群 · 9月24日 21:14 · 消息原文\" }\r\n\r\ncopy f_when    { class: vocabulary, en: \"时间 · 下周三 9月30日 · 出自原文\", zh: \"时间 · 下周三 9月30日 · 出自原文\" }\r\ncopy f_where   { class: vocabulary, en: \"地点 · 广东深圳 · 出自原文\", zh: \"地点 · 广东深圳 · 出自原文\" }\r\ncopy f_kind    { class: vocabulary, en: \"类型 · 出行安排 · 识别所得\", zh: \"类型 · 出行安排 · 识别所得\" }\r\ncopy f_open    { class: vocabulary, en: \"还没定：坐哪班、几点。这一步我不猜。\", zh: \"还没定：坐哪班、几点。这一步我不猜。\" }\r\n\r\n# Both sources are stated, never merged: time/place/type are read by the app's\r\n# local rules, while \"what is still missing\" is supplied by the device\r\n# assistant when one is available — and stays the local rule's line when it is\r\n# not. Which one ran is printed, not implied.\r\ncopy memo_lbl  { class: vocabulary, en: \"从本机记忆里读到：你坐高铁，不坐飞机。\", zh: \"从本机记忆里读到：你坐高铁，不坐飞机。\" }\r\ncopy memo_eff  { class: vocabulary, en: \"所以往下只会给你高铁方案。\", zh: \"所以往下只会给你高铁方案。\" }\r\n\r\n# Where this reading came from. The time/place/type above were read by the app's\r\n# local rules; the \"what's still missing\" line below is supplemented by the\r\n# device assistant when one is available, and falls back to the local rule when\r\n# it is not. Which one ran is part of the record, so it is printed, not implied.\r\ncopy f_src     { class: vocabulary, en: \"识别来源 · 本地规则（设备助手可用时另加一行）\", zh: \"识别来源 · 本地规则（设备助手可用时另加一行）\" }\r\n\r\ncopy act_yes   { class: vocabulary, en: \"对，就是这件事\", zh: \"对，就是这件事\" }\r\ncopy act_fix   { class: vocabulary, en: \"不对，改一下\", zh: \"不对，改一下\" }\r\n\r\n# ── components ───────────────────────────────────────────────────────────────\r\ncomponent Page(instance: text) {\r\n  view Kit(component: \"page\", instance: instance) { slot }\r\n}\r\ncomponent Slab(instance: text) {\r\n  view Kit(component: \"band\", instance: instance) { slot }\r\n}\r\ncomponent Hairline(instance: text) {\r\n  view Kit(component: \"hairline\", instance: instance)\r\n}\r\ncomponent Eyebrow(instance: text, text: text) {\r\n  view Kit(component: \"eyebrow\", instance: instance, text: text)\r\n}\r\ncomponent Heading(instance: text, text: text) {\r\n  view Kit(component: \"heading\", instance: instance, text: text)\r\n}\r\ncomponent Quote(instance: text, text: text) {\r\n  view Kit(component: \"quote\", instance: instance, text: text)\r\n}\r\ncomponent Source(instance: text, text: text) {\r\n  view Kit(component: \"source\", instance: instance, text: text)\r\n}\r\ncomponent Line(instance: text, text: text) {\r\n  view Kit(component: \"row\", instance: instance, text: text)\r\n}\r\ncomponent Note(instance: text, text: text) {\r\n  view Kit(component: \"note\", instance: instance, text: text)\r\n}\r\ncomponent Action(instance: text) {\r\n  view Kit(component: \"action\", instance: instance) { slot }\r\n}\r\ncomponent ActionFill(instance: text) {\r\n  view Kit(component: \"action_fill\", instance: instance) { slot }\r\n}\r\ncomponent ActionGhost(instance: text) {\r\n  view Kit(component: \"action_ghost\", instance: instance) { slot }\r\n}\r\ncomponent ActionControl(instance: text, enabled: bool) {\r\n  view Kit(component: \"action_control\", instance: instance, enabled: enabled)\r\n}\r\ncomponent ActionLabel(instance: text, text: text) {\r\n  view Kit(component: \"action_label\", instance: instance, text: text)\r\n}\r\ncomponent GhostLabel(instance: text, text: text) {\r\n  view Kit(component: \"ghost_label\", instance: instance, text: text)\r\n}\r\n\r\n# ── view ─────────────────────────────────────────────────────────────────────\r\nview root Page(instance: \"page\") {\r\n  Eyebrow(instance: \"eyebrow\", text: copy.eyebrow)\r\n  Heading(instance: \"heading\", text: copy.heading)\r\n\r\n  # What was actually said: the user's own words, quoted, with where they came\r\n  # from — so the reading can be checked against its source.\r\n  Slab(instance: \"quote_band\") {\r\n    Quote(instance: \"quote\", text: copy.quote)\r\n    Source(instance: \"quote_src\", text: copy.quote_src)\r\n  }\r\n\r\n  Hairline(instance: \"rule_1\")\r\n\r\n  # What was taken out, each line saying whether it is the message's own words\r\n  # or something this app worked out.\r\n  Line(instance: \"row_when\",  text: copy.f_when)\r\n  Line(instance: \"row_where\", text: copy.f_where)\r\n  Line(instance: \"row_kind\",  text: copy.f_kind)\r\n  # The local rule's answer: always rendered. The card depends on no service\r\n  # succeeding, so a host with no assistant shows this screen unchanged.\r\n  Note(instance: \"row_open\",  text: copy.f_open)\r\n\r\n  # The device assistant's answer, rendered only when it actually replied\r\n  # (read.is_ok). On a failed or unconfigured turn this guard is false and the\r\n  # path is never evaluated, so a dead assistant cannot break the card.\r\n  when read.is_ok { Note(instance: \"row_ai\", text: read.data.text) }\r\n\r\n  # The reading's source line: the record of who did this step, printed.\r\n  Note(instance: \"row_src\",   text: copy.f_src)\r\n\r\n  Hairline(instance: \"rule_2\")\r\n\r\n  # The long-term rule this app already remembers, stated before it is used.\r\n  Note(instance: \"memo_lbl\", text: copy.memo_lbl)\r\n  Note(instance: \"memo_eff\", text: copy.memo_eff)\r\n\r\n  # One question, two answers, neither of them silent.\r\n  Action(instance: \"action_yes\") {\r\n    ActionFill(instance: \"action_yes_bg\") {\r\n\r\n    }\r\n    ActionControl(instance: \"action_yes_ctl\", enabled: act_enabled)\r\n    ActionLabel(instance: \"action_yes_lbl\", text: copy.act_yes)\r\n  }\r\n  Action(instance: \"action_fix\") {\r\n    ActionGhost(instance: \"action_fix_bg\") {\r\n\r\n    }\r\n    ActionControl(instance: \"action_fix_ctl\", enabled: act_enabled)\r\n    GhostLabel(instance: \"action_fix_lbl\", text: copy.act_fix)\r\n  }\r\n}\r\n",
   "entry": "page.card",
   "grants": [
-    "Draw its screens, and nothing else"
+    "Send messages in rooms you allow",
+    "Open its own conversation with the assistant",
+    "Ask the assistant to work for it, using the device's AI settings"
   ],
   "listing": {
     "age_rating": "all",
@@ -234,14 +257,14 @@
     ],
     "license": "Apache-2.0",
     "platforms": [
-      "android"
+      "windows"
     ],
     "publisher": {
       "name": "sansanyixyz331",
       "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md",
       "support": "https://github.com/sansanyixyz331/shiyi"
     },
-    "release_notes": "0.2.2 — five screens (read, ask, plan, remember, done), each one a hand-written L0 card rendered through the reference host.",
+    "release_notes": "0.3.3 — the bundle now asks for three host services. The opening screen still asks the device assistant what the message leaves out (octos.session.open, octos.turn.start), and it now also asks Rinx's mini-app host to post one line into the room chosen at import (matrix.send_message), so a reading can leave the card and reach the chat. Nothing here depends on a call succeeding: every read sits behind a boolean guard, and a host that serves none of these draws the same card, unchanged. Gate on the Linux hub: hub check PASSED — grants {matrix.send_message, octos.session.open, octos.turn.start}. The cards themselves are unchanged from 0.3.2.",
     "schema": 1,
     "screenshots": [
       "screenshots/01-read.png",
@@ -254,14 +277,18 @@
   },
   "manifest": {
     "agent": null,
-    "capabilities": [],
+    "capabilities": [
+      "matrix.send_message",
+      "octos.session.open",
+      "octos.turn.start"
+    ],
     "compute": {
       "instruction_budget": null,
       "memory_bytes": null
     },
     "id": "shiyi",
     "integrity": {
-      "bundle_blake3": "94f6610781790c6e7f0b7a28f193598d1289354ec955957dfa9596da069624b5",
+      "bundle_blake3": "986c4ac18113a198e6688a9b86084fdc1aa638d68d82db421b92ac41b74966a2",
       "signature": null
     },
     "name": "拾意 Pickup",
@@ -272,7 +299,7 @@
     "storage": {
       "max_bytes": null
     },
-    "version": "0.2.2"
+    "version": "0.3.3"
   },
   "questions": [
     "Does the app do what its name, subtitle and description claim? Cite the text in its source.",
@@ -285,5 +312,5 @@
   ],
   "schema": 1,
   "screenshots": [],
-  "version": "0.2.2"
+  "version": "0.3.3"
 }

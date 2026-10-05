@@ -1,6 +1,7 @@
 {
   "agent": null,
   "capabilities": [
+    "matrix.send_message",
     "octos.session.open",
     "octos.turn.start"
   ],
@@ -10,10 +11,10 @@
   },
   "id": "shiyi",
   "integrity": {
-    "bundle_blake3": "5fb22d9b9cf87753f09127422ddf7f6dfd7f619b94485e6d16802bb48e811caa",
+    "bundle_blake3": "986c4ac18113a198e6688a9b86084fdc1aa638d68d82db421b92ac41b74966a2",
     "signature": {
       "key_id": "sansanyixyz331",
-      "value": "4571740d54e1555822d6a3507393341a240bf3d0e1fb67626029d257f8c8b9187cb5d4441d49191d8d6f59079403a57acc0e23afa4e00e03072bb7274530430d"
+      "value": "df09e626b37492d2aa824adb8e4dbf99048d59763c0ccf9f79517fa210c02b85e00bbe26fd1bc432db0dc54f3aca4272a7c339207e39468a399d1a684f222302"
     }
   },
   "name": "拾意 Pickup",
@@ -24,5 +25,5 @@
   "storage": {
     "max_bytes": null
   },
-  "version": "0.3.2"
+  "version": "0.3.3"
 }

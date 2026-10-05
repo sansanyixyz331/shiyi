@@ -54,7 +54,7 @@ shiyi/
   LICENSE                # Apache-2.0
   PRIVACY.md             # 数据与隐私声明（listing.privacy_policy_url 指向它）
   bundle/                # ★ 唯一的发布产物（提交物）—— 只带首屏
-    manifest.json        # 应用身份 / 版本 / 完整性与能力声明（capabilities: octos.session.open, octos.turn.start）
+    manifest.json        # 应用身份 / 版本 / 完整性与能力声明（capabilities: matrix.send_message, octos.session.open, octos.turn.start）
     listing.json         # 商店条目：描述 / 分类 / 截图 / 图标 / 许可
     bindings.json        # 能力接线：on_open 问本机设备助手一句，结果写进卡片数据槽 read
     page.card            # 屏 1 · 识别（Octoscript L0，手写）
@@ -83,7 +83,7 @@ shiyi/
     证据/                 #   内核会话 / 内核日志 / 验收截图 / **卡片显示回复**实拍（已脱敏）
     templates/            #   ★ 显示 AI 回复的卡 + bindings + data 占位（可直接复用）
   rinx/                  # ★ 不进 bundle：宿主执行扩展 + 真机实证
-    manifest.send.json   #   执行版清单（capabilities: matrix.send_message）
+    manifest.send.json   #   执行版清单（capabilities: matrix.send_message）；「真发送」的独立接线参考与真机实证（同一能力自 0.3.3 起已进 bundle）
     bindings.json        #   能力接线：on_open 声明
     证据/                 #   真机实证（Review / Run 截图 + 房间消息 JSON）
   build/                 # ★ 不进 bundle
@@ -109,13 +109,14 @@ shiyi/
 
 ## 4c. 扩展能力：设备助手（AI）与宿主执行
 
-`bundle/` 停在"出卡"（`capabilities = []`，**任何 Shell 都能开**）。**深度以两支独立备件证明** ——
-它们不是提交物，但都已**对着官方契约核实、并在本机实跑**：
+`bundle/manifest.json` 声明**三条官方白名单能力**：`octos.session.open`、`octos.turn.start`、
+`matrix.send_message`。`bundle/bindings.json` 在打开首屏时按序做三件事：开一个与设备助手的会话、
+问它一句、把这一屏的回执发进**导入时选定的**聊天房间。**三条全部在提交物里**，不是备件：
 
 | 线 | 接到哪（官方能力） | 状态 | 位置 |
 |---|---|---|---|
-| **设备助手（AI）** | `octos.session.open` · `octos.turn.start` | ✅ **已进提交物**：`bundle/` 声明能力 + `bindings.json` 接线，首屏卡多一行"助手给的答案" | `bundle/` + [`ai/`](ai/) |
-| **宿主执行（真发消息）** | `matrix.send_message` | ✅ 备件**本机真跑通**（消息进真实 Matrix 房间） | [`rinx/`](rinx/) |
+| **设备助手（AI）** | `octos.session.open` · `octos.turn.start` | ✅ **已进提交物**：`bundle/` 声明 + `bindings.json` 接线，首屏卡多一行"助手给的答案" | `bundle/` + [`ai/`](ai/) |
+| **宿主执行（真发消息）** | `matrix.send_message` | ✅ **已进提交物**（0.3.3 起）：同一条 `bindings.json` 把回执发进聊天；发不出去也不影响卡片 | `bundle/` + [`rinx/`](rinx/) |
 
 **① AI 线 —— 接"设备助手"（已经写进提交物本身）**
 `bundle/manifest.json` 声明官方白名单能力 **`octos.session.open` + `octos.turn.start`**；
@@ -130,7 +131,7 @@ shiyi/
 - **两条路都真实，且卡不依赖任何服务成功**：助手在 → 多渲染一行助手答案；
   助手不在 / 回合失败（例如宿主没配 provider）→ `when read.is_ok` guard 为假，**那条路径根本不求值** ⇒
   卡片照常显示、**不报错**（这条是实测出来的：见 [`ai/证据/`](ai/证据/) 的两张对照图）。
-- 官方门禁实测：`hub check` → **`shiyi 0.3.2 — PASSED`**（**发布者签名版，无告警**；未签名包在开发期需加 `--allow-unsigned`），`grants: capabilities {octos.session.open, octos.turn.start}`；
+- 官方门禁实测（Linux 侧 `hub`）：`hub check` → **`shiyi 0.3.3 — PASSED`**（**发布者签名版，无告警**；未签名包在开发期需加 `--allow-unsigned`），`grants: capabilities {matrix.send_message, octos.session.open, octos.turn.start}`；
   官方参考宿主 `card-host` 也正常 admit + 渲染（**23 节点、0 诊断**）。
 - **在官方 `card-host` 里长什么样（重要，避免误判为缺陷）**：官方参考宿主**不提供任何 host service**，
   所以它渲染的是**本地规则行**（23 节点）——**这就是官方要求的"不依赖服务也完整可用"**，不是缺功能。
@@ -140,12 +141,11 @@ shiyi/
 - 完整实证与配方：[`ai/本地跑通_20261004.md`](ai/本地跑通_20261004.md)（内核往返 4 轮 + 出货版实拍）、
   [`ai/templates/`](ai/templates/)（可复用三件）、[`ai/README.md`](ai/README.md)（接入面说明）。
 
-**② 执行线 —— 让确认"真的发生"**
-官方契约认 **`matrix.send_message`**。这一条**已在本机跑通**：第三方（本地未签名）迷你应用
-经 **Rinx** 宿主，把消息**真的发进 Matrix 房间** —— Review 界面明写
-`Services: matrix.send_message` 与 `Allowed room`；房间消息 **API 可查**（见 [`rinx/证据/`](rinx/证据/)）：
+**② 执行线 —— 让这一屏的回执真的发出去**
 
-- **全流程实录**：[`rinx/证据/演示视频_Rinx执行链_拾意.mp4`](rinx/证据/演示视频_Rinx执行链_拾意.mp4)（43 秒，带字幕：导入 → 填房间 → Review → Run → 消息进聊天）
+`matrix.send_message` 也在同一份 `bundle/bindings.json` 里：打开首屏时，宿主把一句话发进
+**导入时选定的房间**。这一条**本机真跑通** —— Review 界面明写 `Services: matrix.send_message`
+与 `Allowed room`，消息 **API 可查**（见 [`rinx/证据/`](rinx/证据/)）：
 
 ```json
 { "content": { "body": "【拾意 Pickup】下周三去深圳 — 已确认，日程已记下。",
@@ -155,11 +155,14 @@ shiyi/
   "type": "m.room.message" }
 ```
 
-> **为什么发送不写进 `bundle/`**：`matrix.send_message` **在官方封闭能力清单里**（45 个 `matrix.*` 之一），
-> 声明它是**合法**的。但它要**绑定一个房间**才能发（房间在导入时手填），且官方 `card-host`
-> **不提供 host service、发不出去**。放进提交包只会**多一个评审环境里必然失败的调用**，没有收益。
-> ⇒ **保留了发送能力，但放在独立备件 `rinx/` 里展示**（随宿主就绪再合入）。这与官方口径一致：
-> 「要把应用做成不依赖它们也完整可用」。
+- **全流程实录**：[`rinx/证据/演示视频_Rinx执行链_拾意.mp4`](rinx/证据/演示视频_Rinx执行链_拾意.mp4)（43 秒，带字幕：导入 → 填房间 → Review → Run → 消息进聊天）
+
+> **它放在哪里、为什么会这样**：`matrix.send_message` **在官方封闭能力清单里**（45 个 `matrix.*` 之一），
+> 声明它是**合法**的。发到哪个房间**不是卡片说了算** —— 房间在**导入表单里手填、由宿主绑进租约**，
+> 没填就答 `not attached to a room`。而官方参考宿主 `card-host` **不注册任何 host service**
+> ⇒ 在那里三个调用**一个都不会发生**（本机实测：带 `bindings.json` 与不带，首屏渲染**逐字节相同**），
+> 卡片照常完整显示。**每个读服务结果的路径都包在 `when X.is_ok` 里**：助手不在、房间没绑、模型没配，
+> 都只是让那一行不出现，**不会让卡片崩，也不会让应用打不开**。
 
 ## 4d. 端到端环境：这条线是在 Windows 上跑通的
 
@@ -205,7 +208,7 @@ export APP_REPO=C:/gosim_agentic/05_app/shiyi
 # 1. 盖章（每次改完 bundle 都要重盖；改动会改变摘要）
 "$HUB_BIN" stamp "$APP_REPO/bundle"
 
-# 2. 门禁自检（v0.3.2 已签名；未签名包加 --allow-unsigned 的告警属开发期正常）
+# 2. 门禁自检（v0.3.3 已签名；未签名包加 --allow-unsigned 的告警属开发期正常）
 "$HUB_BIN" check "$APP_REPO/bundle" --allow-unsigned
 # 2b. 复检发布者签名（可选）
 # "$HUB_BIN" check "$APP_REPO/bundle" --publisher-key sansanyixyz331=<公钥>
@@ -299,16 +302,16 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 卡外动作 | ✅ 每屏 `service-actions.json`（**14 个控件 / 14 个事件**，与流程同源） |
 | 宿主运行 | ✅ `card-host` 逐屏跑通（五屏 `[SPLASH] … view=true`，零 lower 错误） |
 | 真实截图 | ✅ 五张 `515×1073`（实拍后裁掉宿主标题栏，入 bundle 与各屏目录） |
-| 门禁 | ✅ `hub check` **PASSED**（**v0.3.2 发布者签名版，无告警**） |
+| 门禁 | ✅ `hub check` **PASSED**（**v0.3.3 发布者签名版，无告警**；Linux 侧 `hub`） |
 | 审查包 | ✅ `build/review.json`（7 个审查问题，放 bundle 之外） |
 | 服务逻辑 | ✅ 五屏流程状态机（`src/shiyi_flow.py`）**已与官方参考宿主串成端到端** |
 | 端到端验证（A3） | ✅ `build/verify_flow.py`：五屏逐屏真渲染 + 每步真实点击命中控件 + 事件链推进 → `build/_evidence/` |
 | 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），日志与抓图留证 |
 | 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒 / 1350 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
 | **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
-| **设备助手（AI，已进提交物）** | ✅ `bundle/` 声明 `octos.session.open`+`octos.turn.start` + `bindings.json` 接线；首屏卡多一行助手答案，助手不在时 guard 兜底、**不报错**。`hub check` **PASSED**；实证 [`ai/证据/`](ai/证据/) |
-| **扩展能力 · 宿主执行（备件）** | ✅ [`rinx/`](rinx/)：`matrix.send_message` **本机真跑通** —— 迷你应用经 Rinx 宿主把消息发进真实 Matrix 房间（实证在 `rinx/证据/`） |
-| 签名 / 提交 | ✅ **已签名**（`sansanyixyz331`；`hub sign-manifest` + 公钥复检 `PASSED`）· **已提交** App Hub issue **#76**（`Submit shiyi 0.3.2`） |
+| **设备助手（AI · 已进提交物）** | ✅ `bundle/` 声明 `octos.session.open`+`octos.turn.start` + `bindings.json` 接线；首屏卡多一行助手答案，助手不在时 guard 兜底、**不报错**；实证 [`ai/证据/`](ai/证据/) |
+| **宿主执行 · 真发消息（已进提交物）** | ✅ `bundle/` 声明 `matrix.send_message` + 同一条 `bindings.json`：打开首屏把回执发进导入时选定的房间；**本机真跑通**（实证在 `rinx/证据/`） |
+| 签名 / 提交 | ✅ **已签名**（`sansanyixyz331`；`hub sign-manifest` + 公钥复检 `PASSED`）· `hub check` **PASSED**（`grants: capabilities {matrix.send_message, octos.session.open, octos.turn.start}`）· App Hub issue **#76**（提交物升到 `0.3.3` 后同步更新） |
 
 ## 7. 实测记录（2026-09-26 跑通的关键契约）
 
@@ -392,7 +395,7 @@ layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
 |---|---|
 | 位置 | 仓库下 `.local-state/memory.json`（`.gitignore` 已排除，运行期生成） |
 | 内容 | 偏好（`prefs`）/ 各地点学到的默认（`places`）/ 每次写入的流水（`log`） |
-| 权限 | **零**（`manifest.capabilities = []`）：不联网、不读系统日历、不碰任何其他应用 |
+| 权限 | 三条 host service（`matrix.send_message` / `octos.session.open` / `octos.turn.start`）；**不声明 `net`，不联网**、不读系统日历、不碰任何其他应用；存储用默认配额 |
 | 首次运行 | 文件不存在 → 用内建初始值播种，并如实标注 `seeded_from: "builtin_initial"` |
 | 可核验 | 打开就是个 JSON；`python build/verify_flow.py` 会断言它被真写、且不会被误写 |
 
@@ -403,7 +406,7 @@ layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
 | 作者 / 发布者 | **sansanyixyz331**（队伍 `三三Claw`） |
 | 支持 | <https://github.com/sansanyixyz331/shiyi/issues> |
 | 仓库 | <https://github.com/sansanyixyz331/shiyi> |
-| 版本 | `0.3.2`（tag `v0.3.2`；`v0.3.1` 为前一版冻结） |
+| 版本 | `0.3.3`（tag `v0.3.3`；`v0.3.2` 为初赛冻结版，`v0.3.1` 更早） |
 | 许可 | Apache-2.0 |
 
 ## License

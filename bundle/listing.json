@@ -26,7 +26,7 @@
     "support": "https://github.com/sansanyixyz331/shiyi",
     "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
   },
-  "release_notes": "0.3.2 — five screens (read, ask, plan, remember, done), each one a hand-written L0 card rendered through the reference host. The kit now names the host's built-in CJK face through a token, so Chinese renders as text in the host instead of falling back to boxes; no font file ships inside the bundle. The screen captures were re-rendered from this bundle.",
+  "release_notes": "0.3.3 — the bundle now asks for three host services. The opening screen still asks the device assistant what the message leaves out (octos.session.open, octos.turn.start), and it now also asks Rinx's mini-app host to post one line into the room chosen at import (matrix.send_message), so a reading can leave the card and reach the chat. Nothing here depends on a call succeeding: every read sits behind a boolean guard, and a host that serves none of these draws the same card, unchanged. Gate on the Linux hub: hub check PASSED — grants {matrix.send_message, octos.session.open, octos.turn.start}. The cards themselves are unchanged from 0.3.2.",
   "age_rating": "all",
   "license": "Apache-2.0"
 }
