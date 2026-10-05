@@ -37,7 +37,7 @@
 | 形态 | 位置 | 能力 | 实证 |
 |---|---|---|---|
 | **① L0 卡片包**（主提交） | `bundle/`（`page.card` + `bindings.json`） | 打开即渲染五屏 + 三条**总线调用**（`octos.session.history` 读助手记忆 · `octos.turn.start` 问助手 · `matrix.send_message` 真发消息） | `hub check PASSED`（Linux） · [`rinx/证据/`](rinx/证据/) |
-| **② 脚本应用 · 现场造卡** | `apps/shiyi-live/bundle/`（`main.splash`，**0.7.2**） | **五个能力**（两个"读"开、模型关）：`matrix.read_messages` 读**绑定房间**的消息 → 点一条 → 当场造卡；`matrix.profile` 读你的名字 → 聊天列表里标出「（你）」；`octos.session.history` 读助手会话；`storage` 长期记忆；`model`（服务名 `model.complete`）代码就位、出厂关（宿主不服务它） | **Rinx 真机全链路**：导入（绑房间）→Review 列出 **5 个服务**→Run→读到 4 条真消息、显示「你是 三三Claw」、每条带「（你）」→点一条→造卡（真日期+记忆行）→确认→记忆 3→4 张（[`docs/evidence/chat-read/`](docs/evidence/chat-read/)、[`docs/evidence/profile/`](docs/evidence/profile/)） |
+| **② 脚本应用 · 现场造卡** | `apps/shiyi-live/bundle/`（`main.splash`，**0.7.3**） | **六个能力**（两个"读"开、模型关）：`matrix.read_messages` 读**绑定房间**的消息 → 点一条 → 当场造卡；**`matrix.send_message` 确认后把结论真发回群**（"记下了"→"办成了"）；`matrix.profile` 读你的名字 → 标出「（你）」；`octos.session.history` 读助手会话；`storage` 长期记忆；`model`（服务名 `model.complete`）代码就位、出厂关 | **Rinx 真机全链路**：导入（绑房间）→Review 列出 **6 个服务**→Run→读到 4 条真消息→点一条→造卡→**确认 → 群里真多一条回执**（记忆 0→1）（[`docs/evidence/act/`](docs/evidence/act/) + `chat-read/` + `profile/`） |
 | **③ 真机连续录屏 · 端到端** | [`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/rinx-live-end-to-end.mp4)（**20.7 秒 / 1316×1436 / H.264**，**一段连续真实录屏，非帧拼**）：导入 → Review（5 服务）→ Run → 读房间消息 → 点一条 → 造卡 → **确认行程** → 长期记忆 **0→1**。全程由宿主自带的 `MAKEPAD_REMOTE` 遥控口驱动，无人手介入；复现见 [`docs/evidence/live-run/README.md`](docs/evidence/live-run/README.md) |
 
 > **摘要分平台**：形态一交 **Linux 评测** ⇒ 留 Linux digest；形态二跑在 **Windows 宿主（Rinx）**

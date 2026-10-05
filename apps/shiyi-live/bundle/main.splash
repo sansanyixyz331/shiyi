@@ -1,4 +1,4 @@
-// 拾意 · 现场造卡（shiyi-live）0.7.2
+// 拾意 · 现场造卡（shiyi-live）0.7.3
 // 一句话进去，一张卡出来。识别在本机做，不依赖任何服务。
 //
 // 长期记忆：存在应用自己的 jail 里（memory.json），与生成器同一套 schema
@@ -8,6 +8,7 @@
 //   ② 设备助手的会话（octos.session.history）+ 一次性模型（model.complete）
 //   ③ 绑定房间里的聊天（matrix.read_messages）—— 读一条直接造卡
 //   ④ 你在 Matrix 上的名字（matrix.profile）—— 认出聊天里哪条是「你自己说的」
+//   ⑤ 确认后真办事（matrix.send_message）—— 把这次意图的结论真发回那个群（「记下了」→「办成了」）
 // 记忆用在三处：
 //   ① 造卡时给出「记忆行」（包括和记忆冲突的提醒）—— 这才叫「知道用户喜好」
 //   ② 确认时写回（偏好 / 常去的地方 / 卡片流水）
@@ -88,6 +89,17 @@ let me_ok = false
 let me_id = ""
 let me_name = ""
 let me_state = ""            // 读不到时的如实说明
+
+// ---- 确认后真办事（matrix.send_message）—— 这是「意图即应用」里「应用」那半截
+// 官方契约（Rinx crates/miniapp-core/src/matrix.rs:219）：服务名就是 `matrix.send_message`；
+//   args {body}；**需 app 绑定房间**（非 room_free 组）。
+// 一件意图只有「真的送出去」才算办成 —— 确认一张卡 = 把结论发回你绑定的那个群。
+// 发不出去就如实退回「只留在本机」，绝不假装成功。
+let LET_IT_ACT = true        // 确认后真发回群（manifest 已声明同名能力）
+let SEND_STANDIN = false     // 开发期替身：把回执写进 jail 的 send-stub.json（card-host 没有 matrix 服务）
+let sent_ok = false          // 是否真的发出去了
+let sent_state = ""          // 在途 / 成功 / 失败 的如实说明
+
 
 // ---------------------------------------------------------------- 长期记忆
 let MEM = "memory.json"
@@ -841,10 +853,58 @@ fn use_one(t){
     recognize(t)
 }
 
+// 确认后把结论真发回群 —— 「意图即应用」里「应用」那半截，就在这几行
+// 官方契约：服务名 `matrix.send_message`；args {body}；**需绑定房间**。
+// 一件事只有真的送出去，才算办成。
+fn receipt_text(){
+    if kind == "pref" { return "✅ 拾意记下一条习惯：" + raw }
+    let t = "✅ 拾意已记下"
+    if when != "" { t = t + " · " + when }
+    if where != "" { t = t + " · " + where }
+    if when == "" {
+        if where == "" { t = t + "：" + raw }
+    }
+    return t
+}
+
+fn send_back(){
+    sent_ok = false
+    if !LET_IT_ACT {
+        sent_state = ""
+        return
+    }
+    sent_state = "正在把结果发回群…"
+    ui.card.render()
+    let body = receipt_text()
+    if SEND_STANDIN {
+        fs.write("send-stub.json", body)
+        sent_ok = true
+        sent_state = "已把结果发回群（本地替身）"
+        ui.card.render()
+        return
+    }
+    if !host.has("matrix.send_message") {
+        sent_state = "宿主没提供发消息 —— 结果只留在本机"
+        ui.card.render()
+        return
+    }
+    host.request("matrix.send_message", {body: body}, fn(r){
+        if r.is_ok {
+            sent_ok = true
+            sent_state = "已把结果发回群 —— 这件事真的办成了"
+        } else {
+            sent_ok = false
+            sent_state = "没能发回群 —— 结果只留在本机"
+        }
+        ui.card.render()
+    })
+}
+
 fn confirm(){
     done = true
     mem_remember()          // ← 确认 = 记住
     note = "记下了 —— 记忆已更新"
+    send_back()             // ← 确认 = 真办事：把结论发回绑定的那个群
     ui.membox.render()
     ui.card.render()
 }
@@ -1012,12 +1072,23 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
               SolidView{width: Fill height: 8}
 
               if done {
-                  Label{width: Fill text: "✓ 已记下，等你点头再动" draw_text.color: accent
+                  Label{width: Fill text: "✓ 已记下，记忆已更新" draw_text.color: accent
                     draw_text.text_style.font_size: 13}
+                  if sent_ok {
+                      Label{width: Fill text: sent_state draw_text.color: accent
+                        draw_text.text_style.font_size: 12}
+                  }
+                  if !sent_ok {
+                      if sent_state != "" {
+                          Label{width: Fill text: sent_state draw_text.color: faint
+                            draw_text.text_style.font_size: 12}
+                      }
+                  }
                   SolidView{width: Fill height: Fit flow: Right align: Align{x: 1.0}
                     Ghost{text: "再来一张" on_click: || reset()}
                   }
-              } else {
+              }
+              if !done {
                   SolidView{width: Fill height: Fit flow: Right align: Align{x: 1.0}
                     Pill{text: act_of() on_click: || confirm()}
                     SolidView{width: 8 height: 1}

@@ -5,7 +5,8 @@
     "model",
     "octos.session.history",
     "matrix.read_messages",
-    "matrix.profile"
+    "matrix.profile",
+    "matrix.send_message"
   ],
   "compute": {
     "instruction_budget": null,
@@ -13,7 +14,7 @@
   },
   "id": "shiyi-live",
   "integrity": {
-    "bundle_blake3": "f44fa11ee412728597287beb3915fb6a3755e2f671a6d1686e40e65e3210aade"
+    "bundle_blake3": "72805400fb81ef35e9dc936c2d099432a48fc70f26c3fa940183e5886ce5a519"
   },
   "name": "拾意 · 现场造卡",
   "network": {
@@ -23,5 +24,5 @@
   "storage": {
     "max_bytes": 262144
   },
-  "version": "0.7.2"
+  "version": "0.7.3"
 }
