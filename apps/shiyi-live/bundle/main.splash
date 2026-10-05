@@ -1,8 +1,12 @@
-// 拾意 · 现场造卡（shiyi-live）0.6.0
+// 拾意 · 现场造卡（shiyi-live）0.7.0
 // 一句话进去，一张卡出来。识别在本机做，不依赖任何服务。
 //
 // 长期记忆：存在应用自己的 jail 里（memory.json），与生成器同一套 schema
 //   version / prefs / places / log
+// 三个来源，各自一个默认关的开关：
+//   ① 本机记住的（你造的卡）—— 永远可用
+//   ② 设备助手的会话（octos.session.history）
+//   ③ 绑定房间里的聊天（matrix.read_messages）—— 读一条直接造卡
 // 记忆用在三处：
 //   ① 造卡时给出「记忆行」（包括和记忆冲突的提醒）—— 这才叫「知道用户喜好」
 //   ② 确认时写回（偏好 / 常去的地方 / 卡片流水）
@@ -53,6 +57,19 @@ let ahist_count = 0
 let ahist_lines = []             // 展示用：最近几条（说话人 + 截断后的话）
 let ahist_state = ""             // 读不到时的如实说明
 
+// ---- 从聊天里拾意（matrix.read_messages）—— 「读消息」这条能力
+// 官方契约：服务名就是 `matrix.read_messages`；args {room_id, limit(1..30)}；
+//   需 app 在导入时**绑定一个房间** —— 读的就是那个房间的最近消息。
+//   返回：messages 数组（每项有 sender / body / ts / room_id / unread 等）+ unread_count，旧→新排列。
+// 脚本 app 不许用 bindings.json，只能直接 host.request（HOST-SERVICES.md）。
+let READ_CHAT = false        // 🚩 复赛打开：从绑定的群里读最近消息，挑一条直接造卡
+let CHAT_STANDIN = false     // 开发期替身：从 jail 的 chat-stub.json 读一段消息（card-host 没有 matrix 服务）
+let chat_ok = false
+let chat_count = 0
+let chat_rows = []           // 展示用：最近几条（说话人 + 截断后的话）
+let chat_texts = []          // 与 chat_rows 一一对应：原始消息文本（点了就当成输入）
+let chat_state = ""          // 读不到时的如实说明
+
 // ---------------------------------------------------------------- 长期记忆
 let MEM = "memory.json"
 let mem = {}            // 与生成器同 schema
@@ -74,6 +91,9 @@ let Tiny = ButtonFlat{height: 30
 let Mini = ButtonFlat{height: 26
     draw_bg +: {border_radius: 13.0 color: #x22352c color_hover: #x2c463a color_down: #x1a2a23 border_size: 0.0}
     draw_text +: {color: faint font_size: 11}}
+let Msg = ButtonFlat{width: Fill height: 32
+    draw_bg +: {border_radius: 10.0 color: #x1b2c24 color_hover: #x22352c color_down: #x16251f border_size: 0.0}
+    draw_text +: {color: ink font_size: 12}}
 let Field = TextInput{width: Fill height: 42
     empty_text: "写一句话，比如：下周三去深圳"
     draw_bg +: {color: #x0f1b17 color_hover: #x0f1b17 color_focus: #x0f1b17 color_empty: #x0f1b17
@@ -345,6 +365,80 @@ fn ahist_fetch(){
         })
     } else {
         ahist_state = "本机没有设备助手"
+    }
+}
+
+// ---------------------------------------------------------------- 从聊天拾意
+// 把 matrix.read_messages 的返回嚼成展示行 —— 一律「枚举」，不点缺失的键（缺字段在 splash 里是报错不是 nil）
+fn chat_ingest(doc){
+    chat_rows = []
+    chat_texts = []
+    chat_count = 0
+    chat_ok = true
+    chat_state = ""
+    if !has_key(doc, "messages") { return }
+    let msgs = doc.messages
+    let n = msgs.len()
+    chat_count = n
+    let from = 0
+    if n > 4 { from = n - 4 }
+    let i = 0
+    for m in msgs {
+        if i >= from {
+            let b = ""
+            let who = ""
+            for fk fv in m {
+                if fk == "body" { b = fv }
+                if fk == "sender" { who = fv }
+            }
+            if b != "" {
+                let tag = who
+                if tag == "" { tag = "有人" }
+                chat_rows.push(tag + "：" + clip(b, 20))
+                chat_texts.push(b)
+            }
+        }
+        i = i + 1
+    }
+}
+
+fn chat_head(){
+    if !chat_ok { return "从聊天拾意" }
+    if chat_count == 0 { return "从聊天拾意 · 这个房间还没有消息" }
+    return "从聊天拾意 · 读到 " + ("" + chat_count) + " 条消息"
+}
+
+// 读绑定的那个房间：默认不读（READ_CHAT=false）。开了才动。
+fn chat_fetch(){
+    if !READ_CHAT { return }
+    chat_state = ""
+    chat_ok = false
+    if CHAT_STANDIN {
+        if fs.exists("chat-stub.json") {
+            let doc = fs.read("chat-stub.json").parse_json()
+            if doc != nil { chat_ingest(doc) }
+        } else {
+            chat_state = "没有替身数据"
+        }
+        ui.chatbox.render()
+        ui.card.render()
+        return
+    }
+    if host.has("matrix.read_messages") {
+        host.request("matrix.read_messages", {limit: 10}, fn(r){
+            if r.is_ok {
+                chat_ingest(r.data)
+            } else {
+                chat_ok = false
+                chat_state = "这次读不到"
+            }
+            ui.chatbox.render()
+            ui.card.render()
+        })
+    } else {
+        chat_state = "本机没有读消息的宿主"
+        ui.chatbox.render()
+        ui.card.render()
     }
 }
 
@@ -687,7 +781,7 @@ fn reset(){
     ui.card.render()
 }
 
-start_timeout(0.05, || { mem_load() ahist_fetch() ui.membox.render() ui.card.render() })
+start_timeout(0.05, || { mem_load() ahist_fetch() chat_fetch() ui.membox.render() ui.card.render() })
 
 // ---------------------------------------------------------------- 界面
 SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
@@ -732,6 +826,27 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
         if ahist_state != "" {
             Label{width: Fill text: "助手记忆 · " + ahist_state
               draw_text.color: dim draw_text.text_style.font_size: 11}
+        }
+      }
+    }
+
+    // 从聊天拾意（matrix.read_messages）—— 只在开关打开时才画（关着时高度为 0，不占位）
+    chatbox := SolidView{width: Fill height: Fit flow: Down
+      on_render: || {
+        if READ_CHAT {
+            SolidView{width: Fill height: Fit flow: Down spacing: 4 padding: 8 show_bg: true
+              draw_bg.color: membg draw_bg.border_radius: 12.0
+              Label{width: Fill text: chat_head() draw_text.color: accent draw_text.text_style.font_size: 11}
+              if chat_state != "" {
+                  Label{width: Fill text: chat_state draw_text.color: dim draw_text.text_style.font_size: 11}
+              }
+              if chat_ok {
+                  Label{width: Fill text: "点一条，就用它造卡" draw_text.color: faint draw_text.text_style.font_size: 10}
+                  for i in chat_rows.len() {
+                      Msg{text: chat_rows[i] on_click: || use_one(chat_texts[i])}
+                  }
+              }
+            }
         }
       }
     }

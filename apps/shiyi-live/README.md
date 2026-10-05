@@ -1,4 +1,4 @@
-# 拾意 · 现场造卡（shiyi-live）0.6.0
+# 拾意 · 现场造卡（shiyi-live）0.7.0
 
 **一个能用的应用**：输入一句话，它在**本机**识别出时间/地点/类型，**现场长出一张卡**，
 并把确认过的卡与你的习惯**记住**（长期记忆）。不依赖任何服务，离线也完整可用。
@@ -159,10 +159,10 @@ host.request("model.complete", {
  "class":"fast"}
 ```
 
-**复赛启用清单**：① `ASK_MODEL = true`（要读助手会话再加 `READ_ASSIST_HISTORY = true`）② `hub stamp`
+**复赛启用清单**：① `ASK_MODEL = true`（要读助手会话再加 `READ_ASSIST_HISTORY = true`；要从群里读消息再加 `READ_CHAT = true`，**并在导入表单里填房间**）② `hub stamp`
 ③ 在宿主里配好 AI provider
 （OctoSense Shells 的 `model` 服务从**用户自己的** provider 回答；应用永远看不到 provider / model id / key）
-④ 重跑门禁确认 `grants: capabilities {"model", "octos.session.history", …}`。
+④ 重跑门禁确认 `grants: capabilities {"model", "octos.session.history", "matrix.read_messages", …}`。
 ⚠️ 声明 `model` 会让商店多一条权限说明（"把你给它的内容发给你配置的 AI provider"）；
 **如果不打算启用，就从 `capabilities` 里去掉 `model`**。
 ⚠️ 预算由宿主管：默认 6 次/分钟、100 次/天、10 万 token/天 —— 所以**别每敲一个字就问一次**。
@@ -208,6 +208,54 @@ host.request("octos.session.history", {}, fn(r){
 | **真机（Rinx）** | `READ_ASSIST_HISTORY=true`，真宿主 + 真助手（`primary: ready`） | Review 认下 3 条服务（`storage, model, octos.session.history`）；Run 后出现 `助手记忆 · 助手会话是空的` —— **真服务答了**（`04-rinx-real-service.png`） |
 
 五种状态 card-host 侧全部 `admitted`、**运行期 0 错误**；真机 Rinx 侧跑通且本机记忆跨导入仍在。
+
+## 从绑定房间里读消息：`matrix.read_messages`（**0.7.0 新增，默认关；复赛开**）
+
+这是**「读消息」这条能力**—— 前面两个来源（本机卡的记忆、助手的会话）都不含"群里刚说了什么"。
+官方 12 场景里「即时消息 / 日历」要落地，第一步就得**能读到消息**。全场只有 3 队声明了它（`00_docs\对手赛情侦察_20261005.md`）。
+
+**官方契约**（源码为准，`Rinx/src/host/matrix/mod.rs:545` + `crates/miniapp-core/src/matrix.rs:209`）：
+
+- 服务名 `matrix.read_messages`；args `{room_id, limit}`（`limit` 会被 clamp 到 **1..30**，默认 10）；
+- ⚠️ **需 app 在导入时绑定一个房间** —— `parse()` 明写：非 `room_free` 的服务、没绑房间 ⇒
+  `this mini-app is not attached to a room`。导入表单的 **`Room ID to allow (optional)`** 那一栏就是它；
+- 返回 `{"messages":[…], "unread_count":N}`，每条含 `sender / sender_id / event_id / body / ts / msgtype / room_id / unread`，**旧→新**排列。
+
+脚本 app **不许用 `bindings.json`**，只能直接 `host.request`：
+
+```splash
+host.request("matrix.read_messages", {limit: 10}, fn(r){
+    if r.is_ok { chat_ingest(r.data) }         // 嚼成可点的消息行
+    else       { chat_state = "这次读不到" }    // 不可用也要完整可用 ⇒ 只写一行，不挡路
+})
+```
+
+**闭环**（这才是评委「任务验证」要的那个）：**读到消息 → 点一条 → 它变成输入 → 现场造卡 → 确认 → 写回记忆**。
+每条消息行是一个 `Msg` 按钮，`on_click` 直接 `use_one(chat_texts[i])`。
+
+**开关**（`main.splash` 顶部，默认都关）：
+
+| 开关 | 现在 | 复赛怎么做 |
+|---|---|---|
+| `READ_CHAT` | `false` —— 一条消息都不读 | 改成 `true`（并重盖摘要）：开屏就读绑定房间的最近消息 |
+| `CHAT_STANDIN` | `false` —— 开发期替身 | 保持 `false`。本地验用：从 jail 的 `chat-stub.json` 读一段消息，走**同一条**解析路径 |
+
+### 验过的状态（都出图了）
+
+**card-host 三态**（`docs/evidence/chat-read/cardhost/`）：默认（与 0.6.0 一致、无聊天盒）／替身
+（`从聊天拾意 · 读到 3 条消息` + 三条可点行）／无服务（`从聊天拾意` + `这次读不到`）—— 三态全部
+`admitted`、**运行期 0 错误**。
+
+**真机 Rinx 全链路**（`docs/evidence/chat-read/`，2026-10-05）：
+
+| 步骤 | 实据 |
+|---|---|
+| 导入 + Review | `拾意 · 现场造卡 0.7.0`；`Services: storage, model, octos.session.history, matrix.read_messages`；`Allowed room: !6OTF…` |
+| Run | `从聊天拾意 · 读到 4 条消息`（读的是真房间里的真消息） |
+| 点一条 | 输入框出现那条消息原文（`01-picked-into-input.png`） |
+| 造卡 | `出发 · 下周三 · 10月14日` + `记忆 · 你不坐飞机 → 这次只给高铁`（`02-card-built-from-message.png`） |
+| 确认 | `记下了 —— 记忆已更新`（`03-confirmed.png`） |
+| 写回 | `记住 3 张卡` → **`4 张卡`**；`深圳 去过 2 次` → **`3 次`**（`04-memory-4-cards.png`） |
 
 ## 这个宿主版本支持什么（实测，别再凭猜）
 

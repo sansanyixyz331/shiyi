@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "subtitle": "一句话，现场造一张卡",
-  "description": "输入一句话，应用在本机识别出时间/地点/类型，现场长出一张按场景各不相同的卡，并把确认过的卡与偏好写进本机长期记忆（memory.json，与生成器同一套 schema）。不依赖任何服务也完整可用。",
+  "description": "输入一句话，应用在本机识别出时间/地点/类型，现场长出一张按场景各不相同的卡，并把确认过的卡与偏好写进本机长期记忆（memory.json）。也可以在导入时绑定一个房间，直接读到那里的最近消息，挑一条就造卡。不依赖任何服务也完整可用。",
   "category": "utilities",
   "keywords": [
     "intent",
@@ -22,7 +22,7 @@
     "support": "https://github.com/sansanyixyz331/shiyi",
     "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
   },
-  "release_notes": "0.6.0 - reads the assistant's own conversation memory (octos.session.history) and folds it into the long-term memory it already keeps, behind a default-off switch; 0.5.0 added one-shot model calls (model.complete) with memory attached; 0.4.0 added the long-term memory.",
+  "release_notes": "0.7.0 - reads the recent messages of the room the app was attached to (matrix.read_messages) and lets you turn one straight into a card; 0.6.0 read the assistant's own conversation memory; 0.5.0 one-shot model calls with memory attached; 0.4.0 the long-term memory itself.",
   "age_rating": "all",
   "license": "Apache-2.0"
 }
