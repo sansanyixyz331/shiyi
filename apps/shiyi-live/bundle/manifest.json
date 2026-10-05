@@ -12,7 +12,7 @@
   },
   "id": "shiyi-live",
   "integrity": {
-    "bundle_blake3": "8636cfff6b7713c337a10ef9d8fdf484c6410ca8509bd74315b7b751defaa935"
+    "bundle_blake3": "12390faa54d010db9f74d9bd6277bcbde31219ee23c7ab31856b5ee6bfb9f0a3"
   },
   "name": "拾意 · 现场造卡",
   "network": {
@@ -22,5 +22,5 @@
   "storage": {
     "max_bytes": 262144
   },
-  "version": "0.7.0"
+  "version": "0.7.1"
 }

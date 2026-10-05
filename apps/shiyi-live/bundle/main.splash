@@ -1,11 +1,11 @@
-// 拾意 · 现场造卡（shiyi-live）0.7.0
+// 拾意 · 现场造卡（shiyi-live）0.7.1
 // 一句话进去，一张卡出来。识别在本机做，不依赖任何服务。
 //
 // 长期记忆：存在应用自己的 jail 里（memory.json），与生成器同一套 schema
 //   version / prefs / places / log
-// 三个来源，各自一个默认关的开关：
-//   ① 本机记住的（你造的卡）—— 永远可用
-//   ② 设备助手的会话（octos.session.history）
+// 三个来源（两个"读"开关已开；模型开关默认关，见 ASK_MODEL 注释；各带 fail-closed 兜底）：
+//   ① 本机记住的（你造的卡）—— 永远可用，不依赖任何服务
+//   ② 设备助手的会话（octos.session.history）+ 一次性模型（model.complete）
 //   ③ 绑定房间里的聊天（matrix.read_messages）—— 读一条直接造卡
 // 记忆用在三处：
 //   ① 造卡时给出「记忆行」（包括和记忆冲突的提醒）—— 这才叫「知道用户喜好」
@@ -41,15 +41,19 @@ let src = "rules"              // rules | model | model-standin
 let model_state = ""           // 助手不可用时的说明，如实显示在卡上
 let MODEL_STANDIN = false      // 开发期替身：从 jail 的 model-stub.json 读一条回复，
                                // 用来验证「回复 → 卡」这一整条链（本机没有 model 服务）。
-let ASK_MODEL = false          // 🚩 总开关：**复赛把它改成 true**，就会真的调设备助手（model.complete）。
-                               // 现在保持 false —— 不把用户的话发给任何助手。
+let ASK_MODEL = false          // 本机识别优先（不依赖任何服务）。
+                               // 为什么默认关：Rinx 把 manifest.capabilities 原样当租约服务集
+                               // （src/miniapps/ui.rs:425），而能力名是 `model`、服务名是 `model.complete`
+                               // ⇒ 在 Rinx 上调它必被拒（"Mini app was not granted model.complete"），
+                               // 那句提示还常驻宿主顶栏。官方 AI-SERVICES 说 `model` 由 **OctoSense shell** 提供
+                               // ⇒ 在那种宿主上改成 true 即可（代码路径已实现、本地三态验证过）。
 
 // ---- 读设备助手的会话记忆（octos.session.history）—— 第二个「长期记忆」来源
 // 本机记住的是「你造的卡」；助手那边记住的是「你在对话里说过的」。两个合起来才叫真知道你是谁。
 // 官方契约：capability 就是同名的 `octos.session.history`；args {}；
 //   返回 {session_id, messages:[{…, lane, speaker, role, content}, …]}（两条车道按时间合并）。
 // 脚本 app 不许用 bindings.json，只能像这样直接 host.request（HOST-SERVICES.md）。
-let READ_ASSIST_HISTORY = false  // 🚩 复赛打开：读设备助手与你的会话（manifest 已声明同名能力）
+let READ_ASSIST_HISTORY = true   // 🚩 复赛已开：读设备助手与你的会话（manifest 已声明同名能力）
 let HIST_STANDIN = false         // 开发期替身：从 jail 的 history-stub.json 读一段会话，
                                  // 用来验「读 → 用」这条链（card-host 没有助手服务）。
 let ahist_ok = false
@@ -62,7 +66,8 @@ let ahist_state = ""             // 读不到时的如实说明
 //   需 app 在导入时**绑定一个房间** —— 读的就是那个房间的最近消息。
 //   返回：messages 数组（每项有 sender / body / ts / room_id / unread 等）+ unread_count，旧→新排列。
 // 脚本 app 不许用 bindings.json，只能直接 host.request（HOST-SERVICES.md）。
-let READ_CHAT = false        // 🚩 复赛打开：从绑定的群里读最近消息，挑一条直接造卡
+let READ_CHAT = true         // 🚩 复赛已开：从绑定的群里读最近消息，挑一条直接造卡
+                             // 没绑房间 / 宿主没有这服务 ⇒ 只写一行如实说明，绝不挡路
 let CHAT_STANDIN = false     // 开发期替身：从 jail 的 chat-stub.json 读一段消息（card-host 没有 matrix 服务）
 let chat_ok = false
 let chat_count = 0
@@ -358,13 +363,13 @@ fn ahist_fetch(){
             if r.is_ok {
                 ahist_ingest(r.data)
             } else {
-                ahist_state = "这次读不到"
+                ahist_state = "这次没读到 · 宿主没这项服务"
             }
             ui.membox.render()
             ui.card.render()
         })
     } else {
-        ahist_state = "本机没有设备助手"
+        ahist_state = "宿主没提供助手这项服务"
     }
 }
 
@@ -430,13 +435,13 @@ fn chat_fetch(){
                 chat_ingest(r.data)
             } else {
                 chat_ok = false
-                chat_state = "这次读不到"
+                chat_state = "这次没读到 · 宿主没这项服务或应用没绑房间"
             }
             ui.chatbox.render()
             ui.card.render()
         })
     } else {
-        chat_state = "本机没有读消息的宿主"
+        chat_state = "宿主没提供读消息这项服务"
         ui.chatbox.render()
         ui.card.render()
     }
@@ -612,7 +617,7 @@ fn ask_model(t){
             }
         } else {
             src = "rules"
-            model_state = "设备助手不可用"
+            model_state = "宿主没提供助手，已走本机规则"
             identify_rules(t)
         }
         ui.card.render()

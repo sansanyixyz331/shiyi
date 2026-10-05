@@ -22,7 +22,7 @@
     "support": "https://github.com/sansanyixyz331/shiyi",
     "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
   },
-  "release_notes": "0.7.0 - reads the recent messages of the room the app was attached to (matrix.read_messages) and lets you turn one straight into a card; 0.6.0 read the assistant's own conversation memory; 0.5.0 one-shot model calls with memory attached; 0.4.0 the long-term memory itself.",
+  "release_notes": "0.7.1 - the two read switches are ON: read the attached room (matrix.read_messages) and read the assistant's session (octos.session.history). Recognition stays on-device; model.complete is implemented and locally verified but left off, because Rinx grants the capability name `model` while the service is `model.complete` and so refuses it - enable it on a host that serves the model service.",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

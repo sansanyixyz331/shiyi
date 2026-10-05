@@ -1,4 +1,4 @@
-# 拾意 · 现场造卡（shiyi-live）0.7.0
+# 拾意 · 现场造卡（shiyi-live）0.7.1
 
 **一个能用的应用**：输入一句话，它在**本机**识别出时间/地点/类型，**现场长出一张卡**，
 并把确认过的卡与你的习惯**记住**（长期记忆）。不依赖任何服务，离线也完整可用。
@@ -111,7 +111,7 @@ bundle digest <新的> does not match the manifest's <旧的>
 `card-host` 和 **Rinx 都校验摘要**。这个坑连踩两次（一次在 Rinx 导入、一次在录制），
 现在 `build/shot_bundle.py` / `record_*` 前都会先盖。
 
-## 接 AI：`model.complete`（**已实现，默认关；复赛开**）
+## 接 AI：`model.complete`（**已实现、本地三态验证过；出厂关 —— 原因见下方 0.7.1 实测**）
 
 按官方 `AI-SERVICES.md` 的契约写好了整条路，但**默认不启用** —— 现在不会把用户的话发给任何助手。
 
@@ -131,7 +131,7 @@ host.request("model.complete", {
 
 | 开关 | 现在 | 复赛怎么做 |
 |---|---|---|
-| `ASK_MODEL` | `false` —— 一律走本机规则，**跟 0.4.0 行为完全一致** | 改成 `true`（并重盖摘要），就会真的调设备助手 |
+| `ASK_MODEL` | **`false`** —— 一律走本机规则（`model.complete` 在 Rinx 上必被拒，且顶栏会常驻一条提示 ⇒ 出厂关） | 在**提供 `model` 服务的宿主**（OctoSense shell）上改成 `true`，就会真的调设备助手 |
 | `MODEL_STANDIN` | `false` —— 开发期替身 | 保持 `false`。仅在本地验证用：从 jail 的 `model-stub.json` 读一条回复，走**同一条**「回复 → 卡」解析路径 |
 
 **未启用时卡上照旧**写 `识别来源 · 本机规则（不依赖任何服务）`；启用后如实标注走了哪条：
@@ -159,7 +159,7 @@ host.request("model.complete", {
  "class":"fast"}
 ```
 
-**复赛启用清单**：① `ASK_MODEL = true`（要读助手会话再加 `READ_ASSIST_HISTORY = true`；要从群里读消息再加 `READ_CHAT = true`，**并在导入表单里填房间**）② `hub stamp`
+**复赛出厂态（0.7.1）**：`READ_CHAT = true`、`READ_ASSIST_HISTORY = true`（两条**真能跑通**的总线读），`ASK_MODEL = false`（Rinx 不提供）。要接模型再加 `model`：把 `ASK_MODEL` 改 `true` ⇒ ② `hub stamp`
 ③ 在宿主里配好 AI provider
 （OctoSense Shells 的 `model` 服务从**用户自己的** provider 回答；应用永远看不到 provider / model id / key）
 ④ 重跑门禁确认 `grants: capabilities {"model", "octos.session.history", "matrix.read_messages", …}`。
@@ -191,7 +191,7 @@ host.request("octos.session.history", {}, fn(r){
 
 | 开关 | 现在 | 复赛怎么做 |
 |---|---|---|
-| `READ_ASSIST_HISTORY` | `false` —— 一个字节的会话都不读 | 改成 `true`（并重盖摘要）：开屏就读设备助手会话 |
+| `READ_ASSIST_HISTORY` | **`true`（0.7.1 起）** —— 开屏就读设备助手会话 | 保持 `true` |
 | `HIST_STANDIN` | `false` —— 开发期替身 | 保持 `false`。本地验用：从 jail 的 `history-stub.json` 读一段会话，走**同一条**解析路径 |
 
 > 解析一律**枚举**（`for fk fv in m`）、不点缺失的键（缺字段在 splash 里是**报错不是 nil**）；
@@ -209,7 +209,7 @@ host.request("octos.session.history", {}, fn(r){
 
 五种状态 card-host 侧全部 `admitted`、**运行期 0 错误**；真机 Rinx 侧跑通且本机记忆跨导入仍在。
 
-## 从绑定房间里读消息：`matrix.read_messages`（**0.7.0 新增，默认关；复赛开**）
+## 从绑定房间里读消息：`matrix.read_messages`（**0.7.0 新增；0.7.1 起默认开**）
 
 这是**「读消息」这条能力**—— 前面两个来源（本机卡的记忆、助手的会话）都不含"群里刚说了什么"。
 官方 12 场景里「即时消息 / 日历」要落地，第一步就得**能读到消息**。全场只有 3 队声明了它（`00_docs\对手赛情侦察_20261005.md`）。
@@ -237,7 +237,7 @@ host.request("matrix.read_messages", {limit: 10}, fn(r){
 
 | 开关 | 现在 | 复赛怎么做 |
 |---|---|---|
-| `READ_CHAT` | `false` —— 一条消息都不读 | 改成 `true`（并重盖摘要）：开屏就读绑定房间的最近消息 |
+| `READ_CHAT` | **`true`（0.7.1 起）** —— 开屏就读绑定房间的最近消息；宿主没这服务或没绑房间 ⇒ 只写一行 | 保持 `true` |
 | `CHAT_STANDIN` | `false` —— 开发期替身 | 保持 `false`。本地验用：从 jail 的 `chat-stub.json` 读一段消息，走**同一条**解析路径 |
 
 ### 验过的状态（都出图了）
@@ -246,16 +246,33 @@ host.request("matrix.read_messages", {limit: 10}, fn(r){
 （`从聊天拾意 · 读到 3 条消息` + 三条可点行）／无服务（`从聊天拾意` + `这次读不到`）—— 三态全部
 `admitted`、**运行期 0 错误**。
 
-**真机 Rinx 全链路**（`docs/evidence/chat-read/`，2026-10-05）：
+**真机 Rinx 全链路**（`docs/evidence/chat-read/`，2026-10-05 · 0.7.1 出厂态）：
+
+> 🎬 **演示片（27.5 秒）**：`docs/evidence/chat-read/demo-rinx-loop.mp4` —— 从 Mini apps → 导入（绑房间）
+> → Review → Run → 读到 ×3 条 → 造卡 → 确认 → 记忆 4→5，一镜到底。
 
 | 步骤 | 实据 |
 |---|---|
-| 导入 + Review | `拾意 · 现场造卡 0.7.0`；`Services: storage, model, octos.session.history, matrix.read_messages`；`Allowed room: !6OTF…` |
-| Run | `从聊天拾意 · 读到 4 条消息`（读的是真房间里的真消息） |
+| 导入 + Review | `拾意 · 现场造卡 0.7.1`；`Services: storage, model, octos.session.history, matrix.read_messages`；`Allowed room: !6OTF…` |
+| Run | `从聊天拾意 · 读到 4 条消息`（真房间真消息）+ `助手记忆 · 助手会话是空的`（**octos 服务也真答了**）（`00-rinx-reads-room.png`） |
 | 点一条 | 输入框出现那条消息原文（`01-picked-into-input.png`） |
 | 造卡 | `出发 · 下周三 · 10月14日` + `记忆 · 你不坐飞机 → 这次只给高铁`（`02-card-built-from-message.png`） |
 | 确认 | `记下了 —— 记忆已更新`（`03-confirmed.png`） |
-| 写回 | `记住 3 张卡` → **`4 张卡`**；`深圳 去过 2 次` → **`3 次`**（`04-memory-4-cards.png`） |
+| 写回 | `记住 4 张卡` → **`5 张卡`**；`深圳 去过 3 次` → **`4 次`**（`04-memory-5-cards.png`） |
+
+### ⚠️ 为什么 `ASK_MODEL` 出厂是 `false`（0.7.1 实测定的）
+
+拿 Rinx 跑通了才发现：**Rinx 把 `manifest.capabilities` 原样当成租约的服务集**（`src/miniapps/ui.rs:425`），
+而模型这条**能力名是 `model`、服务名是 `model.complete`** ⇒ 调 `model.complete` **必被拒**：
+
+```
+Mini app was not granted model.complete
+```
+
+而且这句是宿主顶栏的**常驻**提示（`notice` 是持久 label）⇒ 演示时整场挂着一条"未授权"，看着像坏了。
+官方 `AI-SERVICES.md` 写的是 **`model` 由 OctoSense shell 提供**（Rinx 未实现）⇒ 干脆默认关，
+识别走本机规则（本来就不依赖服务）。**在真正提供 `model` 的宿主上，把它改 `true` 即可** —— 代码路径
+（`ask_model` + schema + fail-closed 回退）已实现、本地三态验证过，见 §接 AI。
 
 ## 这个宿主版本支持什么（实测，别再凭猜）
 
