@@ -156,6 +156,7 @@ shiyi/
 ```
 
 - **全流程实录**：[`rinx/证据/演示视频_Rinx执行链_拾意.mp4`](rinx/证据/演示视频_Rinx执行链_拾意.mp4)（43 秒，带字幕：导入 → 填房间 → Review → Run → 消息进聊天）
+- **真机连续录屏（0.7.2 五能力端到端）**：[`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/rinx-live-end-to-end.mp4)（**20.7 秒，一段连续真实录屏，非帧拼**：Review 5 服务 → Run → 读房间消息 → 造卡 → 确认 → 记忆 0→1；由 Rinx 自带 `MAKEPAD_REMOTE` 遥控口驱动，复现见同目录 README）
 
 > **它放在哪里、为什么会这样**：`matrix.send_message` **在官方封闭能力清单里**（45 个 `matrix.*` 之一），
 > 声明它是**合法**的。发到哪个房间**不是卡片说了算** —— 房间在**导入表单里手填、由宿主绑进租约**，
