@@ -254,8 +254,7 @@ def spec_read(card, p):
     for k in p["lines"]:
         rows.append({"id": "row_" + k, "comp": "line", "text": p["copies"][k]})
     rows.append({"id": "row_open", "comp": "note", "text": p["open_line"]})
-    rows.append({"id": "row_src", "comp": "note",
-                 "text": "识别来源 · 本地规则（设备助手可用时另加一行）"})
+    rows.append({"id": "row_src", "comp": "note", "text": p["source_line"]})
     blocks.append({"id": "fields", "comp": None, "rows": rows})
     if p["memo_lines"]:
         blocks.append({"id": "memo", "comp": None,
@@ -375,8 +374,8 @@ def spec_done(card, p):
 
 # ==================================================================== 产出
 
-def gen_all(text, room, prefs, places, version, out_dir):
-    card = gen_l0.build_card(text, room=room, prefs=prefs)
+def gen_all(text, room, prefs, places, version, out_dir, model_host=None):
+    card, ident = gen_l0.identify_card(text, room=room, prefs=prefs, host=model_host)
     p = gen_l0.plan(card)
     specs = [spec_read(card, p), spec_ask(card, p), spec_plan(card, p),
              spec_memo(card, p, places), spec_done(card, p)]
@@ -453,6 +452,8 @@ def main():
     ap.add_argument("--version", default="0.3.0")
     ap.add_argument("--verify", action="store_true", help="每屏造 probe bundle、渲染、视觉自评")
     ap.add_argument("--memory")
+    ap.add_argument("--model", action="store_true",
+                    help="识别走本机模型（助手可用那条路）；缺省走本地规则")
     args = ap.parse_args()
 
     if gen_l0.MemoryStore is None:
@@ -461,6 +462,16 @@ def main():
         st = gen_l0.MemoryStore(args.memory) if args.memory else gen_l0.MemoryStore()
         st.ensure()
         prefs, places = st.prefs(), st.places()
+
+    # 识别层：--model 时用本机模型做识别；缺省（或不可用）走本地规则。
+    model_host = None
+    if args.model:
+        try:
+            from host_local import LocalModelHost
+            model_host = LocalModelHost()
+            print("[识别] 走本机模型：%s" % model_host.describe())
+        except Exception as e:  # noqa: BLE001
+            print("[识别] 本机模型不可用，回退规则：%s" % e)
 
     os.makedirs(args.out, exist_ok=True)
     jobs = []
@@ -474,7 +485,7 @@ def main():
         ap.error("给 --text 或 --samples")
 
     for text, room, out in jobs:
-        specs = gen_all(text, room, prefs, places, args.version, out)
+        specs = gen_all(text, room, prefs, places, args.version, out, model_host=model_host)
         n = len(specs)
         okd = all(os.path.isfile(os.path.join(out, "cards", s["screen"], "page.card")) for s in specs)
         print("[%s] %-24s %d screens -> %s" % ("OK" if okd else "FAIL", text[:22], n, out))

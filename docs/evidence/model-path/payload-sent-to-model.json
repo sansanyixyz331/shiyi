@@ -1,0 +1,1 @@
+{"task":"把用户这句话里的事，识别成一张卡需要的四个字段。kind 只能是 trip / meeting / errand / purchase / reminder / pref / none 之一；when_text 写中文时间，能确定日期就写成「周X · N月N日」；where 只写地点名，没有就留空串；why 一句话说明依据。不要输出 URL。只输出符合 schema 的 JSON。","input":{"text":"下个月初得去趟慕尼黑看展会","memory":"用户长期记忆：偏好：坐高铁、不坐飞机、周三下午别安排。常去 深圳 · 通常早班。"},"class":"fast"}

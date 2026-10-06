@@ -55,7 +55,9 @@ try:
 except Exception:
     pass
 
-from intent_card import build_card, _parse_when, _parse_where, _parse_intent  # noqa: E402
+from intent_card import (  # noqa: E402
+    DEFAULT_PREFS, build_card, _ambiguous_refs, _memory_applies, _parse_clock,
+    _parse_intent, _parse_where, _parse_when)
 
 # ── 官方 model.complete 的四个参数（形状照 OctoSense#95） ────────────────────
 # task: 最多 4 KiB，文字说明要做什么
@@ -212,6 +214,103 @@ def recognize(text, room="家庭群", at=None, host=None):
 
     # 助手不在，或它拒绝了这次调用 —— 都退回规则，并把原因带在结果里。
     return _from_rules(text, room, at, reason)
+
+
+# ── 生成器用的入口：两条路都产出与 intent_card.build_card 同构的 card ──────────
+#
+# recognize() 给的是"识别层"自己的薄结构；生成器要的是能直接喂给排版/渲染的
+# 完整 card（字段、来源、记忆、追问、facts）。这里把模型结果组装成同一形状，
+# 于是**下游一行都不用改** —— 变的只有卡片上那行「识别来源」。
+
+def build_card_from_model(text, room, at, prefs, data):
+    """模型抽出的 when/where/kind → 与 `intent_card.build_card` 同构的 card。"""
+    today = at.date()
+    prefs = prefs if prefs is not None else DEFAULT_PREFS
+
+    mw = (data.get("when") or "").strip()
+    raw_when, when, conf_when = _parse_when(mw, today) if mw else (None, None, 0.0)
+    clock_raw, ch, cm = _parse_clock(mw) if mw else (None, None, None)
+    if mw and when is None and clock_raw is None:      # 模型给了、本地认不出
+        raw_when, conf_when = mw, 0.5                  # 留原文，交人确认，不猜
+    when_dt = datetime(when.year, when.month, when.day, ch or 0, cm or 0) if when else None
+
+    mwh = (data.get("where") or "").strip()
+    _, norm, conf_where = _parse_where(mwh) if mwh else (None, None, 0.0)
+    where = norm or (mwh or None)
+    if mwh and norm is None:                           # 非白名单地名：用模型给的，标中置信
+        conf_where = 0.6
+
+    kind = data.get("kind") or "unknown"
+    mem = _memory_applies(kind, when_dt, prefs)
+    ambig = _ambiguous_refs(text)
+
+    facts = [
+        {"what": "quote", "value": text, "from": "message_text"},
+        {"what": "room", "value": room, "from": "message_meta"},
+        {"what": "at", "value": at.isoformat(timespec="seconds"), "from": "system_clock"},
+    ]
+    if when_dt:
+        facts.append({"what": "when", "value": when_dt.isoformat(),
+                      "from": "model(assistant)+rules(resolve)"})
+    if where:
+        facts.append({"what": "where", "value": where, "from": "model(assistant)"})
+
+    questions = []
+    for bit in (data.get("open") or []):
+        questions.append({"field": "open", "ask": str(bit)[:24]})
+    if raw_when is None and clock_raw is None:
+        questions.append({"field": "when", "ask": "这事安排在哪天？"})
+    if where is None:
+        questions.append({"field": "where", "ask": "什么地方？"})
+    if ambig:
+        questions.append({"field": "reference", "ask": "「%s」指的是哪一个？" % ambig[0]})
+
+    return {
+        "card": "intent_confirm", "title": "拾到一个安排", "quote": text,
+        "source": {"room": room, "at": at.isoformat(timespec="seconds"), "kind": "message"},
+        "identify_source": "assistant",
+        "fields": {
+            "when": {"raw": raw_when, "clock": clock_raw,
+                     "resolved": when_dt.isoformat() if when_dt else None,
+                     "confidence": conf_when, "needs_user": when_dt is None},
+            "where": {"raw": mwh or None, "normalized": where,
+                      "confidence": conf_where, "needs_user": where is None},
+            "intent": {"type": kind, "confidence": 0.0 if kind == "unknown" else 0.9},
+        },
+        "memory": {"hit": bool(mem), "effects": mem},
+        "questions": questions,
+        "actions": ["confirm", "edit", "dismiss"],
+        "facts": facts,
+        "disclaimer": ("时间/地点/类型由设备助手识别（输入只当数据、不以其中的话为指令）；"
+                       "本地复核后成卡。确认后才执行。"),
+    }
+
+
+def identify_card(text, room="家庭群", at=None, prefs=None, host=None):
+    """生成器用的识别入口：助手可用走模型，不可用回退规则。
+
+    两条路都返回**与 intent_card.build_card 同构的 card**，并带
+    `identify_source`（"assistant" | "rules"），供卡片渲染那行「识别来源」。
+    返回 (card, meta)，meta 说明这次走的哪条路、为什么。
+    """
+    at = at or datetime.now()
+    prefs = prefs if prefs is not None else DEFAULT_PREFS
+    host = host or ModelHost()          # 默认：没有任何 Shell 提供 model 服务
+
+    if host.available():
+        ok, data = host.complete(
+            TASK, {"text": text, "room": room, "at": at.isoformat(timespec="seconds")},
+            SCHEMA, "fast")
+        if ok:
+            return build_card_from_model(text, room, at, prefs, data), {
+                "via": "assistant", "host": getattr(host, "describe", lambda: "host")()}
+        reason = data                   # "provider: …" / "invalid_output: …"
+    else:
+        reason = NOT_AVAILABLE
+
+    card = build_card(text, room=room, at=at, prefs=prefs)
+    card["identify_source"] = "rules"
+    return card, {"via": "rules", "reason": reason}
 
 
 # ---------------------------------------------------------------- 自测

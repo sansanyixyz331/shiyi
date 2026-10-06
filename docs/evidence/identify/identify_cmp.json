@@ -1,0 +1,74 @@
+[
+  {
+    "text": "下周三我得去趟深圳",
+    "rules": {
+      "when": "2026-10-14T00:00:00",
+      "where": "深圳市",
+      "kind": "trip",
+      "open": [],
+      "source": "rules"
+    },
+    "model": {
+      "when": "2026-10-14T00:00:00",
+      "where": "深圳市",
+      "kind": "trip",
+      "open": [],
+      "source": "assistant"
+    },
+    "identify": {
+      "via": "assistant",
+      "host": "local provider (models.json:DeepSeek-V4 Flash)"
+    }
+  },
+  {
+    "text": "明天下午三点跟老王在杭州碰一下",
+    "rules": {
+      "when": "2026-10-06T15:00:00",
+      "where": "杭州",
+      "kind": "meeting",
+      "open": [],
+      "source": "rules"
+    },
+    "model": {
+      "when": "2026-10-06T15:00:00",
+      "where": "杭州",
+      "kind": "meeting",
+      "open": [
+        "老王"
+      ],
+      "source": "assistant"
+    },
+    "identify": {
+      "via": "assistant",
+      "host": "local provider (models.json:DeepSeek-V4 Flash)"
+    }
+  },
+  {
+    "text": "帮我把那个快递寄到上海",
+    "rules": {
+      "when": "",
+      "where": "上海",
+      "kind": "errand",
+      "open": [
+        "这事安排在哪天？",
+        "「那个」指的是哪一个？"
+      ],
+      "source": "rules"
+    },
+    "model": {
+      "when": "",
+      "where": "上海",
+      "kind": "errand",
+      "open": [
+        "快递",
+        "这事安排在哪天？",
+        "「那个」指的是哪一个？"
+      ],
+      "source": "assistant"
+    },
+    "identify": {
+      "via": "assistant",
+      "host": "local provider (models.json:DeepSeek-V4 Flash)"
+    }
+  }
+]

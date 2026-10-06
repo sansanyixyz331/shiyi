@@ -84,6 +84,8 @@ def main():
     ap.add_argument("--version", default="0.2.0")
     ap.add_argument("--memory")
     ap.add_argument("--no-render", action="store_true", help="只生成，不渲染/门禁")
+    ap.add_argument("--model", action="store_true",
+                    help="识别走本机模型（助手可用那条路）；缺省走本地规则")
     args = ap.parse_args()
 
     # 记忆（能力②）
@@ -94,6 +96,16 @@ def main():
         st.ensure()
         prefs = st.prefs()
         memory_note = st.rel_path
+
+    # 识别层：--model 时用本机模型；缺省（或不可用）走本地规则。
+    model_host = None
+    if args.model:
+        try:
+            from host_local import LocalModelHost
+            model_host = LocalModelHost()
+            print("[识别] 走本机模型：%s" % model_host.describe())
+        except Exception as e:  # noqa: BLE001
+            print("[识别] 本机模型不可用，回退规则：%s" % e)
 
     os.makedirs(args.out, exist_ok=True)
     jobs = []
@@ -113,7 +125,8 @@ def main():
         ok = False
         for attempt in range(2):        # 视觉不通过 -> 收紧重来一次
             code, review = gen_l0.generate_one(text, room, out_dir, args.id, args.name,
-                                               args.version, prefs, memory_note, tighten=attempt)
+                                               args.version, prefs, memory_note, tighten=attempt,
+                                               model_host=model_host)
             b = os.path.join(out_dir, "bundle")
             rec = {"text": text, "bundle": b.replace("\\", "/"),
                    "attempt": attempt + 1,

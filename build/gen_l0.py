@@ -44,7 +44,8 @@ SHARED_ASSETS = os.path.join(ROOT, "bundle", "assets")
 
 sys.path.insert(0, SRC)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from intent_card import build_card            # noqa: E402  能力①
+from intent_card import build_card            # noqa: E402  能力① 规则识别
+from intent_model import identify_card        # noqa: E402  能力①′ 模型优先/规则兜底
 try:
     from memory_store import MemoryStore      # noqa: E402  能力②
 except Exception:                             # pragma: no cover
@@ -73,12 +74,50 @@ DEFAULT_ADAPTER = {
     "ask": "要把它落到实处",
 }
 INTENT_ADAPTERS = {
-    "trip":     {"heading": "从你发过的话里，读出了一个安排", "ask": "要把它排成一次行程"},
-    "meeting":  {"heading": "从你发过的话里，读出了一次会面", "ask": "要把它定成一次会面"},
-    "errand":   {"heading": "从你发过的话里，读出了一件要办的事", "ask": "要把它办掉"},
-    "purchase": {"heading": "从你发过的话里，读出了一件要买的", "ask": "要把它安排上"},
-    "reminder": {"heading": "从你发过的话里，读出了一条提醒", "ask": "要把它记成一条提醒"},
+    "trip": {
+        "eyebrow": "拾意 · 出行",
+        "heading": "从你发过的话里，读出了一个安排",
+        "rows": [("when", "出发"), ("where", "目的地")],
+        "ask_fields": ("when", "where"),
+        "actions": ("确认行程", "改一下"),
+        "ask": "要把它排成一次行程",
+    },
+    "meeting": {
+        "eyebrow": "拾意 · 会面",
+        "heading": "从你发过的话里，读出了一次会面",
+        "rows": [("when", "时间"), ("where", "地点")],
+        "ask_fields": ("when", "where"),
+        "actions": ("加进日程", "回复对方"),
+        "ask": "要把它定成一次会面",
+    },
+    "errand": {
+        "eyebrow": "拾意 · 代办",
+        "heading": "从你发过的话里，读出了一件要办的事",
+        "rows": [("when", "什么时候"), ("where", "去哪")],
+        "ask_fields": ("when",),          # 去哪已经定了，只问时间
+        "actions": ("记下来", "转给别人"),
+        "ask": "要把它办掉",
+    },
+    "purchase": {
+        "eyebrow": "拾意 · 采买",
+        "heading": "从你发过的话里，读出了一件要买的",
+        "rows": [("when", "什么时候"), ("where", "在哪")],
+        "ask_fields": ("when", "where"),
+        "actions": ("去比价", "先放着"),
+        "ask": "要把它安排上",
+    },
+    "reminder": {
+        "eyebrow": "拾意 · 提醒",
+        "heading": "从你发过的话里，读出了一条提醒",
+        "rows": [("when", "什么时候")],
+        "ask_fields": ("when",),          # 提醒不问地点
+        "actions": ("设提醒", "改时间"),
+        "ask": "要把它记成一条提醒",
+    },
 }
+
+
+ACTIONS_FALLBACK = ("对，就是这件事", "不对，改一下")
 
 
 def adapter_for(kind):
@@ -137,26 +176,33 @@ def plan(card, drop_memo=0):
 
     lines, copies = [], {}
 
+    # 行标签随卡型走：出行是「出发 / 目的地」，会面是「时间 / 地点」，
+    # 提醒只有「什么时候」。同一个识别结果，不同场景长成不同的卡。
+    labels = dict(ad.get("rows", ()))
+    facts = {}
     if when.get("resolved"):
-        txt = "时间 · %s · 出自原文" % fmt_when(when["resolved"])
-        if when.get("confidence", 0) < 0.7:
-            txt = "时间 · %s · 低置信，待你确认" % fmt_when(when["resolved"])
-        copies["when"] = txt
-        lines.append("when")
+        v = fmt_when(when["resolved"])
+        facts["when"] = (v, "低置信，待你确认" if when.get("confidence", 0) < 0.7 else "出自原文")
     elif when.get("clock"):
-        copies["when"] = "时间 · 只有「%s」，没定哪天 · 待你确认" % clean(when["clock"], 16)
-        lines.append("when")
-
+        facts["when"] = ("只有「%s」，没定哪天" % clean(when["clock"], 16), "待你确认")
     if where.get("normalized"):
-        copies["where"] = "地点 · %s · 出自原文" % clean(where["normalized"], 24)
-        lines.append("where")
+        facts["where"] = (clean(where["normalized"], 24), "出自原文")
+
+    for key in ("when", "where"):
+        if key in facts and key in labels:
+            v, src = facts[key]
+            copies[key] = "%s · %s · %s" % (labels[key], v, src)
+            lines.append(key)
 
     tz = TYPE_ZH.get(intent.get("type"), "待确认")
     conf = intent.get("confidence", 0)
     copies["kind"] = "类型 · %s · %s" % (tz, "识别所得" if conf >= 0.5 else "说不准，待你确认")
     lines.append("kind")
 
-    qs = [q["ask"] for q in card.get("questions", [])]
+    # 该问什么也随卡型走：提醒卡不问地点，代办卡"去哪"已经定了就不问。
+    asked = set(ad.get("ask_fields", ("when", "where")))
+    qs = [q["ask"] for q in card.get("questions", [])
+          if q.get("field") not in ("when", "where") or q.get("field") in asked]
     open_line = ("还没定：" + "；".join(clean(q, 30) for q in qs[:2])) if qs else "该定的都定了，没有要问的。"
 
     memo = []
@@ -173,6 +219,15 @@ def plan(card, drop_memo=0):
         "memo_lines": memo, "heading": ad["heading"], "ask": ad["ask"],
         "intent_type": intent.get("type", "unknown"), "intent_conf": conf,
         "quote_disp": clean(card.get("quote", ""), 40),
+        # 题头与两个动作也随卡型走 —— 出行卡说「确认行程」，提醒卡说「设提醒」。
+        "eyebrow": ad.get("eyebrow", "拾意 · 生成卡 · 第一次识别"),
+        "act_yes": (ad.get("actions") or ACTIONS_FALLBACK)[0],
+        "act_fix": (ad.get("actions") or ACTIONS_FALLBACK)[1],
+        # 这行随识别来源变：走模型写"设备助手"，回退规则写"本地规则"。
+        # 两条路都在卡片上如实标注 —— 是什么就是什么。
+        "source_line": ("识别来源 · 设备助手（本机模型）"
+                        if card.get("identify_source") == "assistant"
+                        else "识别来源 · 本地规则（设备助手可用时另加一行）"),
     }
 
 
@@ -427,11 +482,11 @@ copy quote_src { class: vocabulary, en: "${quote_src}", zh: "${quote_src}" }
 
 ${field_copies}
 copy f_open    { class: vocabulary, en: "${open_line}", zh: "${open_line}" }
-copy f_src     { class: vocabulary, en: "识别来源 · 本地规则（设备助手可用时另加一行）", zh: "识别来源 · 本地规则（设备助手可用时另加一行）" }
+copy f_src     { class: vocabulary, en: "${source_line}", zh: "${source_line}" }
 
 ${memo_copies}
-copy act_yes   { class: vocabulary, en: "对，就是这件事", zh: "对，就是这件事" }
-copy act_fix   { class: vocabulary, en: "不对，改一下", zh: "不对，改一下" }
+copy act_yes   { class: vocabulary, en: "${act_yes}", zh: "${act_yes}" }
+copy act_fix   { class: vocabulary, en: "${act_fix}", zh: "${act_fix}" }
 
 ${components}
 # ── view ─────────────────────────────────────────────────────────────────────
@@ -499,12 +554,15 @@ def render_card(p, card, version, generated_at, review_note, memory_note):
         adapter_note="INTENT_ADAPTERS['%s'] -> %s" % (p["intent_type"], ad["ask"]),
         memory_note=memory_note, review_note=review_note,
         source_desc=quote_src,
-        eyebrow="拾意 · 生成卡 · 第一次识别",
+        eyebrow=p.get("eyebrow", "拾意 · 生成卡 · 第一次识别"),
         heading=p["heading"],
         quote=p.get("quote_disp") or clean(card.get("quote", ""), 40),
         quote_src=quote_src,
         field_copies=field_copies,
         open_line=clean(p["open_line"], 60),
+        source_line=p.get("source_line", "识别来源 · 本地规则（设备助手可用时另加一行）"),
+        act_yes=p.get("act_yes", ACTIONS_FALLBACK[0]),
+        act_fix=p.get("act_fix", ACTIONS_FALLBACK[1]),
         memo_copies=memo_copies.rstrip("\n"),
         components=COMPONENTS.rstrip("\n"),
         field_rows=field_rows,
@@ -528,11 +586,18 @@ def render_data(p):
 
 
 def render_manifest(app_id, name, version):
+    # integrity is a required field of the manifest (app-contract's
+    # `Integrity { bundle_blake3: String, signature: Option<_> }`), so emit it
+    # empty and let `hub stamp` fill the digest in. Older hubs indexed into a
+    # serde_json::Value and created the section out of nothing, which is why a
+    # manifest without it used to pass — a hub that parses first (the fix for
+    # the stamp/check mismatch) refuses it: "missing field `integrity`".
     return {"agent": None,
             "capabilities": ["octos.session.open", "octos.turn.start"],
             "compute": {"instruction_budget": None, "memory_bytes": None},
             "id": app_id, "name": name, "network": {"hosts": []}, "schema": 1,
-            "storage": {"max_bytes": None}, "version": version}
+            "storage": {"max_bytes": None}, "version": version,
+            "integrity": {"bundle_blake3": ""}}
 
 
 def render_bindings(card, p):
@@ -563,12 +628,14 @@ def render_listing(app_id, version, n_screens):
 
 # ==================================================================== 生成 + 自评闭环
 
-def build_with_review(text, room, prefs, version, app_id, name, max_rounds=3, tighten=0):
+def build_with_review(text, room, prefs, version, app_id, name, max_rounds=3, tighten=0,
+                      model_host=None):
     """能力④ 落地：生成一版 -> 自评 -> 有问题就改 -> 直到干净或用尽轮次。
 
     tighten>0：先按视觉/几何反馈收紧一版（更短的文案、更少的原文行）。
+    model_host 给了就走「助手可用」那条路；缺省走本地规则。两条路产出的 card 同构。
     """
-    card = build_card(text, room=room, prefs=prefs)
+    card, ident = identify_card(text, room=room, prefs=prefs, host=model_host)
     p = plan(card)
     if tighten:
         p["open_line"] = clean(p["open_line"], max(16, len(p["open_line"]) - 14 * tighten))
@@ -576,7 +643,7 @@ def build_with_review(text, room, prefs, version, app_id, name, max_rounds=3, ti
         rows = quote_rows(qd)
         if rows > 1:
             p["quote_disp"] = clean(qd, max(QUOTE_PER_LINE, (rows - tighten) * QUOTE_PER_LINE))
-    review = {"rounds": [], "converged": False}
+    review = {"rounds": [], "converged": False, "identify": ident}
     review_note = "clean on first pass"
     for r in range(max_rounds):
         P = placements(p["lines"], ["memo_%d" % i for i in range(len(p["memo_lines"]))],
@@ -641,14 +708,18 @@ def lint(bundle_dir):
     return r.returncode, (r.stdout or "") + (r.stderr or "")
 
 
-def generate_one(text, room, out_dir, app_id, name, version, prefs, memory_note, tighten=0):
+def generate_one(text, room, out_dir, app_id, name, version, prefs, memory_note, tighten=0,
+                 model_host=None):
     card, p, P, review, review_note = build_with_review(text, room, prefs, version, app_id, name,
-                                                       tighten=tighten)
+                                                       tighten=tighten, model_host=model_host)
     b = write_bundle(out_dir, card, p, P, review, review_note, memory_note, app_id, name, version)
     code, log = lint(b)
     n_issues = sum(len(x["issues"]) for x in review["rounds"])
-    print("[%s] %-24s rows=%d memo=%d  review:%s  lint:%s"
-          % ("PASS" if code == 0 else "FAIL", text[:22], len(p["lines"]), len(p["memo_lines"]),
+    via = card.get("identify_source", "rules")
+    print("[%s] %-24s via=%-9s rows=%d memo=%d  review:%s  lint:%s"
+          % ("PASS" if code == 0 else "FAIL", text[:22],
+             "assistant" if via == "assistant" else "rules",
+             len(p["lines"]), len(p["memo_lines"]),
              ("%d issue(s) fixed" % n_issues) if n_issues else "clean-first-pass",
              "ok" if code == 0 else "ERR"))
     return code, review
@@ -664,6 +735,8 @@ def main():
     ap.add_argument("--name", default="拾意 · 生成卡")
     ap.add_argument("--version", default="0.2.0")
     ap.add_argument("--memory", help="memory.json 路径；缺省用仓库 .local-state/memory.json")
+    ap.add_argument("--model", action="store_true",
+                    help="识别走本机模型（助手可用那条路）；缺省走本地规则")
     args = ap.parse_args()
 
     if not os.path.isdir(SHARED_KIT):
@@ -678,17 +751,29 @@ def main():
         prefs = st.prefs()
         memory_note = "%s (prefs=%s)" % (st.rel_path, ",".join(sorted(k for k, v in prefs.items() if v)))
 
+    # 能力①′ 识别层：--model 时用本机模型做识别；缺省（或不可用）走本地规则。
+    model_host = None
+    if args.model:
+        try:
+            from host_local import LocalModelHost
+            model_host = LocalModelHost()
+            print("[识别] 走本机模型：%s" % model_host.describe())
+        except Exception as e:  # noqa: BLE001
+            print("[识别] 本机模型不可用，回退规则：%s" % e)
+
     os.makedirs(args.out, exist_ok=True)
     codes, reviews = [], []
     if args.samples:
         from intent_card import SAMPLES
         for i, (text, room) in enumerate(SAMPLES, 1):
             c, rv = generate_one(text, room, os.path.join(args.out, "%02d" % i),
-                                 args.id, args.name, args.version, prefs, memory_note)
+                                 args.id, args.name, args.version, prefs, memory_note,
+                                 model_host=model_host)
             codes.append(c); reviews.append(rv)
     elif args.text:
         c, rv = generate_one(args.text, args.room, os.path.join(args.out, "card"),
-                             args.id, args.name, args.version, prefs, memory_note)
+                             args.id, args.name, args.version, prefs, memory_note,
+                             model_host=model_host)
         codes.append(c); reviews.append(rv)
     else:
         ap.error("给 --text 或 --samples")
