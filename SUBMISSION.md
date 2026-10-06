@@ -15,7 +15,7 @@
 | 3 | **必须有 README** | ✅ | `README.md`（含顶部 30 秒版）+ `评审速览.md` |
 | 4 | 简短需求 | ✅ | `README.md` §1–§2 |
 | 5 | 可运行最小原型 + **启动说明** | ✅ | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5。**提交材料即到此为止**（便携演示包系我方内部跨机验证工具，**非提交物**，见 `docs/回归清单.md` 四·补3） |
-| 6 | **固定版本源码或包** | ✅ | 源码 = 本仓 `main` HEAD · 卡片包 = `bundle/`（tag `v0.3.3` · `manifest.json` 内容寻址摘要） |
+| 6 | **固定版本源码或包** | ✅ | **固定版本 = tag `gosim-initial-submission`**（初赛参赛版，钉死）· 卡片包 = `bundle/`（内容版本 tag `v0.3.3` · `manifest.json` 内容寻址摘要） |
 | 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒**，五屏正流程 + 两个失败态） |
 | 8 | **两张关键截图** | ✅ | `bundle/screenshots/01-read.png`、`03-plan.png`（另附 5 张） |
 | 9 | 数据来源与限制 | ✅ | `docs/数据来源与限制.md` |
@@ -58,7 +58,7 @@
 | 名称 | 拾意 Pickup |
 | 版本 | `0.3.3`（`manifest.json`） |
 | 发布版本 | **tag `v0.3.3`**（`bundle/` 卡片包的内容版本，自该 tag 起未变；`v0.3.2` / `v0.3.1` 为更早版本） |
-| 固定提交号 | 本仓库 `main` 分支 HEAD（**提交截止时的最新快照**；含形态①②③全量。提交入口 = 官方 issue #13，已提交仓库地址）<br>⚠️ 注：本仓经 API 推送，commit SHA 由内容寻址且会随每次推送重建 ⇒ **故不写死 SHA**，以 `main` HEAD 为准；卡片包另有稳定版本锚点 tag `v0.3.3` |
+| **固定版本**（初赛参赛版） | **tag `gosim-initial-submission`** —— 评委按此 tag 拉取即为**参赛版**（含形态①②③全量）<br>※ 本仓经 API 推送，`main` 分支的 commit SHA 由内容寻址、会随每次推送重建 ⇒ **主线 SHA 不写死**；**要锚定版本请用 tag**。提交入口 = 官方 issue #13（已提交仓库地址）<br>※ 卡片包另有**内容版本锚点** tag `v0.3.3`（`bundle/` 自该 tag 起内容未变） |
 | 许可证 | **Apache-2.0**（`LICENSE`） |
 | 公开仓库 | <https://github.com/sansanyixyz331/shiyi> |
 | 作品形态 | **三形态**：① Hub 卡片包（`bundle/`）② 脚本应用（`apps/shiyi-live/bundle/`）③ OctoSense 系统 app（`octos/`，助手原地改卡） |
@@ -76,7 +76,7 @@
 |---|---|---|---|
 | 1 | **简短需求** | `README.md` §1–§2（一句话 + 赛题对应，≤300 字） | ✅ |
 | 2 | **可运行最小原型及启动说明** | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5 | ✅ |
-| 3 | **固定版本源码或包** | 源码 = 本仓库 `main` HEAD；卡片包 = `bundle/`（`manifest.bundle_blake3` 内容寻址）；**包版本锚点 = tag `v0.3.3`**（tag 为稳定锚，commit SHA 随 API 推送重建、不写死） | ✅ |
+| 3 | **固定版本源码或包** | **固定版本 = tag `gosim-initial-submission`**（初赛参赛版，钉死）；卡片包 = `bundle/`（`manifest.bundle_blake3` 内容寻址，内容版本 tag `v0.3.3`） | ✅ |
 | 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒**，含五屏正流程 + 两个失败态） | ✅ |
 | 5 | **两张关键截图** | ① `bundle/screenshots/01-read.png`（识别：从消息读出时间/地点/类型 + 来源）② `bundle/screenshots/03-plan.png`（记忆命中"坐高铁不坐飞机"→ 只给高铁方案） | ✅ |
 | 6 | **数据来源与限制** | `docs/数据来源与限制.md`（逐字段来源 + **限制：车次为演示样例**） | ✅ |
@@ -89,7 +89,7 @@
 
 | # | 官方要求 | 我方对应 | 状态 |
 |---|---|---|---|
-| 1 | 公开源码仓库、**固定提交号或发布版本**、**Apache-2.0** | 仓库公开；固定提交号 = `main` HEAD（截止时最新），发布版本 = tag `v0.3.3`；`LICENSE` = Apache-2.0 | ✅ |
+| 1 | 公开源码仓库、**固定提交号或发布版本**、**Apache-2.0** | 仓库公开；**固定版本 = tag `gosim-initial-submission`**；`LICENSE` = Apache-2.0 | ✅ |
 | 2 | 应用**目标、适用场景、图标、运行截图、作者与支持方式** | 目标/场景 = `README.md` §1–2；图标 = `bundle/assets/icon.svg`；截图 = `bundle/screenshots/`×5；作者/支持 = `listing.json` publisher + 本文件顶部 | ✅ |
 | 3 | **宿主版本、支持平台、依赖与启动说明**（让评审复现同一版本） | 见下方 §C「复现」——含宿主修订、平台、依赖、逐步命令 | ✅ |
 | 4 | **数据来源、申请权限、隐私处理，以及用户授权、拒绝和失败时的行为** | `docs/数据来源与限制.md`（来源+限制+**权限=3 项，逐项列用途与不可用时行为**）+ `PRIVACY.md`（隐私）+ 该文件的「授权 / 拒绝 / 失败」三表 + §5.4 长期记忆的存储位置与写入行为 | ✅ |

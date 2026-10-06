@@ -12,6 +12,7 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
 | | |
 |---|---|
 | **这是什么** | **OctoScript L0 卡片应用**——把消息里一句随手的话变成一张"等你确认"的卡片；你确认它才执行，并写进长期记忆 |
+| **固定版本（初赛参赛版）** | **tag `gosim-initial-submission`** —— 评委按此 tag 拉取即为**参赛版**（含形态①②③全量；`bundle/` 内容版本 = `0.3.3`） |
 | **怎么跑** | 见 **§5 启动说明**（官方宿主 + Rust 工具链）；卡片包本身**与平台无关**（纯 manifest + card + kit 数据），`python build/verify_flow.py` 可一键跑五屏 + 失败态 + 记忆取证并产出证据 <br>※ 我方另有一个**内部跨机验证包**（`card-host.exe` + 内嵌 Python，拷去别的电脑零依赖跑），属**自用工具、非提交物**，见 [`docs/回归清单.md`](docs/回归清单.md) 四·补3 |
 | **形态 / 场景** | **两种官方承认的形态 + 一条本体形态**：① **L0 卡片包**（主提交，`bundle/`）② **脚本应用 · 现场造卡**（`apps/shiyi-live/`）③ **OctoSense 系统 app**（`octos/`，原生快览屏卡 + **助手原地改卡**）；官方 12 场景之「**即时消息**」（宿主 **Rinx**，即早期 `robrix2`） |
 | **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅ · 2 分 15 秒演示 ✅ |
@@ -416,7 +417,7 @@ layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
 | 作者 / 发布者 | **sansanyixyz331**（队伍 `三三Claw`） |
 | 支持 | <https://github.com/sansanyixyz331/shiyi/issues> |
 | 仓库 | <https://github.com/sansanyixyz331/shiyi> |
-| 版本 | `0.3.3`（`bundle/` 卡片包内容自 tag `v0.3.3` 起未变；本仓 `main` HEAD 另含形态②③；tag `v0.3.2` / `v0.3.1` 为更早版本） |
+| 版本 | **固定版本（初赛参赛版）= tag `gosim-initial-submission`**；卡片包内容版本 = `0.3.3`（tag `v0.3.3`，`bundle/` 自该 tag 起内容未变；`v0.3.2`/`v0.3.1` 为更早版本） |
 | 许可 | Apache-2.0 |
 
 ## License
