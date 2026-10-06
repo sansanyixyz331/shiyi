@@ -164,7 +164,7 @@ python build/record_demo.py                                  # → build/_video/
 | **「确认 = 办事」真机取证（0.7.3）** | `docs/evidence/act/` | Review 列出 6 服务 / 造卡 / 确认已发回群 / 群里新回执 + **27s 连续录屏** + 复现 README |
 | **助手「原地改卡」双端取证（OctoSense 本体）** | `docs/evidence/repin/` + `octos/` | 桌面 + 小米13：模型自发 `shiyi_repin` tool_call / 工具真返回 `{"replaced":true}` / 工具审计 `outcome:"ok"` / 改卡前后截图 / **两端各一段端到端录屏**（`desktop_repin_end_to_end.mp4` 52s、`phone_repin_end_to_end.mp4` 150s）；宿主扩展源码（`tools.json` + `shiyi.rs` + 两处注册）/ 复现 README |
 | **快览屏（glance）底层实证** | `docs/evidence/glance/` | 拾意作为**官方同级 system app**（`os.shiyi`）把卡钉进系统**快览屏**：注册日志 / 3 卡常驻 / 落盘 `picks.json` / 重启后读回 / **同 id 重钉 = 原地替换**（宿主回执 `replaced`）/ **桌面录屏 53s + 手机录屏 26s** / 3 帧 + 手机 3 帧 / 诚实边界 |
-| **便携演示包（内部工具 · 非提交物）** | 仓库外（Release 附发） | `shiyi-portable-demo-v0.3.3.zip`（41 MB）—— **我方自用的跨机验证工具**：拷去别的电脑、由队外朋友跑一遍录视频（备"队外用户试用记录"用）。内含官方宿主 `card-host.exe` + 内嵌 Python，双击 `一键运行.cmd` 即跑出五屏 + 两失败态 + 记忆取证。**不是提交材料**，此行列此备查 |
+| **便携演示包（内部工具 · 非提交物）** | 仓库外（Release 附发） | `shiyi-portable-demo-v0.3.3.zip`（约 52 MB）—— **我方自用的跨机验证工具**：拷去别的电脑、由队外朋友跑一遍录视频（备"队外用户试用记录"用）。内含官方宿主 `card-host.exe` + 内嵌 Python，双击 `一键运行.cmd` 即跑出五屏 + 两失败态 + 记忆取证。**不是提交材料**，此行列此备查 |
 
 ## F. 已知限制（诚实声明）
 

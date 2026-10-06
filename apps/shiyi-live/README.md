@@ -146,8 +146,8 @@ host.request("model.complete", {
 | **真回退** | `ASK_MODEL=true`，`card-host`（**没有 model 服务**） | 卡照出，来源写 `本机规则（设备助手不可用）` |
 | **走模型** | 再加 `MODEL_STANDIN=true` + `model-stub.json` | 卡按**回复**长：`目的地 · 慕尼黑`（规则认不出这个城市） |
 
-证据原为 `docs/evidence/model-path/`（`fallback-in-card-host.png`、`model-standin-in-card-host.png`、
-`payload-sent-to-model.json`）——**该目录未随仓发布**，可用 §「跑」里的 card-host 命令在本机复跑重现。
+证据见 [`docs/evidence/model-path/`](../../docs/evidence/model-path/)（`fallback-in-card-host.png`、
+`model-standin-in-card-host.png`、`payload-sent-to-model.json`）——**已随仓发布**，也可按 §「跑」里的 card-host 命令在本机复跑重现。
 
 **那第三张图里最值钱的是 `payload-sent-to-model.json`** —— 替身会把「本该发出去的载荷」也落盘，
 所以能直接看到**长期记忆确实进了 `input`**：
@@ -197,7 +197,7 @@ host.request("octos.session.history", {}, fn(r){
 > 解析一律**枚举**（`for fk fv in m`）、不点缺失的键（缺字段在 splash 里是**报错不是 nil**）；
 > 截断用 `match_str(regex("^.{0,26}"))`（splash **没有 slice**）。
 
-### 本地验过的四种状态（原截图未随仓发布，可用 §「跑」的 card-host 命令复跑重现）
+### 本地验过的五种状态（截图已随仓发布见 `docs/evidence/assist-memory/`，也可按 §「跑」的 card-host 命令复跑重现）
 
 | 状态 | 怎么跑 | 结果 |
 |---|---|---|
