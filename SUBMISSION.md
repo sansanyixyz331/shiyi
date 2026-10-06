@@ -14,8 +14,8 @@
 | 2 | 代码仓库（**公开 + Apache-2.0**） | ✅ | <https://github.com/sansanyixyz331/shiyi> · `LICENSE` |
 | 3 | **必须有 README** | ✅ | `README.md`（含顶部 30 秒版）+ `评审速览.md` |
 | 4 | 简短需求 | ✅ | `README.md` §1–§2 |
-| 5 | 可运行最小原型 + **启动说明** | ✅ | 便携包（**Release 直链** <https://github.com/sansanyixyz331/shiyi/releases/download/v0.3.3/shiyi-portable-demo-v0.3.3.zip>，41 MB，双击 `一键运行.cmd` 即跑）+ `README.md` §5 |
-| 6 | **固定版本源码或包** | ✅ | tag `v0.3.3` · `bundle/manifest.json` 内容寻址摘要 |
+| 5 | 可运行最小原型 + **启动说明** | ✅ | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5（另附**便携演示包**便于评委零依赖试跑：Release 直链 <https://github.com/sansanyixyz331/shiyi/releases/download/v0.3.3/shiyi-portable-demo-v0.3.3.zip>，双击 `一键运行.cmd` 即跑 —— 便利项，非初赛必交） |
+| 6 | **固定版本源码或包** | ✅ | 源码 = 本仓 `main` HEAD · 卡片包 = `bundle/`（tag `v0.3.3` · `manifest.json` 内容寻址摘要） |
 | 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒**，五屏正流程 + 两个失败态） |
 | 8 | **两张关键截图** | ✅ | `bundle/screenshots/01-read.png`、`03-plan.png`（另附 5 张） |
 | 9 | 数据来源与限制 | ✅ | `docs/数据来源与限制.md` |
@@ -57,8 +57,8 @@
 | app id | `shiyi` |
 | 名称 | 拾意 Pickup |
 | 版本 | `0.3.3`（`manifest.json`） |
-| 发布版本 | **tag `v0.3.3`**（初赛冻结版；与本仓 `main` HEAD 同源。`v0.3.1` 为前一版冻结，`v0.2.2` 更早一版） |
-| 固定提交号 | 本仓库 `main` 分支 HEAD（提交入口 = 官方 issue #13，已提交仓库地址） |
+| 发布版本 | **tag `v0.3.3`**（`bundle/` 卡片包的内容版本，自该 tag 起未变；`v0.3.2` / `v0.3.1` 为更早版本） |
+| 固定提交号 | 本仓库 `main` 分支 HEAD —— `28440bb4b4cd7baead507b00cdc166160efe7c8c`（初赛参赛版；含形态①②③全量。提交入口 = 官方 issue #13，已提交仓库地址） |
 | 许可证 | **Apache-2.0**（`LICENSE`） |
 | 公开仓库 | <https://github.com/sansanyixyz331/shiyi> |
 | 作品形态 | **三形态**：① Hub 卡片包（`bundle/`）② 脚本应用（`apps/shiyi-live/bundle/`）③ OctoSense 系统 app（`octos/`，助手原地改卡） |
@@ -76,7 +76,7 @@
 |---|---|---|---|
 | 1 | **简短需求** | `README.md` §1–§2（一句话 + 赛题对应，≤300 字） | ✅ |
 | 2 | **可运行最小原型及启动说明** | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5 | ✅ |
-| 3 | **固定版本源码或包** | 源码 = 本仓库；包 = `bundle/`（`manifest.bundle_blake3` 内容寻址）；版本 = tag `v0.3.3` | ✅ |
+| 3 | **固定版本源码或包** | 源码 = 本仓库 `main` HEAD（`28440bb4…`）；卡片包 = `bundle/`（`manifest.bundle_blake3` 内容寻址）；包版本 = tag `v0.3.3` | ✅ |
 | 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒**，含五屏正流程 + 两个失败态） | ✅ |
 | 5 | **两张关键截图** | ① `bundle/screenshots/01-read.png`（识别：从消息读出时间/地点/类型 + 来源）② `bundle/screenshots/03-plan.png`（记忆命中"坐高铁不坐飞机"→ 只给高铁方案） | ✅ |
 | 6 | **数据来源与限制** | `docs/数据来源与限制.md`（逐字段来源 + **限制：车次为演示样例**） | ✅ |
@@ -89,7 +89,7 @@
 
 | # | 官方要求 | 我方对应 | 状态 |
 |---|---|---|---|
-| 1 | 公开源码仓库、**固定提交号或发布版本**、**Apache-2.0** | 仓库公开；tag `v0.3.3`；`LICENSE` = Apache-2.0 | ✅ |
+| 1 | 公开源码仓库、**固定提交号或发布版本**、**Apache-2.0** | 仓库公开；固定提交号 = `main` HEAD `28440bb4…`（另 tag `v0.3.3` = 卡片包版本）；`LICENSE` = Apache-2.0 | ✅ |
 | 2 | 应用**目标、适用场景、图标、运行截图、作者与支持方式** | 目标/场景 = `README.md` §1–2；图标 = `bundle/assets/icon.svg`；截图 = `bundle/screenshots/`×5；作者/支持 = `listing.json` publisher + 本文件顶部 | ✅ |
 | 3 | **宿主版本、支持平台、依赖与启动说明**（让评审复现同一版本） | 见下方 §C「复现」——含宿主修订、平台、依赖、逐步命令 | ✅ |
 | 4 | **数据来源、申请权限、隐私处理，以及用户授权、拒绝和失败时的行为** | `docs/数据来源与限制.md`（来源+限制+**权限=3 项，逐项列用途与不可用时行为**）+ `PRIVACY.md`（隐私）+ 该文件的「授权 / 拒绝 / 失败」三表 + §5.4 长期记忆的存储位置与写入行为 | ✅ |

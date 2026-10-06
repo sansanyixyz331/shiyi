@@ -416,7 +416,7 @@ layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
 | 作者 / 发布者 | **sansanyixyz331**（队伍 `三三Claw`） |
 | 支持 | <https://github.com/sansanyixyz331/shiyi/issues> |
 | 仓库 | <https://github.com/sansanyixyz331/shiyi> |
-| 版本 | `0.3.3`（tag `v0.3.3`；`v0.3.2` 为初赛冻结版，`v0.3.1` 更早） |
+| 版本 | `0.3.3`（`bundle/` 卡片包内容自 tag `v0.3.3` 起未变；本仓 `main` HEAD 另含形态②③；tag `v0.3.2` / `v0.3.1` 为更早版本） |
 | 许可 | Apache-2.0 |
 
 ## License
