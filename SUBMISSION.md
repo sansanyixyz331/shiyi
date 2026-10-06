@@ -24,6 +24,7 @@
 | 12 | 一个**失败或空状态** | ✅ | 未签名被拒 / 摘要不符被拒（视频 ③ 段 + `build/_evidence/neg_*.log` 宿主拒绝日志） |
 | 13 | **App Hub 提交** | ✅ **已提** | `OctoSense-App-Hub` issue **#76**（**Submit shiyi 0.7.3**；**一个 issue 覆盖可上架的两形态**：主 = L0 卡片包 `bundle/` 0.3.3〔Linux 章〕，附 = 脚本应用 `apps/shiyi-live/` 0.7.3〔Windows 宿主〕；形态三 `os.shiyi` 系系统 app，**不走 App Hub**，另述于下）· `hub check` PASSED（逐字输出见 issue） |
 | 14 | 官方评分口径**逐条对齐**（加分） | ✅ | [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（12 场景 / 三硬点 / AI 总线 / 三形态） |
+| 15 | **技术深度：造 App 的机器**（申报项） | ✅ | 除"一张卡"外，仓库含**把意图变卡片的机器**：`build/pipeline.py` 一条命令 → 过官方门禁的 L0 bundle + 渲染出图 + 自评修订；识别**两条路**（`model.complete` 优先 / 规则兜底，卡上自标来源）。说明 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，对照证据 [`docs/evidence/identify/`](docs/evidence/identify/)（规则 vs 模型）、[`docs/evidence/model-path/`](docs/evidence/model-path/) |
 
 **⇒ 结论：初赛材料已齐，可提交。**
 

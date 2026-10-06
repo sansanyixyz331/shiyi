@@ -18,6 +18,7 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
 | **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅ · 2 分 15 秒演示 ✅ |
 | **三种交付面** | ① **L0 卡片**（`bundle/`）：打开即渲染五屏 + 三条**总线调用**（读助手记忆 / 问助手 / 真发消息）；② **脚本应用**（`apps/shiyi-live/`）：**一句话当场长出卡**，改一下 / **确认（结果真发回绑定群）** / 再来一张，真交互；③ **OctoSense 系统 app**（`octos/`）：卡钉在**快览屏**、**助手能在卡的对话里原地改卡**（桌面 + 手机双端已跑通，未碰内核一行）。同一套识别口径与长期记忆 |
 | **一页速览** | [`评审速览.md`](评审速览.md)（3 分钟看懂）· **[`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（逐条对官方评分口径）** · 材料对照 [`SUBMISSION.md`](SUBMISSION.md) |
+| **🔧 造 App 的机器** | 拾意不只是"一张卡"，仓库里还有**一台把意图变成卡片的机器**：一条命令从一句话走到「通过官方门禁的 L0 bundle + 渲染出图 + 自评修订」；**识别走两条路**（设备助手 `model.complete` 优先 / 本地规则兜底，结果卡上自己标注走的是哪条）。一页说明见 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，代码 `build/pipeline.py` / `build/gen_screens.py` / `src/intent_model.py`，对照证据 [`docs/evidence/identify/`](docs/evidence/identify/)、[`docs/evidence/model-path/`](docs/evidence/model-path/)、[`docs/evidence/assist-memory/`](docs/evidence/assist-memory/)、[`docs/evidence/live-app/`](docs/evidence/live-app/) |
 
 ---
 
