@@ -248,8 +248,10 @@ host.request("matrix.read_messages", {limit: 10}, fn(r){
 
 **真机 Rinx 全链路**（`docs/evidence/chat-read/`，2026-10-05 · 0.7.1 出厂态）：
 
-> 🎬 **演示片（27.5 秒）**：`docs/evidence/chat-read/demo-rinx-loop.mp4` —— 从 Mini apps → 导入（绑房间）
-> → Review → Run → 读到 ×3 条 → 造卡 → 确认 → 记忆 4→5，一镜到底。
+> 🎬 **演示片（27.5 秒，帧序列合成 · 非连续录屏）**：`docs/evidence/chat-read/demo-rinx-loop.mp4` —— 从 Mini apps → 导入（绑房间）
+> → Review → Run → 读到 ×3 条 → 造卡 → 确认 → 记忆 4→5。
+> **该片由逐步帧合成**（825 帧中 203 唯一帧）；要看**连续真录屏**请见同目录 README 指向的
+> `live-run/rinx-live-end-to-end.mp4`（20.7s）与 `act/rinx-act-end-to-end.mp4`（27s）。
 
 | 步骤 | 实据 |
 |---|---|

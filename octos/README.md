@@ -1,15 +1,31 @@
-# octos/ — 助手「原地改卡」的宿主扩展（不碰官方内核）
+# octos/ — 拾意做成 OctoSense 系统 app（快览屏）+ 助手「原地改卡」（不碰官方内核）
 
-这一目录**不进提交包**（不在 `bundle/` 里）。它装的是：让「拾意」的**卡片对话**从
-**「只能聊」变成「能改卡」**所需的宿主侧文件，以及**双端真机已跑通的实证**。
+这一目录**不进提交包**（不在 `bundle/` 里）。它装的是「拾意」跑在 **OctoSense 本体**上的两段能力所需文件与实证：
 
-> **一句话**：给拾意挂一个它自己的工具 **`shiyi.repin`**（官方预留的扩展点，`implemented_by:"host-service"`），
-> 助手在卡的对话里就能把你钉的那张卡**原地改掉** —— 模型自己选工具、传参数，卡被替换成新内容。
-> **没碰 octos 内核一行**（走的是官方 Calendar / News / Mail 成卡工具的**同一条路**）。
+1. **快览屏（glance）集成** —— 拾意作为官方同级 **system app**（`os.shiyi`），把卡钉进**系统快览屏**、和应用同生命周期（**底层**）。
+2. **助手「原地改卡」** —— 给拾意挂一个它自己的工具 **`shiyi.repin`**，助手在卡的对话里就能把钉的那张卡**原地改掉**（**建在第 1 条之上**）。
+
+> 第 1 条（快览屏）的完整实证见 [`../docs/evidence/glance/`](../docs/evidence/glance/README.md)；
+> 第 2 条（改卡）见 [`../docs/evidence/repin/`](../docs/evidence/repin/README.md)。
+> **两条都没碰 octos 内核一行。**
 
 ---
 
-## 1. 为什么需要它（问题 → 做法）
+## 0. 快览屏（glance）集成 —— 底层
+
+拾意注册为官方同级 system app，与官方 `os.photos / os.maps / os.ai-providers / os.youtube`
+**并列**在同一个 notice 服务表里（`apps.rs:228`）；只声明 `["storage","glance"]` 两个能力。
+
+- **真接官方宿主**：用的是 OctoSense **官方 shell** 里真实存在的 `glance` host service（`glance.publish / withdraw / list`），不是自搭仿真。
+- **多卡常驻 + 持久化**：每 app 上限 4 张；本地 `picks.json` 落盘，**重启后读回**。
+- **同 id 再发 = 原地替换**：`glance` 按 `(app, card_id)` 键控；同句重钉面板卡数不变、卡原地更新（宿主回执 `replaced`）。
+- **诚实**：快览屏内容随 shell 重启清空（宿主行为）；拾意**如实报"0 张"**，不谎称"对得上"。
+
+复现、原始日志、截图与录屏见 [`../docs/evidence/glance/`](../docs/evidence/glance/README.md)。
+
+---
+
+## 1. 为什么需要「改卡」（问题 → 做法）
 
 **问题**：点开一张卡能跟助手聊（真模型回话），但助手**改不了卡片本身**。
 卡的对话里，宿主提示词（`l0-chat/src/lib.rs:539`）明写

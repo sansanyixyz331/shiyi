@@ -14,7 +14,7 @@
 | 2 | 代码仓库（**公开 + Apache-2.0**） | ✅ | <https://github.com/sansanyixyz331/shiyi> · `LICENSE` |
 | 3 | **必须有 README** | ✅ | `README.md`（含顶部 30 秒版）+ `评审速览.md` |
 | 4 | 简短需求 | ✅ | `README.md` §1–§2 |
-| 5 | 可运行最小原型 + **启动说明** | ✅ | 便携包（双击 `一键运行.cmd`）+ `README.md` §5 |
+| 5 | 可运行最小原型 + **启动说明** | ✅ | 便携包（**Release 直链** <https://github.com/sansanyixyz331/shiyi/releases/download/v0.3.3/shiyi-portable-demo-v0.3.3.zip>，41 MB，双击 `一键运行.cmd` 即跑）+ `README.md` §5 |
 | 6 | **固定版本源码或包** | ✅ | tag `v0.3.3` · `bundle/manifest.json` 内容寻址摘要 |
 | 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒**，五屏正流程 + 两个失败态） |
 | 8 | **两张关键截图** | ✅ | `bundle/screenshots/01-read.png`、`03-plan.png`（另附 5 张） |
@@ -159,6 +159,8 @@ python build/record_demo.py                                  # → build/_video/
 | 门禁 / 审查包 | `build/review.json` | `hub scan` 7 问 |
 | **「确认 = 办事」真机取证（0.7.3）** | `docs/evidence/act/` | Review 列出 6 服务 / 造卡 / 确认已发回群 / 群里新回执 + **27s 连续录屏** + 复现 README |
 | **助手「原地改卡」双端取证（OctoSense 本体）** | `docs/evidence/repin/` + `octos/` | 桌面 + 小米13：模型自发 `shiyi_repin` tool_call / 工具真返回 `{"replaced":true}` / 工具审计 `outcome:"ok"` / 改卡前后截图 / **两端各一段端到端录屏**（`desktop_repin_end_to_end.mp4` 52s、`phone_repin_end_to_end.mp4` 150s）；宿主扩展源码（`tools.json` + `shiyi.rs` + 两处注册）/ 复现 README |
+| **快览屏（glance）底层实证** | `docs/evidence/glance/` | 拾意作为**官方同级 system app**（`os.shiyi`）把卡钉进系统**快览屏**：注册日志 / 3 卡常驻 / 落盘 `picks.json` / 重启后读回 / **同 id 重钉 = 原地替换**（宿主回执 `replaced`）/ **桌面录屏 53s + 手机录屏 26s** / 3 帧 + 手机 3 帧 / 诚实边界 |
+| **便携演示包（解压即跑）** | Release 资产 | `shiyi-portable-demo-v0.3.3.zip`（41 MB）<https://github.com/sansanyixyz331/shiyi/releases/download/v0.3.3/shiyi-portable-demo-v0.3.3.zip> —— 内含官方宿主 `card-host.exe` + 内嵌 Python，**双击 `一键运行.cmd` 即跑出五屏 + 两失败态 + 记忆取证**（我方已在干净目录解压后实测 `Exit code = 0`） |
 
 ## F. 已知限制（诚实声明）
 

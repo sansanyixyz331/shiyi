@@ -12,7 +12,7 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
 | | |
 |---|---|
 | **这是什么** | **OctoScript L0 卡片应用**——把消息里一句随手的话变成一张"等你确认"的卡片；你确认它才执行，并写进长期记忆 |
-| **怎么跑（零依赖）** | 解压 `拾意_便携演示包_完整版_20260930.zip` → 双击 **`一键运行.cmd`** → 五个窗口依次弹出、结束打印 `Exit code = 0`（自带宿主与运行库，**不用装任何东西**）；官方参考宿主跑法见 **§5** |
+| **怎么跑（零依赖 · 推荐先走这条）** | **下** [`shiyi-portable-demo-v0.3.3.zip`](https://github.com/sansanyixyz331/shiyi/releases/download/v0.3.3/shiyi-portable-demo-v0.3.3.zip)（**41 MB，Release 直链**）→ 解压 → 双击 **`一键运行.cmd`** → 五个应用窗口依次弹出、结束打印 `Exit code = 0`（**包内自带官方宿主 `card-host.exe` 与内嵌 Python 3.11，不用装任何东西**）；命令行只要 Rust 工具链的官方宿主跑法见 **§5** |
 | **形态 / 场景** | **两种官方承认的形态 + 一条本体形态**：① **L0 卡片包**（主提交，`bundle/`）② **脚本应用 · 现场造卡**（`apps/shiyi-live/`）③ **OctoSense 系统 app**（`octos/`，原生快览屏卡 + **助手原地改卡**）；官方 12 场景之「**即时消息**」（宿主 **Rinx**，即早期 `robrix2`） |
 | **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅ · 2 分 15 秒演示 ✅ |
 | **三种交付面** | ① **L0 卡片**（`bundle/`）：打开即渲染五屏 + 三条**总线调用**（读助手记忆 / 问助手 / 真发消息）；② **脚本应用**（`apps/shiyi-live/`）：**一句话当场长出卡**，改一下 / **确认（结果真发回绑定群）** / 再来一张，真交互；③ **OctoSense 系统 app**（`octos/`）：卡钉在**快览屏**、**助手能在卡的对话里原地改卡**（桌面 + 手机双端已跑通，未碰内核一行）。同一套识别口径与长期记忆 |
@@ -86,10 +86,15 @@ shiyi/
     manifest.send.json   #   执行版清单（capabilities: matrix.send_message）；「真发送」的独立接线参考与真机实证（同一能力自 0.3.3 起已进 bundle）
     bindings.json        #   能力接线：on_open 声明
     证据/                 #   真机实证（Review / Run 截图 + 房间消息 JSON）
-  octos/                 # ★ 不进 bundle：OctoSense 本体扩展（助手「原地改卡」）
+  octos/                 # ★ 不进 bundle：OctoSense 本体扩展（快览屏 system app + 助手「原地改卡」）
     apps/shiyi/bundle/   #   拾意做成 OctoSense 系统 app（manifest + main.splash + tools.json 声明 shiyi.repin）
     crates/shell/src/    #   宿主侧扩展（shiyi.rs：捡起自己的 host service；对齐官方 Calendar/notice 的写法）
     README.md            #   原理 / 代码落点 / 复现 / 边界（未碰内核一行）
+  docs/evidence/         # ★ 不进 bundle：各条链路的真机取证
+    glance/              #   快览屏底层：注册 / 3 卡常驻 / 落盘 / 同 id 原地替换 / 桌面 53s + 手机 26s 录屏
+    repin/               #   助手原地改卡：桌面 52s + 手机 150s 端到端录屏 + 工具审计
+    act/  live-run/      #   脚本应用「确认 = 真办事」/ 端到端连续录屏
+    chat-read/ profile/  #   读绑定房间消息成卡 / 认自己（matrix.profile）
   build/                 # ★ 不进 bundle
     render_cards.py      # 逐屏渲染：组临时 bundle → 盖章 → 起宿主 → 抓图 → 裁图
     sync_bundle.py       # 首屏 + 五张截图 → bundle（单一真源，防止两份不一致）
