@@ -15,7 +15,7 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
 | **固定版本（初赛参赛版）** | **tag `gosim-initial-submission`** —— 评委按此 tag 拉取即为**参赛版**（含形态①②③全量；`bundle/` 内容版本 = `0.3.3`） |
 | **怎么跑** | 见 **§5 启动说明**（官方宿主 + Rust 工具链）；卡片包本身**与平台无关**（纯 manifest + card + kit 数据），`python build/verify_flow.py` 可一键跑五屏 + 失败态 + 记忆取证并产出证据 <br>※ 我方另有一个**内部跨机验证包**（`card-host.exe` + 内嵌 Python，拷去别的电脑零依赖跑），属**自用工具、非提交物**，见 [`docs/回归清单.md`](docs/回归清单.md) 四·补3 |
 | **形态 / 场景** | **两种官方承认的形态 + 一条本体形态**：① **L0 卡片包**（主提交，`bundle/`）② **脚本应用 · 现场造卡**（`apps/shiyi-live/`）③ **OctoSense 系统 app**（`octos/`，原生快览屏卡 + **助手原地改卡**）；官方 12 场景之「**即时消息**」（宿主 **Rinx**，即早期 `robrix2`） |
-| **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅ · 2 分 15 秒演示 ✅ |
+| **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅ · 2 分 17 秒演示 ✅ |
 | **三种交付面** | ① **L0 卡片**（`bundle/`）：打开即渲染五屏 + 三条**总线调用**（读助手记忆 / 问助手 / 真发消息）；② **脚本应用**（`apps/shiyi-live/`）：**一句话当场长出卡**，改一下 / **确认（结果真发回绑定群）** / 再来一张，真交互；③ **OctoSense 系统 app**（`octos/`）：卡钉在**快览屏**、**助手能在卡的对话里原地改卡**（桌面 + 手机双端已跑通，未碰内核一行）。同一套识别口径与长期记忆 |
 | **一页速览** | [`评审速览.md`](评审速览.md)（3 分钟看懂）· **[`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（逐条对官方评分口径）** · 材料对照 [`SUBMISSION.md`](SUBMISSION.md) |
 | **🔧 造 App 的机器** | 拾意不只是"一张卡"，仓库里还有**一台把意图变成卡片的机器**：一条命令从一句话走到「通过官方门禁的 L0 bundle + 渲染出图 + 自评修订」；**识别走两条路**（设备助手 `model.complete` 优先 / 本地规则兜底，结果卡上自己标注走的是哪条）。一页说明见 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，代码 `build/pipeline.py` / `build/gen_screens.py` / `src/intent_model.py`，对照证据 [`docs/evidence/identify/`](docs/evidence/identify/)、[`docs/evidence/model-path/`](docs/evidence/model-path/)、[`docs/evidence/assist-memory/`](docs/evidence/assist-memory/)、[`docs/evidence/live-app/`](docs/evidence/live-app/) |
@@ -318,8 +318,8 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 审查包 | ✅ `build/review.json`（7 个审查问题，放 bundle 之外） |
 | 服务逻辑 | ✅ 五屏流程状态机（`src/shiyi_flow.py`）**已与官方参考宿主串成端到端** |
 | 端到端验证（A3） | ✅ `build/verify_flow.py`：五屏逐屏真渲染 + 每步真实点击命中控件 + 事件链推进 → `build/_evidence/` |
-| 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），宿主拒绝日志 + 演示片 ③ 段空窗画面留证 |
-| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒 / 1350 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
+| 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝准入、**我方卡片零渲染**（fail-closed）；宿主画**它自带的拒绝说明页**（含 refused 原文），`build/_evidence/neg_*.log` + `neg_*.png` 留证，演示片 ③ 段原样露出 |
+| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒 / 1366 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
 | **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
 | **设备助手（AI · 已进提交物）** | ✅ `bundle/` 声明 `octos.session.open`+`octos.turn.start` + `bindings.json` 接线；首屏卡多一行助手答案，助手不在时 guard 兜底、**不报错**；实证 [`ai/证据/`](ai/证据/) |
 | **宿主执行 · 真发消息（已进提交物）** | ✅ `bundle/` 声明 `matrix.send_message` + 同一条 `bindings.json`：打开首屏把回执发进导入时选定的房间；**本机真跑通**（实证在 `rinx/证据/`） |

@@ -6,8 +6,9 @@
 
 在官方参考宿主 `card-host` 里真实跑一遍五屏流程并**逐帧录下宿主窗口本身**
 （走宿主自带的 instrument 路由 `/g?raw=1`），再用 ffmpeg 合成 mp4；
-片头/片尾是合成的标题卡，两个失败态是**真起宿主、真被拒绝**后录到的空窗口
-（画面上叠官方原话，不遮不骗）。
+片头/片尾是合成的标题卡，两个失败态是**真起宿主、真被拒绝**后录到的画面
+—— 新版宿主被拒后会在窗口里画**它自带的「拒绝说明页」**（含 refused 原文），
+本片**原样露出**，只在底部加一条说明条，**不遮不骗**。
 
 为什么这么录，而不是手机录屏（详见 00_docs/大白话_…md 与 README）：
   · 官方《作品提交与 AppHub 规范》第 6 条要的是「运行截图、日志或视频及对应
@@ -22,14 +23,15 @@
     片头卡 → [五屏：起宿主 → 等本屏真画出来 → 开始逐帧采样 → /snap 证实控件在
     → /click 点它正中心 → 停几秒让这一下被录到 → 读该屏 service-actions.json
     声明的事件名推进下一屏] → [失败态①未签名 / ②摘要不符：真起宿主 → 录到
-    拒绝后的空窗口 → 叠官方原话] → 片尾卡 → ffmpeg 合成 mp4
+    宿主自带的拒绝说明页 → 底部加说明条] → 片尾卡 → ffmpeg 合成 mp4
 
 踩过的坑（都已修）：
   · 抓帧计数器必须**全局共享**，否则每屏各自从 00001 起 → 后一屏覆盖前一屏。
   · ffmpeg 的 fontfile 不能带 Windows 的 `C:/`（冒号要转义、反斜杠是转义符），
     → 把字体复制到输出目录、只传裸文件名、并把 ffmpeg 的 cwd 设成输出目录。
   · 字幕**不能画在画面上**（会盖住主按钮）→ 先 pad 在底部加一条字幕带再画进去。
-  · 失败态窗口是**空白**的，直接播看不出信息 → 叠一层深色说明卡（含宿主原话）。
+  · 失败态**不能整屏盖住**：新版宿主被拒后会画它自带的「拒绝说明页」（真实证据），
+    整屏盖掉就成了"看不到证据"→ 只在**底部**加说明条，上面原样露出宿主页面。
 
 用法：
     python build/record_demo.py                # 全片（正流程 + 失败态 + 片头尾）
@@ -206,7 +208,7 @@ class Caps:
 
 
 class Overlays:
-    """失败态全屏说明卡（盖住空白窗口，画宿主的真实原话）。"""
+    """失败态底部说明条（上面露出宿主自带的「拒绝说明页」，画宿主真实原话）。"""
 
     def __init__(self):
         self.items = []  # [start_frame, end_frame|None, [ (text,size,color,dy), ... ]]
@@ -283,19 +285,20 @@ def shorten(msg):
 
 
 def fail_lines(idx, raw_msg):
-    """失败态说明卡的文字（含宿主原话，逐字不编，只把长哈希压短）。"""
-    wrap = textwrap.wrap(shorten(raw_msg), width=34) or [raw_msg]
+    """失败态说明条的文字（含宿主原话，逐字不编，只把长哈希压短）。
+
+    画面**不遮**：上面露出宿主自带的「拒绝说明页」（真实证据），
+    我只在底部加一条说明条 —— 写清"这是我方卡片一张都没画"。
+    """
+    wrap = textwrap.wrap(shorten(raw_msg), width=30) or [raw_msg]
     lines = [
-        ("失败态 %s" % idx, 38, "white", 300),
-        ("（画面 = 宿主拒绝后留下的空窗口）", 17, "0xA5D6A7", 372),
-        ("宿主原话", 20, "0x81C784", 452),
+        ("失败态 %s ｜ 宿主原话（逐字，画面为宿主自带拒绝页）" % idx, 17, "0x81C784", 792),
     ]
-    y = 496
-    for ln in wrap:
-        lines.append((ln, 19, "white", y))
-        y += 30
-    lines.append(("结果", 20, "0x81C784", y + 40))
-    lines.append(("一张卡都没画 —— fail-closed", 24, "0xFF8A65", y + 74))
+    y = 824
+    for ln in wrap[:4]:
+        lines.append((ln, 16, "white", y))
+        y += 24
+    lines.append(("结果：我方卡片一张都没画 —— fail-closed", 20, "0xFF8A65", y + 12))
     return lines
 
 
@@ -389,10 +392,12 @@ def record():
             txt = read_log(logf)
             m = re.search(r"card-host: refused: .*", txt)
             raw_msg = m.group(0).split("refused:", 1)[-1].strip() if m else "（未捕获到拒绝原因）"
-            rendered = "[SPLASH] eval" in txt
+            # 判据：**我方卡片**是否被准入 —— 只看 `admitted`。
+            # ⚠️ 不能用 `[SPLASH] eval`：宿主被拒后画的**自带拒绝页**也会打这一行。
+            admitted = VF.card_was_admitted(txt)
             log("   宿主 127.0.0.1:%d" % h.port)
             log("   拒绝原因：refused: %s" % raw_msg)
-            log("   是否渲染了卡片：%s" % ("是（不该）" if rendered else "否 —— fail-closed ✓"))
+            log("   我方卡片是否被准入：%s" % ("是（不该）" if admitted else "否 —— fail-closed ✓"))
             caps.switch(counter.n, "拾意　｜　" + title)
             ov.open(counter.n, fail_lines(idx, raw_msg))
             g = Grabber(h.port, FRAMES, counter)
@@ -401,7 +406,7 @@ def record():
             g.stop()
             ov.close(counter.n)
             caps.close(counter.n)
-            log("   录到 %d 帧（画面为空窗口，已叠说明卡）" % g.saved)
+            log("   录到 %d 帧（画面 = 宿主自带拒绝页，底部已加说明条）" % g.saved)
 
     # ④ 片尾卡
     render_card(OUTRO_PNG, OUTRO_LINES)
@@ -420,10 +425,11 @@ def record():
 # ── 合成 ──────────────────────────────────────────────────────────────────
 
 def overlay_filter(overlays):
+    """失败态：只在**底部**画一条说明带，露出上面宿主自带的拒绝页（真实证据）。"""
     parts = []
     for t0, t1, lines in overlays:
         parts.append(
-            "drawbox=x=0:y=0:w=iw:h=ih:color=0x0B1512@0.96:t=fill"
+            "drawbox=x=0:y=760:w=iw:h=ih-760:color=0x0B1512@0.92:t=fill"
             ":enable='between(t,%.2f,%.2f)'" % (t0, t1))
         for text, size, color, y in lines:
             parts.append(

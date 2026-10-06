@@ -16,7 +16,7 @@
 | 4 | 简短需求 | ✅ | `README.md` §1–§2 |
 | 5 | 可运行最小原型 + **启动说明** | ✅ | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5。**提交材料即到此为止**（便携演示包系我方内部跨机验证工具，**非提交物**，见 `docs/回归清单.md` 四·补3） |
 | 6 | **固定版本源码或包** | ✅ | **固定版本 = tag `gosim-initial-submission`**（初赛参赛版，钉死）· 卡片包 = `bundle/`（内容版本 tag `v0.3.3` · `manifest.json` 内容寻址摘要） |
-| 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒**，五屏正流程 + 两个失败态） |
+| 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒**，五屏正流程 + 两个失败态） |
 | 8 | **两张关键截图** | ✅ | `bundle/screenshots/01-read.png`、`03-plan.png`（另附 5 张） |
 | 9 | 数据来源与限制 | ✅ | `docs/数据来源与限制.md` |
 | 10 | 已报名成员名单 | ✅ | 官方 issue #5 报名评论（队伍 `三三Claw`） |
@@ -78,7 +78,7 @@
 | 1 | **简短需求** | `README.md` §1–§2（一句话 + 赛题对应，≤300 字） | ✅ |
 | 2 | **可运行最小原型及启动说明** | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5 | ✅ |
 | 3 | **固定版本源码或包** | **固定版本 = tag `gosim-initial-submission`**（初赛参赛版，钉死）；卡片包 = `bundle/`（`manifest.bundle_blake3` 内容寻址，内容版本 tag `v0.3.3`） | ✅ |
-| 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒**，含五屏正流程 + 两个失败态） | ✅ |
+| 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒**，含五屏正流程 + 两个失败态） | ✅ |
 | 5 | **两张关键截图** | ① `bundle/screenshots/01-read.png`（识别：从消息读出时间/地点/类型 + 来源）② `bundle/screenshots/03-plan.png`（记忆命中"坐高铁不坐飞机"→ 只给高铁方案） | ✅ |
 | 6 | **数据来源与限制** | `docs/数据来源与限制.md`（逐字段来源 + **限制：车次为演示样例**） | ✅ |
 | 7 | **已报名成员名单** | 官方 issue 报名凭证：<https://github.com/gosimfoundation/hackathon-agenticapp26/issues/5#issuecomment-5852150142>（队伍 `三三Claw` / 成员 id `三三Claw-ljh`） | ✅ |
@@ -157,8 +157,8 @@ python build/record_demo.py                                  # → build/_video/
 | 端到端全步骤 | `build/_evidence/flow_run.json` | 每屏：控件是否在/可点/点得中 + 宿主应答 + 事件 |
 | 宿主内逐屏抓图 | `build/_evidence/shots/*.png` | 五个末帧，字节各不相同（非同一张） |
 | 宿主运行日志 | `build/_evidence/host_*.log` | 含 `admitted` / `[SPLASH] eval` |
-| 失败态证据（宿主拒绝日志） | `build/_evidence/neg_unsigned.log`、`neg_tampered.log` | 含 `refused:` 原文；拒绝后**零渲染**（空白窗，见演示片 ③ 段 ≈88–127s 画面） |
-| 演示短片 | `build/_video/shiyi-walkthrough.mp4` | 2 分 15 秒，四段 |
+| 失败态证据（宿主拒绝日志） | `build/_evidence/neg_unsigned.log`、`neg_tampered.log` | 含 `refused:` 原文；**我方卡片零渲染**（fail-closed）；宿主在窗口里画**它自带的拒绝说明页**（截图 `neg_unsigned.png`/`neg_tampered.png`，演示片 ③ 段 ≈95–135s 画面） |
+| 演示短片 | `build/_video/shiyi-walkthrough.mp4` | 2 分 17 秒，四段 |
 | **长期记忆文件** | `.local-state/memory.json` | 运行期生成（`.gitignore` 排除）；`flow_run.json` 的 `memory` 段有三条断言的实测值 |
 | 门禁 / 审查包 | `build/review.json` | `hub scan` 7 问 |
 | **「确认 = 办事」真机取证（0.7.3）** | `docs/evidence/act/` | Review 列出 6 服务 / 造卡 / 确认已发回群 / 群里新回执 + **27s 连续录屏** + 复现 README |

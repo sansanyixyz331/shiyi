@@ -23,8 +23,13 @@
 
 同时跑两个**失败态**（官方明点：必须能展示失败）：
 
-  · 卡片包未签名 → 宿主拒绝准入，且**一张都不渲染**（fail-closed）
-  · 卡片包被改过 → 摘要不符 → 同样拒绝
+  · 卡片包未签名 → 宿主拒绝准入，**我方卡片一张都不渲染**（fail-closed）；
+    新版宿主会在窗口里画一张它**自带的「拒绝说明页」**（含 refused 原文）。
+  · 卡片包被改过 → 摘要不符 → 同样拒绝（同样画拒绝页）。
+
+  判据（**我方卡片**是否渲染）：只看宿主日志的 `admitted` / `refused` ——
+  准入成功打 `admitted`，被拒只打 `refused`。`[SPLASH] eval` **不是**判据：
+  宿主被拒后画的拒绝说明页也会打一行 `[SPLASH] eval`，那是宿主画的、不是我方卡片。
 
 外带一项**记忆真读写取证**（对应官方「结果核验」）：
 
@@ -402,6 +407,17 @@ def run_positive():
 
 # ── 失败态 ───────────────────────────────────────────────────────────────
 
+def card_was_admitted(text):
+    """判据：**我方卡片**是否被宿主准入渲染。
+
+    只看宿主日志有没有 `admitted` —— 准入成功打 `admitted <app> <ver>`，
+    被拒只打 `refused:`、绝不打 `admitted`。
+    ⚠️ 不能用 `[SPLASH] eval` 当判据：宿主被拒后画**自带的拒绝说明页**时，
+    也会打一行 `[SPLASH] eval: N bytes`（那是宿主画的页面，不是我方卡片）。
+    """
+    return bool(re.search(r"card-host: shiyi \S+ admitted", text))
+
+
 def run_negative():
     """官方明点：必须能展示失败。这里取两类真实拒绝。"""
     out = []
@@ -415,20 +431,22 @@ def run_negative():
     with Host(b, logf, os.path.join(RUN, "neg_unsigned", "state"), extra=()) as h:
         text = read_log(logf)
         m = re.search(r"card-host: refused: .*", text)
-        rendered = "[SPLASH] eval" in text
+        admitted = card_was_admitted(text)
         log("   宿主：127.0.0.1:%d" % h.port)
         log("   拒绝原因：%s" % (m.group(0) if m else "（未捕获）"))
-        log("   是否渲染了卡片：%s" % ("是（不该）" if rendered else "否 —— fail-closed ✓"))
+        log("   我方卡片是否被准入：%s" % ("是（不该）" if admitted else "否 —— fail-closed ✓"))
         try:
             d = h.frame(min_bytes=1)
-            shot_state = ("抓到的只是空白窗口（%d 字节，无卡片内容）—— 一张都没画 ✓" % len(d)
-                          if len(d) < 20000 else "抓到了卡片画面（不该）")
+            shot_state = ("宿主画了它自带的「拒绝说明页」（%d 字节，含 refused 原文）；"
+                          "**我方卡片一张都没画** ✓" % len(d))
+            open(os.path.join(EVID, "neg_unsigned.png"), "wb").write(d)
         except Exception:
-            shot_state = "抓不到卡片画面 —— 一张都没画 ✓"
+            shot_state = "抓不到画面 —— 我方卡片一张都没画 ✓"
         log("   抓图：%s" % shot_state)
         out.append({"case": "unsigned", "refused": bool(m),
+                    "admitted": admitted,
                     "log": m.group(0) if m else None,
-                    "rendered_any": rendered, "capture": shot_state})
+                    "capture": shot_state})
 
     # ② 被改过：摘要不符
     log("")
@@ -441,11 +459,19 @@ def run_negative():
               extra=["--allow-unsigned"]) as h:
         text = read_log(logf)
         m = re.search(r"card-host: refused: .*", text)
-        rendered = "[SPLASH] eval" in text
+        admitted = card_was_admitted(text)
         log("   拒绝原因：%s" % (m.group(0) if m else "（未捕获）"))
-        log("   是否渲染了卡片：%s" % ("是（不该）" if rendered else "否 —— fail-closed ✓"))
+        log("   我方卡片是否被准入：%s" % ("是（不该）" if admitted else "否 —— fail-closed ✓"))
+        try:
+            d = h.frame(min_bytes=1)
+            capture = ("宿主画了它自带的「拒绝说明页」（%d 字节）；**我方卡片一张都没画** ✓"
+                       % len(d))
+            open(os.path.join(EVID, "neg_tampered.png"), "wb").write(d)
+        except Exception:
+            capture = "抓不到画面 —— 我方卡片一张都没画 ✓"
         out.append({"case": "tampered", "refused": bool(m),
-                    "log": m.group(0) if m else None, "rendered_any": rendered})
+                    "admitted": admitted,
+                    "log": m.group(0) if m else None, "capture": capture})
     return out
 
 

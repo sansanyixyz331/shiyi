@@ -19,9 +19,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":21}",
+      "host_answer": "{\"ok\":1,\"f\":20}",
       "shot": "build/_evidence/shots/shiyi-01-read.png",
-      "bundle_blake3": "216b97b22364f820507020fdec66c2c7540a388ebe05e1c7e6bacaf97c8a7a81"
+      "bundle_blake3": "00f59a1b41a5eebf8e682fea1ede0896b86527d0c2cbc00f466e04f93ac13a86"
     },
     {
       "screen": "shiyi-02-ask",
@@ -40,9 +40,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":21}",
+      "host_answer": "{\"ok\":1,\"f\":18}",
       "shot": "build/_evidence/shots/shiyi-02-ask.png",
-      "bundle_blake3": "1b4702822415c3147216948b0b291853a20ddb280726db2fd80d521d32e3bdd5"
+      "bundle_blake3": "707fbf4c8f8bd4c9802c10d84c83fd55de5ff8e1ee1fc868a49632d47b599809"
     },
     {
       "screen": "shiyi-02-ask",
@@ -61,9 +61,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":24}",
+      "host_answer": "{\"ok\":1,\"f\":21}",
       "shot": "build/_evidence/shots/shiyi-02-ask.png",
-      "bundle_blake3": "1b4702822415c3147216948b0b291853a20ddb280726db2fd80d521d32e3bdd5"
+      "bundle_blake3": "707fbf4c8f8bd4c9802c10d84c83fd55de5ff8e1ee1fc868a49632d47b599809"
     },
     {
       "screen": "shiyi-02-ask",
@@ -82,9 +82,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":27}",
+      "host_answer": "{\"ok\":1,\"f\":24}",
       "shot": "build/_evidence/shots/shiyi-02-ask.png",
-      "bundle_blake3": "1b4702822415c3147216948b0b291853a20ddb280726db2fd80d521d32e3bdd5"
+      "bundle_blake3": "707fbf4c8f8bd4c9802c10d84c83fd55de5ff8e1ee1fc868a49632d47b599809"
     },
     {
       "screen": "shiyi-03-plan",
@@ -103,9 +103,9 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":21}",
+      "host_answer": "{\"ok\":1,\"f\":20}",
       "shot": "build/_evidence/shots/shiyi-03-plan.png",
-      "bundle_blake3": "b9ee53fb486d34d07f1e975498c3503beb76395c644044551e0aa1a4d780c61c"
+      "bundle_blake3": "68c2e566afe5b9b0cc41ad5490dd7d6efbb723219d2db7a89a98ec4b590e6c5c"
     },
     {
       "screen": "shiyi-04-memo",
@@ -126,7 +126,7 @@
       "click_inside_widget": true,
       "host_answer": "{\"ok\":1,\"f\":20}",
       "shot": "build/_evidence/shots/shiyi-04-memo.png",
-      "bundle_blake3": "5a0ceb80b8490802a9c2745756c1c578c1906bc1ce67d12da9f5e44e06710803"
+      "bundle_blake3": "66f027bcbde048a92640b25acaa019c93deae1054b6674f5b1230fa97644e03d"
     },
     {
       "screen": "shiyi-05-done",
@@ -147,22 +147,23 @@
       "click_inside_widget": true,
       "host_answer": "{\"ok\":1,\"f\":23}",
       "shot": "build/_evidence/shots/shiyi-05-done.png",
-      "bundle_blake3": "eb66d35b809a7da3cb2dc810dfb4a318666797cd0246f0a540bb494de16df5b0"
+      "bundle_blake3": "7615f5fca49c2cbb8ef81bf3e356705fe7f20ecc41917e7e81c38472b2e7f6db"
     }
   ],
   "negative": [
     {
       "case": "unsigned",
       "refused": true,
+      "admitted": false,
       "log": "card-host: refused: app shiyi is unsigned and this host requires a signature",
-      "rendered_any": false,
-      "capture": "抓到的只是空白窗口（5440 字节，无卡片内容）—— 一张都没画 ✓"
+      "capture": "宿主画了它自带的「拒绝说明页」（21971 字节，含 refused 原文）；**我方卡片一张都没画** ✓"
     },
     {
       "case": "tampered",
       "refused": true,
-      "log": "card-host: refused: bundle digest 78cc4b2745e2b72d4c37f1b2a43487fb875dc5c606ab0ab13a1cdd998218d283 does not match the manifest's 216b97b22364f820507020fdec66c2c7540a388ebe05e1c7e6bacaf97c8a7a81: app shiyi version 0.3.2",
-      "rendered_any": false
+      "admitted": false,
+      "log": "card-host: refused: bundle digest 6e63b91cd7c4ee1257b9a3c6f8dae075859c87501dc3fd65672004508a228f2b does not match the manifest's 00f59a1b41a5eebf8e682fea1ede0896b86527d0c2cbc00f466e04f93ac13a86: app shiyi version 0.3.3",
+      "capture": "宿主画了它自带的「拒绝说明页」（33369 字节）；**我方卡片一张都没画** ✓"
     }
   ],
   "memory": {
@@ -173,7 +174,7 @@
       "write_receipt": {
         "path": ".local-state/memory.json",
         "abs_path": "C:\\gosim_agentic\\05_app\\shiyi\\.local-state\\memory.json",
-        "written_at": "2026-10-05T00:49:23",
+        "written_at": "2026-10-06T19:31:41",
         "place": "深圳",
         "default_depart": "早班",
         "from": "家里",
@@ -181,20 +182,20 @@
         "log_entries": 1,
         "line": "去深圳默认早班，从家里出发"
       },
-      "file_sha16": "30e57d46b25ab488"
+      "file_sha16": "a32b4b222f09fad2"
     },
     "second_run": {
       "remembered_before": {
         "default_depart": "早班",
         "from": "家里",
-        "learned_at": "2026-10-05T00:49:23",
+        "learned_at": "2026-10-06T19:31:41",
         "learned_from": "下周三我得去趟深圳",
         "room": "家庭群"
       }
     },
     "third_run_skip": {
-      "sha_before16": "30e57d46b25ab488",
-      "sha_after16": "30e57d46b25ab488"
+      "sha_before16": "a32b4b222f09fad2",
+      "sha_after16": "a32b4b222f09fad2"
     },
     "assertions": {
       "keep_wrote_file": true,
@@ -204,8 +205,8 @@
     "file_content": {
       "version": 1,
       "seeded_from": "builtin_initial",
-      "seeded_at": "2026-10-05T00:49:23",
-      "updated_at": "2026-10-05T00:49:23",
+      "seeded_at": "2026-10-06T19:31:41",
+      "updated_at": "2026-10-06T19:31:41",
       "prefs": {
         "prefers_rail": true,
         "no_flight": true,
@@ -215,14 +216,14 @@
         "深圳": {
           "default_depart": "早班",
           "from": "家里",
-          "learned_at": "2026-10-05T00:49:23",
+          "learned_at": "2026-10-06T19:31:41",
           "learned_from": "下周三我得去趟深圳",
           "room": "家庭群"
         }
       },
       "log": [
         {
-          "at": "2026-10-05T00:49:23",
+          "at": "2026-10-06T19:31:41",
           "event": "memo.keep",
           "place": "深圳",
           "default_depart": "早班",
