@@ -27,4 +27,8 @@ build/_evidence/
 build/_gen/
 build/_screens/
 
+# 录制中间产物（成片另存 docs/evidence/ 下进仓）
+build/_gen_video/
+build/_live_video/
+
 build/_probe/

@@ -62,9 +62,12 @@ python build/demo_identify.py --samples                 # 同一句话：规则 
 | — | 底部列出**本会话造过的卡**（最新在前）；整页可滚动 |
 
 **Rinx 真机端到端跑通**：导入 bundle → Review → Run → 点例子 → 出卡 → 确认 → 再造一张。
-证据：`docs/evidence/live-app/*.png` + `build/_gen_video/live-app-in-rinx.mp4`
+证据：`docs/evidence/live-app/*.png` + `docs/evidence/live-app/live-app.mp4`（宿主内逐帧）
++ `docs/evidence/live-run/rinx-live-end-to-end.mp4`（Rinx 真机连续录屏，20.7s）
++ `docs/evidence/live-run/live-app-in-rinx.mp4`（Rinx 真机连续录屏·遥控口驱动，38.7s：导入 → Review → Run → 出「出行」卡）
 （`build/record_rinx_app.py` 直接抓 Rinx 窗口，每帧都是宿主真实绘制；主按钮位置是**按颜色现场找的**，
-因为卡片高度随内容变，写死坐标会点空）。
+因为卡片高度随内容变，写死坐标会点空。`build/record_rinx_live.py` 走 Rinx 自带 `MAKEPAD_REMOTE`
+遥控口、`ffmpeg -f gdigrab` 连续抓屏，坐标一律取 `/snap` 的 layout 点、每步重取不缓存）。
 
 **离线完整可用**：识别全在本机，**不依赖任何服务** —— 正是官方"服务不可用时应用也要可用"那条。
 （顺带实测：Rinx 这一版的导入页已经带「Assistant (this device)」，可配 provider / Base URL / Key，
@@ -164,16 +167,18 @@ host.request("model.complete", {
 
 | 证据 | 位置 | 说明 |
 |---|---|---|
-| **真机跑（应用）** | `build/_gen_video/live-app-in-rinx.mp4` | **Rinx 真机**逐帧录：空记忆 → 说习惯 → 确认（记忆=1）→ 出行卡带**记忆行** → 滚动到按钮 → 确认（记忆=2）。**只留本地**（`.gitignore` 已排除） |
-| **宿主内轮换** | `build/_gen_video/live-app.mp4` | card-host 里五条样例自动轮换**并确认**，记忆条在画面上从 2 张长到 5 张 |
-| **真机截图** | `docs/evidence/live-app/0{1,2,3}-*.png` | 默认态 / 造好卡 / 确认后，均为 Rinx 窗口实拍 |
-| **真机复现** | `build/record_rinx_app.py` | 一条命令重录（自己抓 Rinx 窗口，非屏录） |
-| **干活录屏**（生成器） | `build/_gen_video/generator-at-work.mp4` | 真跑真录：片头 → 输入那句话 → **终端真实输出** → 模型卡面 → **规则卡面对照** → `hub check PASSED` → 片尾。**只留本地** |
+| **真机跑（应用）** | `docs/evidence/live-app/live-app.mp4` | 宿主内**逐帧真渲染**：五场景样例自动轮换并确认，记忆条从 2 张长到 5 张（`record_live_app.py`） |
+| **真机连续录屏** | `docs/evidence/live-run/rinx-live-end-to-end.mp4` | **Rinx 真机**一段连续录屏（非帧拼，20.7s）：导入 → Review → Run → 清记忆 → 点房间消息 → 造卡 → 确认（记忆 0→1） |
+| **真机连续录屏（遥控口驱动）** | `docs/evidence/live-run/live-app-in-rinx.mp4` | **Rinx 真机**一段连续录屏（非帧拼，38.7s）：进 apps → 导入页 → 填路径 → Review（六能力）→ Run → 写入一句话 → 出「出行」卡。经 `MAKEPAD_REMOTE` 遥控口驱动、`ffmpeg -f gdigrab` 连续抓屏（`record_rinx_live.py` 一条命令重录） |
+| **真机截图** | `docs/evidence/live-app/0{1..9}-*.png` | 默认态 / 造好卡 / 确认后 / 记忆 3，均为 Rinx 窗口实拍 |
+| **真机复现** | `build/record_rinx_app.py`｜`build/record_rinx_live.py` | 一条命令重录（前者自己抓 Rinx 窗口逐帧；后者走遥控口连续录屏） |
+| **干活录屏**（生成器） | `docs/evidence/generator/generator-at-work.mp4` | **真跑真录（85.4s）**：片头 → 输入那句话 → **终端真实输出** → 模型卡面 → **规则卡面对照** → 五场景 → `hub check PASSED` → 片尾（`record_generator.py` 一条命令重录） |
 | **卡面对照图** | `docs/evidence/identify/card-rules-vs-model.png` | 同一句话两张卡，左规则右模型 |
 | **机器可读对照** | `docs/evidence/identify/identify_cmp.json` | 三条样例的 when/where/kind/open |
 | **对照可重跑** | `build/demo_identify.py` | 一条命令复现上面两个 |
 | **自评过程** | 每份产出旁的 `review.json` | 逐轮"发现什么问题、改了什么" |
 | **演示短片**（初赛提交物） | `build/_video/shiyi-walkthrough.mp4` | 真实宿主逐帧录制（非动画） |
+| **复现命令** | `python build/record_generator.py`｜`python build/record_rinx_app.py <out.mp4>` | 上面两条录屏都能一条命令重跑 |
 
 ---
 
@@ -193,7 +198,7 @@ host.request("model.complete", {
 - 做的是**「结构化意图 → 组件库组装」**，不是"任意意图 → 任意 UI"（官方自己
   App Studio 也分里程碑）。
 - 覆盖**单屏确认卡 + 五屏流转**；**"图 → 卡片"**这一路（官方 image-to-card）**不做**。
-- 生成器**不产出提交物**：产出在 `build/_gen/`；冻结的 `bundle/` 与 tag `v0.3.2`
-  **一字节不动**。
+- 生成器**不产出提交物**：产出在 `build/_gen/`；冻结的 `bundle/`
+  **一字节不动**，固定版本一律以 **tag `gosim-initial-submission`** 为准。
 - 本机模型这条路是**开发期桥**（`src/host_local.py`）；真机上由宿主决定有没有模型，
   应用不依赖它。
