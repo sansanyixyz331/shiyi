@@ -21,9 +21,9 @@
 | 9 | 数据来源与限制 | ✅ | `docs/数据来源与限制.md` |
 | 10 | 已报名成员名单 | ✅ | 官方 issue #5 报名评论（队伍 `三三Claw`） |
 | 11 | 至少一次**可核对的操作** | ✅ | `build/verify_flow.py` 宿主内真点击 → `build/_evidence/flow_run.json` |
-| 12 | 一个**失败或空状态** | ✅ | 未签名被拒 / 摘要不符被拒（视频 ③ 段 + `_evidence` 抓图） |
+| 12 | 一个**失败或空状态** | ✅ | 未签名被拒 / 摘要不符被拒（视频 ③ 段 + `build/_evidence/neg_*.log` 宿主拒绝日志） |
 | 13 | **App Hub 提交** | ✅ **已提** | `OctoSense-App-Hub` issue **#76**（**Submit shiyi 0.7.3**；**一个 issue 覆盖两形态**：主 = L0 卡片包 `bundle/` 0.3.3〔Linux 章〕，附 = 脚本应用 `apps/shiyi-live/` 0.7.3〔Windows 宿主〕）· `hub check` PASSED（逐字输出见 issue） |
-| 14 | 官方评分口径**逐条对齐**（加分） | ✅ | [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（12 场景 / 三硬点 / AI 总线 / 两形态） |
+| 14 | 官方评分口径**逐条对齐**（加分） | ✅ | [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（12 场景 / 三硬点 / AI 总线 / 三形态） |
 
 **⇒ 结论：初赛材料已齐，可提交。**
 
@@ -83,7 +83,7 @@
 | 7 | **已报名成员名单** | 官方 issue 报名凭证：<https://github.com/gosimfoundation/hackathon-agenticapp26/issues/5#issuecomment-5852150142>（队伍 `三三Claw` / 成员 id `三三Claw-ljh`） | ✅ |
 | — | **至少一次可核对的操作** | `build/verify_flow.py` 在宿主内五屏真点击（证据 `build/_evidence/flow_run.json`） | ✅ |
 | — | **可核验的长期记忆（真读写）** | 点「记下」→ `.local-state/memory.json` 真被写；再跑一遍读得到；点「这次别记」sha 不变 —— 三条断言进 `flow_run.json` 的 `memory` 段 | ✅ |
-| — | **一个失败或空状态** | 两个失败态：未签名被拒 / 摘要不符被拒（`_evidence` 抓图 + 宿主日志；视频 ③ 段） | ✅ |
+| — | **一个失败或空状态** | 两个失败态：未签名被拒 / 摘要不符被拒（`build/_evidence/neg_*.log` 宿主拒绝日志 + 演示片 ③ 段空窗画面） | ✅ |
 
 ## B. 通用材料（官方《作品提交与 App Hub》「所有作品需要的材料」6 项）
 
@@ -156,7 +156,7 @@ python build/record_demo.py                                  # → build/_video/
 | 端到端全步骤 | `build/_evidence/flow_run.json` | 每屏：控件是否在/可点/点得中 + 宿主应答 + 事件 |
 | 宿主内逐屏抓图 | `build/_evidence/shots/*.png` | 五个末帧，字节各不相同（非同一张） |
 | 宿主运行日志 | `build/_evidence/host_*.log` | 含 `admitted` / `[SPLASH] eval` |
-| 失败态抓图 | `build/_evidence/neg_*.png` | 拒绝后**零渲染**（空白窗） |
+| 失败态证据（宿主拒绝日志） | `build/_evidence/neg_unsigned.log`、`neg_tampered.log` | 含 `refused:` 原文；拒绝后**零渲染**（空白窗，见演示片 ③ 段 ≈88–127s 画面） |
 | 演示短片 | `build/_video/shiyi-walkthrough.mp4` | 2 分 15 秒，四段 |
 | **长期记忆文件** | `.local-state/memory.json` | 运行期生成（`.gitignore` 排除）；`flow_run.json` 的 `memory` 段有三条断言的实测值 |
 | 门禁 / 审查包 | `build/review.json` | `hub scan` 7 问 |

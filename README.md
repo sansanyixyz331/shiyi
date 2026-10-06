@@ -317,7 +317,7 @@ python build/record_demo.py --no-caption    # 不要字幕
 | 审查包 | ✅ `build/review.json`（7 个审查问题，放 bundle 之外） |
 | 服务逻辑 | ✅ 五屏流程状态机（`src/shiyi_flow.py`）**已与官方参考宿主串成端到端** |
 | 端到端验证（A3） | ✅ `build/verify_flow.py`：五屏逐屏真渲染 + 每步真实点击命中控件 + 事件链推进 → `build/_evidence/` |
-| 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），日志与抓图留证 |
+| 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝且**零渲染**（fail-closed），宿主拒绝日志 + 演示片 ③ 段空窗画面留证 |
 | 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 15 秒 / 1350 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
 | **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
 | **设备助手（AI · 已进提交物）** | ✅ `bundle/` 声明 `octos.session.open`+`octos.turn.start` + `bindings.json` 接线；首屏卡多一行助手答案，助手不在时 guard 兜底、**不报错**；实证 [`ai/证据/`](ai/证据/) |
