@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "tools": [
+    {
+      "name": "shiyi.repin",
+      "description": "Change one of the person's pinned 拾意 cards in place: give the card_id, and the new title, time and place the card should show. The card already on the glance screen with that card_id is replaced, not duplicated. Use it after the person asks you to edit, correct or add to a card they pinned.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9._-]+$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "when": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "where": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "as_of": {
+            "type": "string",
+            "maxLength": 32
+          }
+        },
+        "required": [
+          "card_id",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string"
+          },
+          "replaced": {
+            "type": "boolean"
+          },
+          "expires_at": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "card_id"
+        ]
+      },
+      "risk": "act",
+      "background": false,
+      "implemented_by": "host-service"
+    }
+  ]
+}

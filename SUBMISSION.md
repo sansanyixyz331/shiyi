@@ -29,20 +29,22 @@
 
 ---
 
-## 🔬 两种形态（同一件作品，两副面孔）
+## 🔬 三种交付面（同一件作品，三副面孔）
 
-官方赛道一承认**两种交付形态**（进程应用 / App Card）。「拾意」两种都做了 ——
-覆盖官方问答里"不要静态概念稿"的正面回答：
+官方赛道一承认**两种交付形态**（进程应用 / App Card）。「拾意」把两种都做了，并在
+**OctoSense 本体（系统 app）**上把能力做到最深 —— 覆盖官方问答里"不要静态概念稿"的正面回答：
 
 | 形态 | 位置 | 能力 | 实证 |
 |---|---|---|---|
 | **① L0 卡片包**（主提交） | `bundle/`（`page.card` + `bindings.json`） | 打开即渲染五屏 + 三条**总线调用**（`octos.session.history` 读助手记忆 · `octos.turn.start` 问助手 · `matrix.send_message` 真发消息） | `hub check PASSED`（Linux） · [`rinx/证据/`](rinx/证据/) |
 | **② 脚本应用 · 现场造卡** | `apps/shiyi-live/bundle/`（`main.splash`，**0.7.3**） | **六个能力**（两个"读"开、模型关）：`matrix.read_messages` 读**绑定房间**的消息 → 点一条 → 当场造卡；**`matrix.send_message` 确认后把结论真发回群**（"记下了"→"办成了"）；`matrix.profile` 读你的名字 → 标出「（你）」；`octos.session.history` 读助手会话；`storage` 长期记忆；`model`（服务名 `model.complete`）代码就位、出厂关 | **Rinx 真机全链路**：导入（绑房间）→Review 列出 **6 个服务**→Run→读到 4 条真消息→点一条→造卡→**确认 → 群里真多一条回执**（记忆 0→1）（[`docs/evidence/act/`](docs/evidence/act/) + `chat-read/` + `profile/`） |
-| **③ 真机连续录屏 · 端到端** | [`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/rinx-live-end-to-end.mp4)（**20.7 秒 / 1316×1436 / H.264**，**一段连续真实录屏，非帧拼**）：导入 → Review（5 服务）→ Run → 读房间消息 → 点一条 → 造卡 → **确认行程** → 长期记忆 **0→1**。全程由宿主自带的 `MAKEPAD_REMOTE` 遥控口驱动，无人手介入；复现见 [`docs/evidence/live-run/README.md`](docs/evidence/live-run/README.md) |
-| **④ 真机连续录屏 · 「确认 = 办事」（0.7.3）** | [`docs/evidence/act/rinx-act-end-to-end.mp4`](docs/evidence/act/rinx-act-end-to-end.mp4)（**27 秒 / 2200×1440 / H.264**，一段连续真实录屏、非帧拼）：导入（绑房间）→ Review 列出 **6 个服务** → Run → 读到房间 **4 条真消息** → 点一条 → 造卡 → **确认 → 群里真多一条回执**（长期记忆 0→1）。逐步 5 帧截图见 [`docs/evidence/act/`](docs/evidence/act/)，复现见其 `README.md` |
+| **③ OctoSense 系统 app · 助手原地改卡** | `octos/`（系统 app 源码 + 宿主扩展） | 拾意做成 OctoSense **原生 system app**（`os.shiyi`），卡钉在**快览屏（glance）**；给它挂官方预留扩展点工具 **`shiyi.repin`**（`tools.json` 声明 `implemented_by:"host-service"` + 宿主注册同名服务）⇒ 助手在**卡的对话**里调它 → 同 `card_id` 重发 = **原地改卡**。**未碰 octos 内核一行** | **桌面（Windows）+ 小米13 双端已跑通**：模型自己发 `shiyi_repin` tool_call → 工具真返回 `{"replaced":true}` → 卡标题真的变了；工具审计 `risk:"act" / outcome:"ok"`（[`docs/evidence/repin/`](docs/evidence/repin/)，[`octos/README.md`](octos/README.md)） |
+| **④ 真机连续录屏 · 端到端** | [`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/rinx-live-end-to-end.mp4)（**20.7 秒 / 1316×1436 / H.264**，**一段连续真实录屏，非帧拼**）：导入 → Review（5 服务）→ Run → 读房间消息 → 点一条 → 造卡 → **确认行程** → 长期记忆 **0→1**。全程由宿主自带的 `MAKEPAD_REMOTE` 遥控口驱动，无人手介入；复现见 [`docs/evidence/live-run/README.md`](docs/evidence/live-run/README.md) |
+| **⑤ 真机连续录屏 · 「确认 = 办事」（0.7.3）** | [`docs/evidence/act/rinx-act-end-to-end.mp4`](docs/evidence/act/rinx-act-end-to-end.mp4)（**27 秒 / 2200×1440 / H.264**，一段连续真实录屏、非帧拼）：导入（绑房间）→ Review 列出 **6 个服务** → Run → 读到房间 **4 条真消息** → 点一条 → 造卡 → **确认 → 群里真多一条回执**（长期记忆 0→1）。逐步 5 帧截图见 [`docs/evidence/act/`](docs/evidence/act/)，复现见其 `README.md` |
 
 > **摘要分平台**：形态一交 **Linux 评测** ⇒ 留 Linux digest；形态二跑在 **Windows 宿主（Rinx）**
-> ⇒ 留 Windows digest（**谁运行它，就用谁那一侧的 hub 盖章**）。
+> ⇒ 留 Windows digest（**谁运行它，就用谁那一侧的 hub 盖章**）。形态三跑在 **OctoSense 本体**，
+> 系统 app 的 bundle 摘要由构建期 `pack_system_app` **自动盖章**（无需手动签名）。
 > 逐条对官方评分口径见 [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)。
 
 ---
@@ -56,7 +58,7 @@
 | 固定提交号 | 本仓库 `main` 分支 HEAD（提交入口 = 官方 issue #13，已提交仓库地址） |
 | 许可证 | **Apache-2.0**（`LICENSE`） |
 | 公开仓库 | <https://github.com/sansanyixyz331/shiyi> |
-| 作品形态 | **两形态**：① Hub 卡片包（`bundle/`）② 脚本应用（`apps/shiyi-live/bundle/`） |
+| 作品形态 | **三形态**：① Hub 卡片包（`bundle/`）② 脚本应用（`apps/shiyi-live/bundle/`）③ OctoSense 系统 app（`octos/`，助手原地改卡） |
 | 支持方式 | <https://github.com/sansanyixyz331/shiyi/issues> |
 
 ---
@@ -156,6 +158,7 @@ python build/record_demo.py                                  # → build/_video/
 | **长期记忆文件** | `.local-state/memory.json` | 运行期生成（`.gitignore` 排除）；`flow_run.json` 的 `memory` 段有三条断言的实测值 |
 | 门禁 / 审查包 | `build/review.json` | `hub scan` 7 问 |
 | **「确认 = 办事」真机取证（0.7.3）** | `docs/evidence/act/` | Review 列出 6 服务 / 造卡 / 确认已发回群 / 群里新回执 + **27s 连续录屏** + 复现 README |
+| **助手「原地改卡」双端取证（OctoSense 本体）** | `docs/evidence/repin/` + `octos/` | 桌面 + 小米13：模型自发 `shiyi_repin` tool_call / 工具真返回 `{"replaced":true}` / 工具审计 `outcome:"ok"` / 改卡前后截图；宿主扩展源码（`tools.json` + `shiyi.rs` + 两处注册）/ 复现 README |
 
 ## F. 已知限制（诚实声明）
 

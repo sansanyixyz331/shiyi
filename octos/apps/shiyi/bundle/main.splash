@@ -1,0 +1,236 @@
+// 拾意 · 一句话，一张常驻卡（shiyi / OctoSense 版）0.2.0
+// 一句话进去，一张卡钉到「快览屏」（glance）—— 卡会留着、能复用。
+// 官方「意图即应用」：不装 App、说完就有一个正好干这件事的东西，还能留下来。
+//
+// 0.2.0 相比 0.1.0：从「一张纸条」变成「一个应用」——
+//   ① 卡上把这句话里的 时间 / 地点 挑出来，分字段显示（不再只有一整句）；
+//   ② 可以同时钉多张（glance 每 app 上限 4 张），钉满先撤最旧的一张；
+//   ③ 每一张都落盘（fs）—— 重开拾意，你钉过什么都在；
+//   ④ 每行都能「重钉」（原地更新同一张卡）或「撤掉」（glance.withdraw）；
+//   ⑤ 每次进来问一次 glance.list，如实告诉你有几张真的在快览屏上；
+//   ⑥ 发失败绝不记账 —— 没钉上就不进列表。
+//
+// 机制：host.request("glance.publish", {source: <L0 卡>, data: <值>})
+//   卡按 (app, card_id) 键控：同一个 card_id 再发 = 替换，不是又建一张。
+//   桌面按 F9 看快览屏；点卡会打开拾意。
+// 注释只能用 // 或 /* */（# 是颜色记号，不是注释）。
+
+// ---------------------------------------------------------------- 配色
+let bg      = #x0e1a16
+let panel   = #x16251f
+let field   = #x1b2c24
+let line    = #x274036
+let ink     = #xeaf3ee
+let dim     = #x9db3aa
+let faint   = #x6d847b
+let accent  = #x7fd1b9
+let accentD = #x5fb9a2
+
+// ---------------------------------------------------------------- 卡模板（L0）
+// 换行用 \n（Splash 字符串支持转义）；整串用单引号，里面的双引号就不用转义。
+// 注意：sys.dataset 是固定字段集（title/subtitle/summary/as_of… 就这些），
+// TextTitle / TextRow / TextBody 只吃 text:，不吃 value:（那是 TextCaption 的）。
+let CARD = '# ledger os.shiyi@0.2.0\n# level:   L0\n# profile: ui/l0\n#\n# 拾意 card: one sentence a person asked 拾意 to keep. rec is a sys.dataset\n# record the app fills from that sentence: title is what they said, subtitle\n# the time it names, summary the place, as_of when they pinned it. The card\n# states nothing the app did not put in its data.\n\nsource rec sys.dataset(fields: [title, subtitle, summary, as_of])\n\ncopy app { class: vocabulary, en: "拾意" }\n\nview root Surface(pad: .tight) {\n  Col(gap: 10) {\n    Row(gap: 8, align: .center) {\n      Icon(name: .bookmark, size: .row)\n      TextCaption(text: copy.app, width: .fill)\n      TextCaption(value: rec.as_of)\n    }\n    TextTitle(text: rec.title, width: .fill)\n    TextRow(text: rec.subtitle, width: .fill)\n    TextBody(text: rec.summary, width: .fill)\n  }\n}\n'
+
+// ---------------------------------------------------------------- 状态
+let intent = ""     // 输入框里那句话
+let picks  = []     // 已钉的卡：[{id, text, when, where, at, key}]，最多 4 张
+let seq    = 0      // 发号器（id 只能 [A-Za-z0-9]，所以是 shiyi-p1、shiyi-p2…）
+let board  = ""     // glance.list 的如实回执
+let MAX_CARDS = 4   // glance 服务每 app 上限；满了先撤最旧的一张
+let DATA = "/picks.json"
+
+// ---------------------------------------------------------------- 组件
+let Flat = ButtonFlat{height: 34 padding: Inset{left: 16 right: 16}
+    draw_bg +: {color: accent color_hover: accentD color_down: accentD border_size: 0.0 border_radius: 10.0}
+    draw_text +: {color: bg color_hover: bg color_down: bg text_style +: {font_size: 14}}
+}
+let Mini = ButtonFlat{height: 24 padding: Inset{left: 10 right: 10}
+    draw_bg +: {color: field color_hover: line color_down: line border_size: 0.0 border_radius: 7.0}
+    draw_text +: {color: dim color_hover: ink color_down: ink text_style +: {font_size: 11}}
+}
+
+// ---------------------------------------------------------------- 小工具
+fn show(s){ ui.status.set_text(s) }
+
+fn as_of_text(){
+    let lt = local_time()
+    return "" + lt.year + "-" + lt.month + "-" + lt.day + " " + lt.hour + ":" + lt.minute
+}
+
+// 用一条正则从句子里把一段话挑出来（挑不到给空串）。
+// match_str 命中回 {value, index, captures}；value 是命中的整段原文。
+fn grab(t, pat){
+    let m = t.match_str(regex(pat, ""))
+    if m == nil { return "" }
+    return m.value
+}
+// 取第一个捕获组（比如「去」后面的那截地名）。
+fn grab_cap(t, pat){
+    let m = t.match_str(regex(pat, ""))
+    if m == nil { return "" }
+    if m.captures == nil { return "" }
+    if m.captures.len() < 2 { return "" }
+    if m.captures[1] == nil { return "" }
+    return m.captures[1]
+}
+
+// 标题超长就截断（glance 的 title 上限 80 字）。
+fn clip(t){ return grab(t, "^.{0,54}") }
+
+// 从句子里挑时间 / 地点 —— 用的就是他自己那句话里的字。
+// 时间按「日期 + 钟点」整体挑（明天上午10点 → 明天上午10点，不是只挑到「明天」）。
+let DAY = "(大后天|后天|明天|今天|明早|今晚|下下周|下下个月|下个月|这个月|这周末|周末|下周[一二三四五六日天]|下个星期|下星期|这个星期|周[一二三四五六日天]|星期[一二三四五六日天])"
+let PART = "(上午|下午|晚上|中午|早上|凌晨|傍晚)"
+fn when_of(t){
+    return grab(t, "(" + DAY + PART + "?[0-9]{1,2}(点|时)[0-9]{0,2}分?|" + DAY + PART + "?|" + PART + "[0-9]{0,2}(点|时)?)")
+}
+fn where_of(t){
+    // 排除字表 = 地点名里不会出现、但常出现在地名之后的动作或虚词，用来切断贪婪捕获。
+    // 例：在公司会议室过方案 → 在「过」处停 → 公司会议室（不加过会吃到 公司会议室过方案）。
+    return grab_cap(t, "[去在到回来]([^，,。；;！!？? 的见开做吃拿买发打看聊谈写改送取接陪要想要去过讨]{1,8})")
+}
+
+fn when_line(e){
+    if e.when == "" { return "时间 · 这句话里没提" }
+    return "时间 · " + e.when
+}
+fn where_line(e){
+    if e.where == "" { return "地点 · 这句话里没提" }
+    return "地点 · " + e.where
+}
+
+// ---------------------------------------------------------------- 落盘
+fn load(){
+    if !fs.exists(DATA) { return }
+    let v = fs.read(DATA).parse_json()
+    if v == nil { return }
+    if v.picks != nil { picks = v.picks }
+    if v.seq != nil { seq = v.seq }
+}
+fn save(){ fs.write(DATA, {seq: seq picks: picks}.to_json()) }
+
+// ---------------------------------------------------------------- 发卡
+// 把一张卡发到快览屏（同一个 id 再发 = 原地更新）。
+// is_new：发成功才把它记进 picks —— 没钉上就不记账。
+fn publish(e, done_msg, is_new){
+    let args = {card_id: e.id title: clip("拾意 · " + e.text) source: CARD
+        data: {rec: {title: e.text subtitle: when_line(e) summary: where_line(e) as_of: e.at}}
+        priority: 60 open: {app: "os.shiyi"} notify: true expires: 604800}
+    host.request("glance.publish", args, fn(r){
+        if r.is_ok {
+            if is_new {
+                picks.push(e)
+                save()
+                intent = ""
+                ui.input.set_text("")
+                ui.rows.render()
+            }
+            let rep = ""
+            if r.data.replaced == true { rep = "（换掉了原来那张）" }
+            show(done_msg + rep + " —— 按 F9 看")
+        } else {
+            show("没能钉上：" + r.error)
+        }
+        refresh()
+    })
+}
+
+// 撤掉一张卡（服务侧），再从列表里去掉（本机侧）。
+fn withdraw(e, done_msg, drop){
+    host.request("glance.withdraw", {card_id: e.id}, fn(r){
+        if r.is_ok { show(done_msg) } else { show("没撤掉：" + r.error) }
+        if drop { picks.retain(|p| p.id != e.id) save() ui.rows.render() }
+        refresh()
+    })
+}
+
+// 问快览屏：我现在到底有几张卡在上面。
+fn refresh(){
+    host.request("glance.list", {}, fn(r){
+        if !r.is_ok { board = "快览屏没答话：" + r.error ui.pinned.set_text(board) return }
+        let n = 0
+        if r.data != nil { n = r.data.len() }
+        board = "快览屏上现在有 " + n + " 张"
+        if n == picks.len() { board = board + "（和我记的对得上）" }
+        ui.pinned.set_text(board)
+    })
+}
+
+// ---------------------------------------------------------------- 钉 / 撤 / 重钉
+fn pin_new(){
+    if intent == "" { show("先说一句话") return }
+    let key = intent.trim()
+    // 同一句话再钉 = 更新原来那张，不重复建卡。
+    for e in picks {
+        if e.key == key {
+            show("这句已经钉过了 —— 原地更新")
+            publish(e, "已更新", false)
+            return
+        }
+    }
+    seq = seq + 1
+    let e = {id: "shiyi-p" + seq text: intent when: when_of(intent) where: where_of(intent) at: as_of_text() key: key}
+    // 钉满 4 张：先撤最旧的一张（等真撤了再钉新的，免得被服务拒）。
+    if picks.len() >= MAX_CARDS {
+        let old = picks[0]
+        host.request("glance.withdraw", {card_id: old.id}, fn(r){
+            picks.retain(|p| p.id != old.id)
+            save()
+            ui.rows.render()
+            publish(e, "已钉到快览屏（钉满 " + MAX_CARDS + " 张，撤掉了最早那张：" + clip(old.text) + "）", true)
+        })
+        return
+    }
+    publish(e, "已钉到快览屏", true)
+}
+
+fn repin(e){ publish(e, "已重钉（同一张卡原地更新）", false) }
+
+fn unpin(e){ withdraw(e, "已从快览屏撤掉", true) }
+
+// ---------------------------------------------------------------- 启动
+load()
+start_timeout(0.05, || show("说一句话，我造一张卡钉到快览屏 —— 能留、能复用。桌面按 F9 看"))
+start_timeout(0.30, || ui.rows.render())
+start_timeout(0.60, || refresh())
+
+// ---------------------------------------------------------------- 界面
+SolidView{width: Fill height: Fill flow: Down padding: 10 spacing: 6 draw_bg.color: bg
+    Label{text: "拾意" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}
+    Label{width: Fill text: "一句话 → 一张卡，钉到你的快览屏。卡留着、点得开；都收在这，随时重钉或撤掉。" draw_text.color: dim draw_text.text_style.font_size: 12}
+    input := TextInput{width: Fill height: 32 empty_text: "例：下周三去深圳见客户"
+        on_change: |t| { intent = ("" + t).trim() }
+        on_return: |t| { intent = ("" + t).trim() pin_new() }
+        draw_bg +: {color: field color_hover: field color_focus: field color_empty: field
+            border_color: line border_color_hover: line border_color_focus: accent border_color_empty: line
+            border_radius: 9.0}
+        draw_text +: {color: ink color_hover: ink color_focus: ink color_empty: faint color_empty_hover: faint}
+    }
+    Flat{text: "造卡 · 钉到快览屏" on_click: || pin_new()}
+    status := Label{width: Fill text: "" draw_text.color: accent draw_text.text_style.font_size: 11}
+    // 标题按自然宽（Fit），计数/回执行吃掉剩余宽（Fill）——
+    // 手机窄屏上「快览屏上现在有 N 张（和我记的对得上）」很长，若反过来（标题 Fill）
+    // 标题会被挤到 0 宽、逐字竖排；桌面 990 宽不触发，手机必现。
+    View{width: Fill height: Fit flow: Right spacing: 10 align: Align{y: 0.5}
+        Label{text: "常驻卡 · 已钉的都在这" draw_text.color: ink draw_text.text_style.font_size: 13}
+        pinned := Label{width: Fill text: "" draw_text.color: faint draw_text.text_style.font_size: 11}
+        Mini{text: "刷新" on_click: || { show("问快览屏要个准数…") refresh() }}
+    }
+    rows := View{width: Fill height: Fill flow: Down spacing: 6 on_render: || {
+        View{width: Fill height: 1}
+        if picks.len() == 0 {
+            Label{width: Fill text: "还没有钉过卡。上面说一句话试试。" draw_text.color: faint draw_text.text_style.font_size: 12}
+        }
+        for e in picks {
+            SolidView{width: Fill height: Fit flow: Down padding: 6 spacing: 3 draw_bg +: {color: panel border_radius: 9.0}
+                Label{width: Fill text: e.text draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 13}}
+                View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
+                    Label{width: Fill text: when_line(e) + "   " + where_line(e) + "   ·   钉于 " + e.at draw_text.color: dim draw_text.text_style.font_size: 11}
+                    Mini{text: "重钉" on_click: || repin(e)}
+                    Mini{text: "撤掉" on_click: || unpin(e)}
+                }
+            }
+        }
+    }}
+}
