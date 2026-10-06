@@ -34,9 +34,9 @@ Rinx 支持 `MAKEPAD_REMOTE=<port>` 环境变量，启动后开一个**本地 HT
 
 ## 复现步骤
 
-1. 起宿主：`MAKEPAD_REMOTE=8799 rinx.exe`（本机为 `F:/gosim_build/rinx_target/debug/rinx.exe`）
+1. 起宿主：`MAKEPAD_REMOTE=8799 rinx.exe`
 2. 遥控导航到导入表单，填 `path`（本仓库 `apps/shiyi-live/bundle`）与 `room`
-3. 驱动脚本：`00_docs/_full_demo.py`（Review → Run → 清记忆 → 点消息 → 造卡 → 确认）
+3. 驱动脚本：按遥控口 `/snap`（取坐标）→ `/m`（点击）逐步驱动（Review → Run → 清记忆 → 点消息 → 造卡 → 确认）；录制用的驱动脚本为开发期工具，未随仓发布
 4. 录屏：`ffmpeg -f gdigrab -framerate 15 -offset_x <win.x> -offset_y <win.y> -video_size 1316x1436 -i desktop out.mp4`
    —— 宽高必须是偶数（`yuv420p` 要求），故高度取 1436 而非 1377。
    录制让 `-t <秒>` 自然结束，**切勿中途强杀**（否则 moov 写不完，文件只剩 48 字节）。

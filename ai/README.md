@@ -74,7 +74,7 @@ cp ai/tools.json        "$APP/bundle/tools.json"
 
 本机 `hub` / `card-host` 是旧版，验证不了带 `model` 的包。要本地验证需：
 
-1. 更新 `F:/gosim_build/octosense-org/OctoSense-App-Hub` 到 `main`；
+1. 把官方 `OctoSense-App-Hub` 更新到 `main`；
 2. 重新构建 `hub` 与 `card-host`；
 3. 再跑第 3 节的命令。
 

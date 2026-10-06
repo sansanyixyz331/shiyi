@@ -17,6 +17,7 @@ card-host 自带 instrument HTTP 端口，直接把它画出来的那一帧吐�
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -25,9 +26,10 @@ import urllib.request
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD = os.path.join(ROOT, "build")
 
-HUB_EXE = "F:/gosim_build/cache/target/debug/hub.exe"
-CARD_HOST_EXE = "F:/gosim_build/cache/target/debug/card-host.exe"
-HUB_REPO = "F:/gosim_build/octosense-org/OctoSense-App-Hub"
+# 宿主工具位置：优先环境变量（见 README §5.2），其次 PATH。
+HUB_EXE = os.environ.get("HUB_BIN") or shutil.which("hub") or "hub"
+CARD_HOST_EXE = os.environ.get("CARD_HOST_BIN") or shutil.which("card-host") or "card-host"
+HUB_REPO = os.environ.get("HUB_REPO") or os.getcwd()
 TITLE_BAR = 42
 
 TEXT = {"capture_output": True, "text": True, "encoding": "utf-8", "errors": "replace"}
@@ -146,6 +148,12 @@ def shot(bundle, static=None):
             proc.kill()
             proc.wait(timeout=10)
         logf.close()
+        # 宿主日志里带编译机私有路径 —— 落盘后即刻脱敏（产物区也不留用户名）
+        try:
+            import verify_flow as _vf
+            _vf.scrub(os.path.join(work, "host.log"))
+        except Exception:  # noqa: BLE001
+            pass
 
     shots = os.path.join(bundle, "screenshots")
     os.makedirs(shots, exist_ok=True)

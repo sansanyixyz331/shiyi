@@ -21,7 +21,9 @@ import urllib.parse
 import urllib.request as ur
 
 B = "http://127.0.0.1:8799"
-BUNDLE = "C:/gosim_agentic/05_app/shiyi/apps/shiyi-live/bundle"
+# 本作品仓库内的脚本应用 bundle（相对本脚本解析，换机器不用改）
+BUNDLE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                      "apps", "shiyi-live", "bundle")
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "_gen_video", "live-app-in-rinx.mp4")
 FPS = 15
@@ -35,12 +37,31 @@ except Exception:  # noqa: BLE001
 
 
 def find_ffmpeg():
-    hits = glob.glob(
-        r"C:\Users\adves\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg*\**\bin\ffmpeg.exe",
-        recursive=True)
-    if hits:
-        return sorted(hits)[-1]
-    return shutil.which("ffmpeg")
+    """找 ffmpeg：优先 PATH，其次环境变量 FFMPEG，最后常见安装位。
+
+    不写死任何用户名/盘符 —— 换台机器（评委、队外试用）也能跑。
+    """
+    exe = shutil.which("ffmpeg")
+    if exe:
+        return exe
+    env = os.environ.get("FFMPEG")
+    if env and os.path.exists(env):
+        return env
+    pats = (
+        os.path.join(os.environ.get("LOCALAPPDATA", ""),
+                     "Microsoft", "WinGet", "Packages",
+                     "Gyan.FFmpeg*", "**", "bin", "ffmpeg.exe"),
+        r"C:\ffmpeg\bin\ffmpeg.exe",
+        r"C:\Program Files\ffmpeg\bin\ffmpeg.exe",
+        "/usr/bin/ffmpeg",
+        "/usr/local/bin/ffmpeg",
+    )
+    for pat in pats:
+        hits = sorted(glob.glob(pat, recursive=True))
+        for c in hits:
+            if os.path.exists(c):
+                return c
+    return None
 
 
 def get(u, t=12):
@@ -191,6 +212,8 @@ def wait_for(pred, timeout=15):
 
 def main():
     ff = find_ffmpeg()
+    if not ff:
+        raise SystemExit("找不到 ffmpeg：装到 PATH，或用 FFMPEG 环境变量指定可执行文件")
     r = win_rect()
     if not r:
         raise SystemExit("Rinx 窗口未找到（先 MAKEPAD_REMOTE=8799 rinx.exe）")

@@ -15,7 +15,7 @@
 
 ## 复现
 
-1. Rinx 以遥控模式启动：`MAKEPAD_REMOTE=8799 ./rinx.exe`（`F:/gosim_build/rinx_target/debug/`）。
+1. Rinx 以遥控模式启动：`MAKEPAD_REMOTE=8799 ./rinx.exe`（构建产物落在你的工作区）。
 2. 导入 `apps/shiyi-live/bundle`，`Room ID to allow` 填一个你已加入的房间 → **Review bundle**（应列出上面六个服务）→ **Run**。
 3. 点「从聊天拾意」里任一条消息（或例子、或自写一句）→ **造卡** → **确认行程**。
 4. 看两处：卡片底部出现 `已把结果发回群 —— 这件事真的办成了`；回到那个房间，**多出一条由你发出的回执**。

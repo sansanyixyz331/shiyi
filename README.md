@@ -208,14 +208,15 @@ shiyi/
 
 前置：Rust 工具链 + 共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`）。
 
-本机已备一套隔离环境（`F:\gosim_build\`，入口 `source F:/gosim_build/env.sh`），
-`hub` 与 `card-host` 已于 2026-09-26 在其中编译并实跑。以下命令是**实测通过**的那一套。
+下面的命令里，`$WORK` 就是**你的工作区**——一个放官方 hub 源码与构建产物、且**和本作品仓库分开**的目录
+（我们示例用 `~/gosim_build`，实测通过；你换成自己的路径即可）。`hub` 与 `card-host` 就在它里面从源码编译。
 
 ```sh
-source F:/gosim_build/env.sh
-export HUB_BIN=F:/gosim_build/cache/target/debug/hub.exe
-export CARD_HOST_BIN=F:/gosim_build/cache/target/debug/card-host.exe
-export APP_REPO=C:/gosim_agentic/05_app/shiyi
+export WORK=~/gosim_build            # ← 改成你的工作区
+source "$WORK/env.sh"                # 官方 checkout 自带的构建环境入口
+export HUB_BIN="$WORK"/cache/target/debug/hub.exe          # Linux/macOS 去掉 .exe
+export CARD_HOST_BIN="$WORK"/cache/target/debug/card-host.exe
+export APP_REPO=~/shiyi               # ← 本作品仓库（本文件所在目录）
 
 # 1. 盖章（每次改完 bundle 都要重盖；改动会改变摘要）
 "$HUB_BIN" stamp "$APP_REPO/bundle"
@@ -229,7 +230,7 @@ export APP_REPO=C:/gosim_agentic/05_app/shiyi
 "$HUB_BIN" scan "$APP_REPO/bundle" --packet "$APP_REPO/build/review.json"
 
 # 4. 参考宿主运行（须在 Hub 仓库里启动，宿主资源才解析得到）
-cd F:/gosim_build/octosense-org/OctoSense-App-Hub
+cd "$WORK"/octosense-org/OctoSense-App-Hub
 "$CARD_HOST_BIN" --bundle "$APP_REPO/bundle" --app-data "$APP_REPO/.local-state" --allow-unsigned --remote
 
 # 5. 抓真实截图（端点取第 4 步日志里打印的 127.0.0.1:<PORT>）

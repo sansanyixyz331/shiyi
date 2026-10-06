@@ -39,9 +39,10 @@ BUILD = os.path.join(ROOT, "build")
 RUN = os.path.join(BUILD, "_run")
 SHOTS = os.path.join(BUILD, "shots")
 
-HUB_EXE = "F:/gosim_build/cache/target/debug/hub.exe"
-CARD_HOST_EXE = "F:/gosim_build/cache/target/debug/card-host.exe"
-HUB_REPO = "F:/gosim_build/octosense-org/OctoSense-App-Hub"
+# 宿主工具位置：优先环境变量（见 README §5.2），其次 PATH。
+HUB_EXE = os.environ.get("HUB_BIN") or shutil.which("hub") or "hub"
+CARD_HOST_EXE = os.environ.get("CARD_HOST_BIN") or shutil.which("card-host") or "card-host"
+HUB_REPO = os.environ.get("HUB_REPO") or os.getcwd()
 
 TITLE_BAR = 42  # the host draws its own bar above the card
 

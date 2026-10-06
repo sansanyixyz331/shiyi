@@ -170,7 +170,7 @@ host.request("model.complete", {
 ## 读设备助手的会话记忆：`octos.session.history`（**已实现，默认关；复赛开**）
 
 这是**第二个「长期记忆」来源**。本机记住的是**你造的卡**；助手那边记住的是**你在对话里说过的**
-—— 两个合起来，才叫真知道你是谁。全场只有 2 队声明了这条能力（`00_docs\对手赛情侦察_20261005.md`）。
+—— 两个合起来，才叫真知道你是谁。
 
 **官方契约**（`AI-SERVICES.md` § The assistant capabilities）：capability 就是同名的 `octos.session.history`；
 `octos.session.history` 调一次、args `{}`，返回 `{session_id, messages:[…]}` —— **两条车道（person /
@@ -212,7 +212,7 @@ host.request("octos.session.history", {}, fn(r){
 ## 从绑定房间里读消息：`matrix.read_messages`（**0.7.0 新增；0.7.1 起默认开**）
 
 这是**「读消息」这条能力**—— 前面两个来源（本机卡的记忆、助手的会话）都不含"群里刚说了什么"。
-官方 12 场景里「即时消息 / 日历」要落地，第一步就得**能读到消息**。全场只有 3 队声明了它（`00_docs\对手赛情侦察_20261005.md`）。
+官方 12 场景里「即时消息 / 日历」要落地，第一步就得**能读到消息**。
 
 **官方契约**（源码为准，`Rinx/src/host/matrix/mod.rs:545` + `crates/miniapp-core/src/matrix.rs:209`）：
 

@@ -10,7 +10,7 @@
 —— 新版宿主被拒后会在窗口里画**它自带的「拒绝说明页」**（含 refused 原文），
 本片**原样露出**，只在底部加一条说明条，**不遮不骗**。
 
-为什么这么录，而不是手机录屏（详见 00_docs/大白话_…md 与 README）：
+为什么这么录，而不是手机录屏（详见 README 的"支持平台"说明）：
   · 官方《作品提交与 AppHub 规范》第 6 条要的是「运行截图、日志或视频及对应
     复现步骤」—— 视频只是**证据形态之一**；且原文写明「演示材料不能代替可运行
     的开源作品」。
@@ -127,12 +127,32 @@ def log(msg):
 
 
 def find_ffmpeg():
-    for c in glob.glob(
-            r"C:\Users\adves\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg*\**\bin\ffmpeg.exe",
-            recursive=True):
-        if os.path.exists(c):
-            return c
-    return shutil.which("ffmpeg")
+    """找 ffmpeg：优先 PATH，其次环境变量 FFMPEG，最后常见安装位。
+
+    不写死任何用户名/盘符 —— 换台机器（评委、队外试用）也能跑。
+    """
+    exe = shutil.which("ffmpeg")
+    if exe:
+        return exe
+    env = os.environ.get("FFMPEG")
+    if env and os.path.exists(env):
+        return env
+    pats = (
+        # winget 装的 Gyan.FFmpeg：用 %LOCALAPPDATA% 展开，不写死用户目录
+        os.path.join(os.environ.get("LOCALAPPDATA", ""),
+                     "Microsoft", "WinGet", "Packages",
+                     "Gyan.FFmpeg*", "**", "bin", "ffmpeg.exe"),
+        r"C:\ffmpeg\bin\ffmpeg.exe",
+        r"C:\Program Files\ffmpeg\bin\ffmpeg.exe",
+        "/usr/bin/ffmpeg",
+        "/usr/local/bin/ffmpeg",
+    )
+    for pat in pats:
+        hits = sorted(glob.glob(pat, recursive=True))
+        for c in hits:
+            if os.path.exists(c):
+                return c
+    return None
 
 
 class Counter:

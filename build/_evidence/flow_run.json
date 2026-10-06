@@ -40,7 +40,7 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":18}",
+      "host_answer": "{\"ok\":1,\"f\":20}",
       "shot": "build/_evidence/shots/shiyi-02-ask.png",
       "bundle_blake3": "707fbf4c8f8bd4c9802c10d84c83fd55de5ff8e1ee1fc868a49632d47b599809"
     },
@@ -61,7 +61,7 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":21}",
+      "host_answer": "{\"ok\":1,\"f\":23}",
       "shot": "build/_evidence/shots/shiyi-02-ask.png",
       "bundle_blake3": "707fbf4c8f8bd4c9802c10d84c83fd55de5ff8e1ee1fc868a49632d47b599809"
     },
@@ -82,7 +82,7 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":24}",
+      "host_answer": "{\"ok\":1,\"f\":26}",
       "shot": "build/_evidence/shots/shiyi-02-ask.png",
       "bundle_blake3": "707fbf4c8f8bd4c9802c10d84c83fd55de5ff8e1ee1fc868a49632d47b599809"
     },
@@ -103,7 +103,7 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":20}",
+      "host_answer": "{\"ok\":1,\"f\":19}",
       "shot": "build/_evidence/shots/shiyi-03-plan.png",
       "bundle_blake3": "68c2e566afe5b9b0cc41ad5490dd7d6efbb723219d2db7a89a98ec4b590e6c5c"
     },
@@ -145,7 +145,7 @@
       "widget_present": true,
       "widget_clickable": true,
       "click_inside_widget": true,
-      "host_answer": "{\"ok\":1,\"f\":23}",
+      "host_answer": "{\"ok\":1,\"f\":21}",
       "shot": "build/_evidence/shots/shiyi-05-done.png",
       "bundle_blake3": "7615f5fca49c2cbb8ef81bf3e356705fe7f20ecc41917e7e81c38472b2e7f6db"
     }
@@ -173,8 +173,8 @@
       "remembered_before_keep": null,
       "write_receipt": {
         "path": ".local-state/memory.json",
-        "abs_path": "C:\\gosim_agentic\\05_app\\shiyi\\.local-state\\memory.json",
-        "written_at": "2026-10-06T19:31:41",
+        "abs_path": "<REPO>\\.local-state\\memory.json",
+        "written_at": "2026-10-06T21:17:42",
         "place": "深圳",
         "default_depart": "早班",
         "from": "家里",
@@ -182,20 +182,20 @@
         "log_entries": 1,
         "line": "去深圳默认早班，从家里出发"
       },
-      "file_sha16": "a32b4b222f09fad2"
+      "file_sha16": "4ff1f48461b0ed63"
     },
     "second_run": {
       "remembered_before": {
         "default_depart": "早班",
         "from": "家里",
-        "learned_at": "2026-10-06T19:31:41",
+        "learned_at": "2026-10-06T21:17:42",
         "learned_from": "下周三我得去趟深圳",
         "room": "家庭群"
       }
     },
     "third_run_skip": {
-      "sha_before16": "a32b4b222f09fad2",
-      "sha_after16": "a32b4b222f09fad2"
+      "sha_before16": "4ff1f48461b0ed63",
+      "sha_after16": "4ff1f48461b0ed63"
     },
     "assertions": {
       "keep_wrote_file": true,
@@ -205,8 +205,8 @@
     "file_content": {
       "version": 1,
       "seeded_from": "builtin_initial",
-      "seeded_at": "2026-10-06T19:31:41",
-      "updated_at": "2026-10-06T19:31:41",
+      "seeded_at": "2026-10-06T21:17:42",
+      "updated_at": "2026-10-06T21:17:42",
       "prefs": {
         "prefers_rail": true,
         "no_flight": true,
@@ -216,14 +216,14 @@
         "深圳": {
           "default_depart": "早班",
           "from": "家里",
-          "learned_at": "2026-10-06T19:31:41",
+          "learned_at": "2026-10-06T21:17:42",
           "learned_from": "下周三我得去趟深圳",
           "room": "家庭群"
         }
       },
       "log": [
         {
-          "at": "2026-10-06T19:31:41",
+          "at": "2026-10-06T21:17:42",
           "event": "memo.keep",
           "place": "深圳",
           "default_depart": "早班",

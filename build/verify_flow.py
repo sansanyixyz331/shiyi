@@ -70,14 +70,62 @@ EVID = os.path.join(ROOT, "build", "_evidence")
 RUN = os.path.join(ROOT, "build", "_run_verify")
 SHOTS = os.path.join(EVID, "shots")
 
-HUB_EXE = "F:/gosim_build/cache/target/debug/hub.exe"
-CARD_HOST_EXE = "F:/gosim_build/cache/target/debug/card-host.exe"
-HUB_REPO = "F:/gosim_build/octosense-org/OctoSense-App-Hub"
+# 宿主工具位置：优先环境变量（见 README §5.2 的 $HUB_BIN / $CARD_HOST_BIN），
+# 其次 PATH。不写死任何本机路径 —— 换台机器也能跑。
+HUB_EXE = os.environ.get("HUB_BIN") or shutil.which("hub") or "hub"
+CARD_HOST_EXE = os.environ.get("CARD_HOST_BIN") or shutil.which("card-host") or "card-host"
+# 宿主资源须在官方 Hub 仓库里解析；用 HUB_REPO 环境变量指定（默认当前目录）。
+HUB_REPO = os.environ.get("HUB_REPO") or os.getcwd()
 
 sys.path.insert(0, SRC)
 
 MESSAGE = "下周三我得去趟深圳"
 ROOM = "家庭群"
+
+
+# ── 脱敏：证据文件落盘前，把本机私有路径/用户名换成中性占位 ──────────────
+# 宿主日志里会原样带上编译机路径（用户主目录、我们的构建工作区），
+# 这些既暴露用户名、又是别人机器上不存在的位置。证据只关心"发生了什么"
+# （admitted / refused / [SPLASH] eval / 事件名），路径换成占位即可。
+_SCRUB_RULES = [
+    # 顺序：更具体的在前。`[\\/]+` 同时覆盖单反斜杠（日志）与双反斜杠（JSON 转义）。
+    (re.compile(r"[A-Za-z]:[\\/]+Users[\\/]+[^\\/\s\"]+"), "<HOME>"),
+    (re.compile(r"[A-Za-z]:[\\/]+gosim_build"), "<WORK>"),
+    (re.compile(r"[A-Za-z]:[\\/]+gosim_agentic[\\/]+05_app[\\/]+shiyi"), "<REPO>"),
+    (re.compile(r"[A-Za-z]:[\\/]+gosim_agentic"), "<WORKSPACE>"),
+]
+
+
+def _scrub_text(t):
+    for rx, rep in _SCRUB_RULES:
+        t = rx.sub(rep, t)
+    return t
+
+
+def scrub(path):
+    """把已落盘的证据文件里的本机路径/用户名就地脱敏（只动文本文件）。
+
+    ⚠️ 用**二进制读写**：绝不能让 Python 文本模式在 Windows 上把已有 CRLF 再转一遍
+    （否则 `\\r\\n` 会变成 `\\r\\r\\n`，字节数变化、且破坏原始日志形态）。
+    只替换路径/用户名本身，换行原样保留。
+    """
+    if not path or not os.path.exists(path):
+        return
+    try:
+        with open(path, "rb") as f:
+            raw = f.read()
+    except Exception:
+        return
+    if b"\x00" in raw[:4096]:      # 二进制（图片/视频）不动
+        return
+    try:
+        txt = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return
+    new = _scrub_text(txt)
+    if new != txt:
+        with open(path, "wb") as f:        # 二进制写：换行不受平台影响
+            f.write(new.encode("utf-8"))
 
 # 用户在这条链路上真实按下的东西（屏, 控件名）；控件名 → 事件名由卡旁的
 # service-actions.json 决定，不在这里硬编码。
@@ -316,6 +364,7 @@ class Host:
                 self.proc.wait(timeout=10)
             if self.logf:
                 self.logf.close()
+            scrub(self.logpath)          # 证据日志落盘后脱敏本机路径/用户名
         return False
 
 
@@ -598,6 +647,7 @@ def main():
     dst = os.path.join(EVID, "flow_run.json")
     with open(dst, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
+    scrub(dst)                           # 证据文件里的本机路径/用户名脱敏
     log("")
     log("证据已写：%s" % dst)
     return 0

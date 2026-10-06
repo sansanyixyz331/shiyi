@@ -20,7 +20,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.path.join(HERE, "_live_video")
 FRAMES = os.path.join(OUT, "frames")
-CARD_HOST = "F:/gosim_build/cache/target/debug/card-host.exe"
+CARD_HOST = os.environ.get("CARD_HOST_BIN") or shutil.which("card-host") or "card-host"
 STATE = os.path.join(OUT, "state")
 PORT = 8977
 FPS = 8
@@ -28,11 +28,31 @@ SECONDS = 22.0
 
 
 def find_ffmpeg():
-    for pat in (r"C:\Users\adves\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg*\**\bin\ffmpeg.exe",):
-        hits = glob.glob(pat, recursive=True)
-        if hits:
-            return sorted(hits)[-1]
-    return shutil.which("ffmpeg")
+    """找 ffmpeg：优先 PATH，其次环境变量 FFMPEG，最后常见安装位。
+
+    不写死任何用户名/盘符 —— 换台机器（评委、队外试用）也能跑。
+    """
+    exe = shutil.which("ffmpeg")
+    if exe:
+        return exe
+    env = os.environ.get("FFMPEG")
+    if env and os.path.exists(env):
+        return env
+    pats = (
+        os.path.join(os.environ.get("LOCALAPPDATA", ""),
+                     "Microsoft", "WinGet", "Packages",
+                     "Gyan.FFmpeg*", "**", "bin", "ffmpeg.exe"),
+        r"C:\ffmpeg\bin\ffmpeg.exe",
+        r"C:\Program Files\ffmpeg\bin\ffmpeg.exe",
+        "/usr/bin/ffmpeg",
+        "/usr/local/bin/ffmpeg",
+    )
+    for pat in pats:
+        hits = sorted(glob.glob(pat, recursive=True))
+        for c in hits:
+            if os.path.exists(c):
+                return c
+    return None
 
 
 def grab(url):
@@ -85,6 +105,8 @@ def main():
             proc.kill()
 
     ff = find_ffmpeg()
+    if not ff:
+        raise RuntimeError("找不到 ffmpeg：装到 PATH，或用 FFMPEG 环境变量指定可执行文件")
     r = subprocess.run([ff, "-y", "-framerate", str(FPS), "-i",
                         os.path.join(FRAMES, "%05d.png"),
                         "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",

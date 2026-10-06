@@ -129,7 +129,7 @@ WSL/Linux 另编同版本 `hub` 跑门禁。实测：Rinx（Windows）+ 自编 o
 回复各不相同**；确认消息真发进 `matrix.rinx.chat`。详见 `README.md §4d`。
 
 **依赖**：Rust 工具链 + 官方共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`）。
-本机已备隔离环境 `F:\gosim_build\`，入口 `source F:/gosim_build/env.sh`。
+在一套**与作品仓库分开**的工作区里（我们示例用 `~/gosim_build`）编译 `hub` 与 `card-host`；下面的 `$WORK` 就是你的工作区，换成自己的路径即可。
 
 **一键复现（端到端 + 失败态）**：
 
