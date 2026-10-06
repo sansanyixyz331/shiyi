@@ -134,7 +134,7 @@ host.request("glance.publish", args, fn(r){
 
 ## 8 · 复现（从零）
 
-**环境**：Windows + Rust 隔离工具链（见 [`../../octos/README.md`](../../octos/README.md) §2）。
+**环境**：Windows + Rust 隔离工具链（见 [`../../../octos/README.md`](../../../octos/README.md) §2）。
 
 ```bash
 # 1) 编官方 shell（含打包拾意为 system app）

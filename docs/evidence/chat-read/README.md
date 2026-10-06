@@ -42,7 +42,7 @@
 - `storage` —— 长期记忆（`memory.json`）
 - `octos.session.history` —— 读设备助手会话（空会话如实显示，不编）
 
-完整能力清单与出厂开关见 [`../../apps/shiyi-live/README.md`](../../apps/shiyi-live/README.md)。
+完整能力清单与出厂开关见 [`../../../apps/shiyi-live/README.md`](../../../apps/shiyi-live/README.md)。
 
 ## `cardhost/` 子目录
 

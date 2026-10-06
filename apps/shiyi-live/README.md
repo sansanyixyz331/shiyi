@@ -1,11 +1,11 @@
-# 拾意 · 现场造卡（shiyi-live）0.7.1
+# 拾意 · 现场造卡（shiyi-live）0.7.3
 
 **一个能用的应用**：输入一句话，它在**本机**识别出时间/地点/类型，**现场长出一张卡**，
 并把确认过的卡与你的习惯**记住**（长期记忆）。不依赖任何服务，离线也完整可用。
 
 - 形态：**脚本应用**（`main.splash`，OctoScript）—— 有逻辑、能交互（输入框 / 按钮 / 动态渲染 / 定时器 / 文件读写）
 - 宿主：**Rinx 真机已跑通**（导入 → Run → 说习惯 → 确认 → 记忆更新 → 造出行卡带记忆行 → 再确认；
-  证据 `docs/evidence/live-app/` 与 `build/_gen_video/live-app-in-rinx.mp4`），官方参考宿主 `card-host` 也跑得通
+  证据 `docs/evidence/live-run/`（20.7s 连续真录屏）与 `docs/evidence/chat-read/`），官方参考宿主 `card-host` 也跑得通
 - 识别口径：与生成器同一套（强信号优先：提醒 / 买 → 寄取 → 见碰 → 去飞）
 - **按场景长不同的卡**：出行 / 会面 / 代办 / 采买 / 提醒 —— 题头、行标签、动作各不同
 - **长期记忆**（见下）：与生成器**同一套 schema**
@@ -146,8 +146,8 @@ host.request("model.complete", {
 | **真回退** | `ASK_MODEL=true`，`card-host`（**没有 model 服务**） | 卡照出，来源写 `本机规则（设备助手不可用）` |
 | **走模型** | 再加 `MODEL_STANDIN=true` + `model-stub.json` | 卡按**回复**长：`目的地 · 慕尼黑`（规则认不出这个城市） |
 
-证据在 `docs/evidence/model-path/`：`fallback-in-card-host.png`、`model-standin-in-card-host.png`、
-`payload-sent-to-model.json`。
+证据原为 `docs/evidence/model-path/`（`fallback-in-card-host.png`、`model-standin-in-card-host.png`、
+`payload-sent-to-model.json`）——**该目录未随仓发布**，可用 §「跑」里的 card-host 命令在本机复跑重现。
 
 **那第三张图里最值钱的是 `payload-sent-to-model.json`** —— 替身会把「本该发出去的载荷」也落盘，
 所以能直接看到**长期记忆确实进了 `input`**：
@@ -197,7 +197,7 @@ host.request("octos.session.history", {}, fn(r){
 > 解析一律**枚举**（`for fk fv in m`）、不点缺失的键（缺字段在 splash 里是**报错不是 nil**）；
 > 截断用 `match_str(regex("^.{0,26}"))`（splash **没有 slice**）。
 
-### 本地验过的四种状态（都出图了，`docs/evidence/assist-memory/`）
+### 本地验过的四种状态（原截图未随仓发布，可用 §「跑」的 card-host 命令复跑重现）
 
 | 状态 | 怎么跑 | 结果 |
 |---|---|---|

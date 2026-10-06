@@ -68,6 +68,8 @@ cp ai/tools.json        "$APP/bundle/tools.json"
 要退回保命版：把 `manifest.json` 的 `capabilities` 改回 `[]`、删掉 `agent` 块与
 `AGENT.md` / `tools.json`，再 `stamp` + `check`。
 
+> （说明：现行 `bundle/` 已声明 `octos.session.open` + `octos.turn.start` + `matrix.send_message`，`hub check` PASSED；上面是开发期替代范式的说明。）
+
 ## 4. 本机验证 AI 版的前置（尚未做）
 
 本机 `hub` / `card-host` 是旧版，验证不了带 `model` 的包。要本地验证需：

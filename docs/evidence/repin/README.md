@@ -129,6 +129,9 @@ shiyi-p6 现在显示「下周四去广州见客户」…」；约 105s glance �
 | `crates/shell/src/lib.rs` | 修改 | `pub mod shiyi;` |
 | `crates/shell/src/apps.rs` | 修改 | `register_host_services()` 里 `crate::shiyi::register();` |
 
+> 本仓内**随附的落地副本**（可直接对照查看）在 [`../../../octos/`](../../../octos/README.md)：
+> `octos/apps/shiyi/bundle/tools.json`、`octos/crates/shell/src/shiyi.rs`。
+
 **未碰 octos 内核一行。**
 
 ## 边界（fail-closed）

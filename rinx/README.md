@@ -29,7 +29,8 @@
 - 现行**多数 Shell 只认 7 项能力**，manifest 会**拒收未知字段**。把 `matrix.*` 直接写进
   `bundle/manifest.json`，风险是**"作品在评审用的旧宿主里根本打不开"**。
 - 官方原话（AI 服务文档）：**「想现在就在 OctoSense 中打开的应用包，请不要使用它们。」**
-  → **保命版 `bundle/`（`capabilities = []`）继续当提交物**；执行扩展作为**独立备件**，随宿主就绪再合入。
+  → 早期把「真发消息」放在**独立备件**里，`bundle/` 保持 `capabilities = []`。
+  **（0.3.3 起已更新）**：现行评测宿主接受这 3 项能力、`hub check` PASSED ⇒ 已**合入 `bundle/`**（见 §6）。
 
 **保命版 + 独立备件**——和 `ai/` 一个哲学：**提交物永远是最小、最能开的那个形态；深度用备件证明。**
 
@@ -93,9 +94,11 @@ cp "$APP/rinx/bindings.json"      /tmp/shiyi-send/bindings.json
 ## 6. 与提交物的关系（一句话）
 
 ```
-bundle/             ← 提交物。capabilities=[]，任何 Shell 都能开（保命版）
-ai/                 ← 备件：接设备助手（model/agent）的契约
-rinx/               ← 备件：接宿主执行（matrix.send_message）的适配 + 实证 ★本目录
+bundle/             ← 提交物。**0.3.3 起 capabilities = ["matrix.send_message","octos.session.open","octos.turn.start"]**
+ai/                 ← 备件：接设备助手（model/agent）的契约（同能力已进 bundle/）
+rinx/               ← 备件：接宿主执行（matrix.send_message）的适配 + 实证 ★本目录（同能力已进 bundle/）
 ```
 
-**提交物不掺未知字段；能力在备件里，随宿主就绪合入。**
+> **更新（0.3.3，2026-10-06）**：早期 `bundle/` 确实保持 `capabilities = []`（"保命版"），矩阵能力只放备件。
+> 现已核实**现行评测宿主**（Linux 侧 `hub check`）接受这 3 项能力并 **PASSED**，故「真发消息」已**合入 `bundle/`**；
+> 本目录的 `manifest.send.json` / `bindings.json` 仍是**独立接线参考**（换 `page.card` 用法时的最简可跑范式）。
