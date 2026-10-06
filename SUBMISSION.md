@@ -158,7 +158,7 @@ python build/record_demo.py                                  # → build/_video/
 | **长期记忆文件** | `.local-state/memory.json` | 运行期生成（`.gitignore` 排除）；`flow_run.json` 的 `memory` 段有三条断言的实测值 |
 | 门禁 / 审查包 | `build/review.json` | `hub scan` 7 问 |
 | **「确认 = 办事」真机取证（0.7.3）** | `docs/evidence/act/` | Review 列出 6 服务 / 造卡 / 确认已发回群 / 群里新回执 + **27s 连续录屏** + 复现 README |
-| **助手「原地改卡」双端取证（OctoSense 本体）** | `docs/evidence/repin/` + `octos/` | 桌面 + 小米13：模型自发 `shiyi_repin` tool_call / 工具真返回 `{"replaced":true}` / 工具审计 `outcome:"ok"` / 改卡前后截图；宿主扩展源码（`tools.json` + `shiyi.rs` + 两处注册）/ 复现 README |
+| **助手「原地改卡」双端取证（OctoSense 本体）** | `docs/evidence/repin/` + `octos/` | 桌面 + 小米13：模型自发 `shiyi_repin` tool_call / 工具真返回 `{"replaced":true}` / 工具审计 `outcome:"ok"` / 改卡前后截图 / **两端各一段端到端录屏**（`desktop_repin_end_to_end.mp4` 52s、`phone_repin_end_to_end.mp4` 150s）；宿主扩展源码（`tools.json` + `shiyi.rs` + 两处注册）/ 复现 README |
 
 ## F. 已知限制（诚实声明）
 
