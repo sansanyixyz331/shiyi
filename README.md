@@ -97,6 +97,7 @@ shiyi/
     repin/               #   助手原地改卡：桌面 52s + 手机 150s 端到端录屏 + 工具审计
     act/  live-run/      #   脚本应用「确认 = 真办事」/ 端到端连续录屏
     chat-read/ profile/  #   读绑定房间消息成卡 / 认自己（matrix.profile）
+    phone-live-20261008/ #   手机端真机：一句话 → 造卡 → 钉进系统快览屏（25s 连续录屏 + 3 帧 + picks.json）
   build/                 # ★ 不进 bundle
     render_cards.py      # 逐屏渲染：组临时 bundle → 盖章 → 起宿主 → 抓图 → 裁图
     sync_bundle.py       # 首屏 + 五张截图 → bundle（单一真源，防止两份不一致）
@@ -325,9 +326,9 @@ python build/record_demo.py --no-caption    # 不要字幕
 → ④ 片尾卡。
 
 成片：`build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒 / 1366 帧**，满足官方
-初赛"2–3 分钟演示"的要求）。说明：这是**桌面官方参考宿主**里的真实运行录制；
-手机端要等官方"支持设备／运行包"公布（官方那条 HTTP 自动化通道在 Android 上被
-编译掉了，手机端另有真机触摸注入的一套，是几小时级的活）。
+初赛"2–3 分钟演示"的要求）。说明：这是**桌面官方参考宿主**里的真实运行录制。
+**手机端也已跑通**——官方手机变体 `OctoSense/phone` 由本例自行交叉编译成 APK、
+装上安卓真机运行（见 §6.1 与 `docs/evidence/phone-live-20261008/`）。
 
 ### 6.0 复赛主片（2026-10-08）· **真读 · 真判定 · 真回执**
 
@@ -350,6 +351,22 @@ python build/record_demo.py --no-caption    # 不要字幕
 **诚实标注（必读）**：[`docs/演示素材与诚实标注.md`](docs/演示素材与诚实标注.md) ——
 房间是我们自建的、消息是自己投放的（该 homeserver 关闭注册，拿不到第二个真人账号），
 **但"读消息 → 判定 → 回执"这条链全真、零 mock**；识别走本机规则，**没有假装用过外部大模型**。
+
+### 6.1 手机端真机（同一份拾意，安卓真机跑通）
+
+除桌面宿主外，**拾意还作为 OctoSense 系统 app 在安卓真机上跑通**（2026-10-06 首跑，
+2026-10-08 复录）：一句话 → 当场造卡 → 卡**钉进系统快览屏** → 点卡进对话、助手原地改卡。
+官方手机变体 `OctoSense/phone` 由本例**自行交叉编译为 APK**（`octo_sense.apk`，aarch64-linux-android），
+`su -c 'pm install -r -d -g'` 旁装到已 root 的真机。
+
+- 本次录像（2026-10-08）：[`docs/evidence/phone-live-20261008/phone-input-card-glance.mp4`](docs/evidence/phone-live-20261008/phone-input-card-glance.mp4)
+  —— **连续录屏，带中文旁白（同目录另有无声原片 + 3 帧截图 + `picks.json`）**：
+  输入「周三下午两点去体育馆打球」→ 造卡 → 回桌面 → 滑到快览屏，**4 张拾意卡并排**。
+- 更早的完整链路（2026-10-06）：[`docs/evidence/repin/`](docs/evidence/repin/)（真机端到端：
+  造卡 → 快览屏 → 点卡 → 助手原地改卡，附内核工具审计）+ [`docs/evidence/glance/`](docs/evidence/glance/)。
+- **边界（勿混说）**：手机端这条是 **OctoSense 本体形态**（快览屏 + 改卡），
+  与复赛主片那条 **Rinx card-host（读 Matrix 房间消息 → 造卡 → 回执）不是同一条链路**；
+  后者手机版未编译。手机端识别走真模型（provider 已配），桌面 Rinx 那条走本机规则。
 
 ## 6. 当前状态
 
