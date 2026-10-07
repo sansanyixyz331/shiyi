@@ -22,7 +22,7 @@
     "support": "https://github.com/sansanyixyz331/shiyi",
     "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
   },
-  "release_notes": "0.7.3 - confirming a card now actually does the thing: it sends the result back into the bound room (matrix.send_message), so the card is not just a note but an action you can see land in the chat. If the send fails it says so and falls back to keeping the result on-device. Adds matrix.send_message; the two read switches stay ON and model stays off (Rinx refuses model.complete).",
+  "release_notes": "0.7.4 - refreshes the bundled examples and the input placeholder so they read like the demo material (grocery run, plumber measuring the kitchen, parcel pickup, paying the foreman, no Friday-night socials) instead of one repeated business-trip line. No behavioural change: same on-device rules, same Matrix read, same send-back-on-confirm. Re-stamped bundle_blake3.",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

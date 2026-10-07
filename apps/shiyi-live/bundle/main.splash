@@ -1,4 +1,4 @@
-// 拾意 · 现场造卡（shiyi-live）0.7.3
+// 拾意 · 现场造卡（shiyi-live）0.7.4
 // 一句话进去，一张卡出来。识别在本机做，不依赖任何服务。
 //
 // 长期记忆：存在应用自己的 jail 里（memory.json），与生成器同一套 schema
@@ -44,6 +44,11 @@ let model_state = ""           // 助手不可用时的说明，如实显示在�
 let MODEL_STANDIN = false      // 开发期替身：从 jail 的 model-stub.json 读一条回复，
                                // 用来验证「回复 → 卡」这一整条链（本机没有 model 服务）。
 let ASK_MODEL = false          // 本机识别优先（不依赖任何服务）。
+                               // 2026-10-08 实测：即便在 Rinx 导入页挂了本机 provider（deepseek-v4-flash）
+                               // 并点「Use this device」、`manifest.capabilities` 里也声明了 `model`，
+                               // Rinx 仍不给 mini app 授 `model.complete`（卡上如实写「宿主没提供助手」）。
+                               // ⇒ 本机演示 100% 走规则，不编造"已接大模型"。
+                               // 这条分支留着：宿主哪天真给了，同一份代码会自动切到设备助手并回退。
                                // 为什么默认关：Rinx 把 manifest.capabilities 原样当租约服务集
                                // （src/miniapps/ui.rs:425），而能力名是 `model`、服务名是 `model.complete`
                                // ⇒ 在 Rinx 上调它必被拒（"Mini app was not granted model.complete"），
@@ -126,7 +131,7 @@ let Msg = ButtonFlat{width: Fill height: 32
     draw_bg +: {border_radius: 10.0 color: #x1b2c24 color_hover: #x22352c color_down: #x16251f border_size: 0.0}
     draw_text +: {color: ink font_size: 12}}
 let Field = TextInput{width: Fill height: 42
-    empty_text: "写一句话，比如：下周三去深圳"
+    empty_text: "写一句话，比如：周四去建材市场挑瓷砖"
     draw_bg +: {color: #x0f1b17 color_hover: #x0f1b17 color_focus: #x0f1b17 color_empty: #x0f1b17
         border_color: #x2a4238 border_color_hover: #x33513f border_color_focus: accent border_color_empty: #x2a4238
         border_radius: 10.0 border_size: 1.0}
@@ -1022,11 +1027,11 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
     SolidView{width: Fill height: Fit flow: Down spacing: 4
       Label{text: "或点一个例子" draw_text.color: faint draw_text.text_style.font_size: 11}
       SolidView{width: Fill height: Fit flow: Flow.Right{wrap: true} spacing: 6
-        Tiny{text: "下周三去深圳" on_click: || use_one("下周三我得去趟深圳")}
-        Tiny{text: "周末买显示器" on_click: || use_one("周末去买台新显示器")}
-        Tiny{text: "记得交房租" on_click: || use_one("下周二记得交房租")}
-        Tiny{text: "寄快递到上海" on_click: || use_one("帮我把那个快递寄到上海")}
-        Tiny{text: "我不坐飞机" on_click: || use_one("我不坐飞机")}
+        Tiny{text: "周六买鲈鱼" on_click: || use_one("记得周六去菜市场买条鲈鱼")}
+        Tiny{text: "约师傅上门" on_click: || use_one("周六上午十点约了师傅上门量橱柜")}
+        Tiny{text: "记得取快递" on_click: || use_one("顺丰到楼下了，明天去驿站取件")}
+        Tiny{text: "周一付款" on_click: || use_one("下周一付款给工长，水电改造那一笔")}
+        Tiny{text: "周五不排应酬" on_click: || use_one("我习惯周五晚上不排应酬")}
       }
     }
 
