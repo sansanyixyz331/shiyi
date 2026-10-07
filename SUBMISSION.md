@@ -16,12 +16,12 @@
 | 4 | 简短需求 | ✅ | `README.md` §1–§2 |
 | 5 | 可运行最小原型 + **启动说明** | ✅ | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5。**提交材料即到此为止**（便携演示包系我方内部跨机验证工具，**非提交物**，见 `docs/回归清单.md` 四·补3） |
 | 6 | **固定版本源码或包** | ✅ | **固定版本 = tag `gosim-initial-submission`**（初赛参赛版，钉死）· 卡片包 = `bundle/`（内容版本 tag `v0.3.3` · `manifest.json` 内容寻址摘要） |
-| 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒**，五屏正流程 + 两个失败态） |
+| 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒，带中文旁白**，五屏正流程 + 两个失败态；旁白稿 [`docs/演示旁白稿.md`](docs/演示旁白稿.md)） |
 | 8 | **两张关键截图** | ✅ | `bundle/screenshots/01-read.png`、`03-plan.png`（另附 5 张） |
 | 9 | 数据来源与限制 | ✅ | `docs/数据来源与限制.md` |
 | 10 | 已报名成员名单 | ✅ | 官方 issue #5 报名评论（队伍 `三三Claw`） |
 | 11 | 至少一次**可核对的操作** | ✅ | `build/verify_flow.py` 宿主内真点击 → `build/_evidence/flow_run.json` |
-| 12 | 一个**失败或空状态** | ✅ | 未签名被拒 / 摘要不符被拒（视频 ③ 段 + `build/_evidence/neg_*.log` 宿主拒绝日志） |
+| 12 | 一个**失败或空状态** | ✅ | 未签名被拒 / 摘要不符被拒（视频 ③ 段 + `build/_evidence/neg_*.log` 宿主拒绝日志）· **六类失败逐条留证见 [`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)** |
 | 13 | **App Hub 提交** | ✅ **已提** | `OctoSense-App-Hub` issue **#76**（**Submit shiyi 0.7.3**；**一个 issue 覆盖可上架的两形态**：主 = L0 卡片包 `bundle/` 0.3.3〔Linux 章〕，附 = 脚本应用 `apps/shiyi-live/` 0.7.3〔Windows 宿主〕；形态三 `os.shiyi` 系系统 app，**不走 App Hub**，另述于下）· `hub check` PASSED（逐字输出见 issue） |
 | 14 | 官方评分口径**逐条对齐**（加分） | ✅ | [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（12 场景 / 三硬点 / AI 总线 / 三形态） |
 | 15 | **技术深度：造 App 的机器**（申报项） | ✅ | 除"一张卡"外，仓库含**把意图变卡片的机器**：`build/pipeline.py` 一条命令 → 过官方门禁的 L0 bundle + 渲染出图 + 自评修订；识别**两条路**（`model.complete` 优先 / 规则兜底，卡上自标来源）。说明 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，对照证据 [`docs/evidence/identify/`](docs/evidence/identify/)（规则 vs 模型）、[`docs/evidence/model-path/`](docs/evidence/model-path/) |
@@ -78,13 +78,13 @@
 | 1 | **简短需求** | `README.md` §1–§2（一句话 + 赛题对应，≤300 字） | ✅ |
 | 2 | **可运行最小原型及启动说明** | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5 | ✅ |
 | 3 | **固定版本源码或包** | **固定版本 = tag `gosim-initial-submission`**（初赛参赛版，钉死）；卡片包 = `bundle/`（`manifest.bundle_blake3` 内容寻址，内容版本 tag `v0.3.3`） | ✅ |
-| 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒**，含五屏正流程 + 两个失败态） | ✅ |
+| 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒，带中文旁白**，含五屏正流程 + 两个失败态；原无声版留档 `…-silent.mp4`） | ✅ |
 | 5 | **两张关键截图** | ① `bundle/screenshots/01-read.png`（识别：从消息读出时间/地点/类型 + 来源）② `bundle/screenshots/03-plan.png`（记忆命中"坐高铁不坐飞机"→ 只给高铁方案） | ✅ |
 | 6 | **数据来源与限制** | `docs/数据来源与限制.md`（逐字段来源 + **限制：车次为演示样例**） | ✅ |
 | 7 | **已报名成员名单** | 官方 issue 报名凭证：<https://github.com/gosimfoundation/hackathon-agenticapp26/issues/5#issuecomment-5852150142>（队伍 `三三Claw` / 成员 id `三三Claw-ljh`） | ✅ |
 | — | **至少一次可核对的操作** | `build/verify_flow.py` 在宿主内五屏真点击（证据 `build/_evidence/flow_run.json`） | ✅ |
 | — | **可核验的长期记忆（真读写）** | 点「记下」→ `.local-state/memory.json` 真被写；再跑一遍读得到；点「这次别记」sha 不变 —— 三条断言进 `flow_run.json` 的 `memory` 段 | ✅ |
-| — | **一个失败或空状态** | 两个失败态：未签名被拒 / 摘要不符被拒（`build/_evidence/neg_*.log` 宿主拒绝日志 + 演示片 ③ 段空窗画面） | ✅ |
+| — | **一个失败或空状态** | 两个失败态：未签名被拒 / 摘要不符被拒（`build/_evidence/neg_*.log` 宿主拒绝日志 + 演示片 ③ 段空窗画面）· **系统留证见 [`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)**（六类：准入未授 2 / 服务缺失 2 / 能力被拒 2，含源码行号与日志原文） | ✅ |
 
 ## B. 通用材料（官方《作品提交与 App Hub》「所有作品需要的材料」6 项）
 

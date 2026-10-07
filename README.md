@@ -15,7 +15,7 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
 | **固定版本（初赛参赛版）** | **tag `gosim-initial-submission`** —— 评委按此 tag 拉取即为**参赛版**（含形态①②③全量；`bundle/` 内容版本 = `0.3.3`） |
 | **怎么跑** | 见 **§5 启动说明**（官方宿主 + Rust 工具链）；卡片包本身**与平台无关**（纯 manifest + card + kit 数据），`python build/verify_flow.py` 可一键跑五屏 + 失败态 + 记忆取证并产出证据 <br>※ 我方另有一个**内部跨机验证包**（`card-host.exe` + 内嵌 Python，拷去别的电脑零依赖跑），属**自用工具、非提交物**，见 [`docs/回归清单.md`](docs/回归清单.md) 四·补3 |
 | **形态 / 场景** | **两种官方承认的形态 + 一条本体形态**：① **L0 卡片包**（主提交，`bundle/`）② **脚本应用 · 现场造卡**（`apps/shiyi-live/`）③ **OctoSense 系统 app**（`octos/`，原生快览屏卡 + **助手原地改卡**）；官方 12 场景之「**即时消息**」（宿主 **Rinx**，即早期 `robrix2`） |
-| **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅ · 2 分 17 秒演示 ✅ |
+| **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅（[`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)）· 2 分 17 秒演示 ✅（**带中文旁白**，[`docs/演示旁白稿.md`](docs/演示旁白稿.md)） |
 | **三种交付面** | ① **L0 卡片**（`bundle/`）：打开即渲染五屏 + 三条**总线调用**（读助手记忆 / 问助手 / 真发消息）；② **脚本应用**（`apps/shiyi-live/`）：**一句话当场长出卡**，改一下 / **确认（结果真发回绑定群）** / 再来一张，真交互；③ **OctoSense 系统 app**（`octos/`）：卡钉在**快览屏**、**助手能在卡的对话里原地改卡**（桌面 + 手机双端已跑通，未碰内核一行）。同一套识别口径与长期记忆 |
 | **一页速览** | [`评审速览.md`](评审速览.md)（3 分钟看懂）· **[`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（逐条对官方评分口径）** · 材料对照 [`SUBMISSION.md`](SUBMISSION.md) |
 | **🔧 造 App 的机器** | 拾意不只是"一张卡"，仓库里还有**一台把意图变成卡片的机器**：一条命令从一句话走到「通过官方门禁的 L0 bundle + 渲染出图 + 自评修订」；**识别走两条路**（设备助手 `model.complete` 优先 / 本地规则兜底，结果卡上自己标注走的是哪条）。一页说明见 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，代码 `build/pipeline.py` / `build/gen_screens.py` / `src/intent_model.py`，对照证据 [`docs/evidence/identify/`](docs/evidence/identify/)、[`docs/evidence/model-path/`](docs/evidence/model-path/)、[`docs/evidence/assist-memory/`](docs/evidence/assist-memory/)、[`docs/evidence/live-app/`](docs/evidence/live-app/) |
@@ -193,6 +193,31 @@ shiyi/
 > 这一版是在 **Windows**——官方工具支持相对弱的平台——上完成的端到端助手往返；过程中顺手替官方抓到一个 Windows 专属的门禁 bug（#75）。这是**实测填坑**，不是配置出来的。
 
 ## 5. 怎么跑（官方参考宿主）
+
+### 5.0 先看这里：你要验到哪一层（**前置与耗时如实标注**）
+
+| 层 | 能验到什么 | 前置 | 耗时 |
+|---|---|---|---|
+| **L0 · 看已有证据（零安装）** | 五屏端到端 + **两个失败态** + 记忆真读写——全部是**我方已跑完留下的原始产物** | **无**（纯文件，直接打开） | 约 5 分钟 |
+| **L1 · 一键重跑（需 Rust）** | `python build/verify_flow.py` 在你自己机器上重跑 L0 那一套，产出同名证据 | 需先按 §5.2 **从源码编译**官方 `hub` + `card-host`（Rust 工具链 + Makepad/Octoscript checkout） | 编译数十分钟起，跑约 3 分钟 |
+| **L2 · 改着试** | 改 `bundle/` 里任意一张卡，看宿主怎么反应（含被拒） | 同 L1 | 同 L1 |
+
+> ⚠️ **诚实说明**：**「30 秒」指的是"看懂"，不是"跑起来"。**
+> 完整复现要走官方参考宿主，而宿主**必须从 Rust 源码编译**——这一步我们省不掉，**也不假装能省掉**。
+> 若不方便编译，请直接看 **L0**：那一层不需要任何工具链，证据是本仓现成的原始日志与截图。
+
+**L0 证据入口**（全在仓内，无需任何安装）：
+
+| 证据 | 路径 |
+|---|---|
+| 五屏端到端 + 失败态 + 记忆取证（全步骤记录） | `build/_evidence/flow_run.json` |
+| 五屏宿主原始日志（每屏一份，含 `admitted` / `refused` 判据原文） | `build/_evidence/host_shiyi-01-read.log` … `05-done.log` |
+| 两个失败态（未签名 / 摘要不符）——**我方卡片一张都不渲染** | `build/_evidence/neg_unsigned.log`（+`.png`）、`neg_tampered.log`（+`.png`） |
+| 五屏真实截图 | `bundle/screenshots/` |
+| 操作录屏（2 分 17 秒，含失败态） | `build/_video/shiyi-walkthrough.mp4` |
+
+> 判据怎么看：**只看宿主日志的 `admitted` / `refused`** —— 准入成功打 `admitted`，被拒只打 `refused`。
+> `[SPLASH] eval` **不是**判据：宿主被拒后画的"拒绝说明页"也会打这一行，那是宿主画的、不是我方卡片。
 
 ### 5.1 复现环境（让评审拿到同一版本）
 
