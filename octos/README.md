@@ -116,6 +116,19 @@
 
 ## 5. 怎么验证（复现）
 
+**一键构建（官方"可构建版本"）**：把本目录的宿主扩展应用到官方源码并编译——
+
+```sh
+# 桌面（打语音补丁 + 编 octosense）
+bash octos/host-extension/build_host.sh /path/to/OctoSense
+# 桌面 + 安卓 APK（含内核）
+bash octos/host-extension/build_host.sh /path/to/OctoSense --apk
+```
+
+脚本只做三件事：`git apply` 语音补丁（可干净应用）→ 放入 `shiyi.rs`（repin host-service）→ `cargo build --release -p octosense`（`--apk` 再打手机 APK）。**不改官方源码历史。**
+
+**手工路径**：
+
 **桌面（Windows）**：编 `octosense.exe`（`cargo build --release -p octosense`）→
 `MAKEPAD_REMOTE=8399 OCTOSENSE_HOME=… octosense.exe` → F9 开快览屏 → 点卡 → Chat → 说"把这张卡改成…"。
 **手机（小米13）**：`phone/system-apps.json` 含 `shiyi` ⇒ `./build_octosense_apk_kernel.sh` 重打 APK（含 `liboctos.so`）→ 装机 → 真机点卡改卡。
