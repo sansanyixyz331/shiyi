@@ -1,0 +1,19 @@
+# 拾意「会说话」真机证据 · 2026-10-08 04:05 · 设备 f40f11dc(小米13)
+# 抓法: adb logcat -d  (已先 logcat -c 清场)
+
+10-08 04:05:33.331  1660  1722 I Makepad : crates\shell\src\glance.rs:724:41 - glance: os.shiyi published shiyi-p14
+10-08 04:05:33.388  1660  1722 I Makepad : crates\shell\src\lib.rs:4289:9 - glance: os.shiyi notifies os.shiyi/shiyi-p14
+10-08 04:05:33.388  1660  1722 I Makepad : crates\shell\src\android_integration.rs:378:9 - speak: os.shiyi reads 周日早上九点去菜市场买菜。地点 · 菜市场
+10-08 04:05:33.404 11795 11867 I TtsEngineProcessor: speak  sync  Begin, onlyOffline: 1500 text=周日早上九点去菜市场买菜。地点 · 菜市场
+10-08 04:05:33.404 11795 11867 I TtsEngineProcessor: speak  sync  in  speak begin
+10-08 04:05:33.404 11795 11861 I CloudTtsEngine: speakInternal
+10-08 04:05:33.404 11795 11861 I CloudTtsEngine: speakInternal: text=周日早上九点去菜市场买菜。地点 · 菜市场 eventId=3cba4c34304e47b0b44d7d8c5ae0662e
+10-08 04:05:36.914 11795 11867 I TtsEngineProcessor: speak  sync  out 
+10-08 04:05:37.838  1660  1722 I Makepad : crates\shell\src\glance.rs:724:41 - glance: os.shiyi published shiyi-p14
+10-08 04:05:37.841  1660  1722 I Makepad : crates\shell\src\lib.rs:4289:9 - glance: os.shiyi notifies os.shiyi/shiyi-p14
+10-08 04:05:37.841  1660  1722 I Makepad : crates\shell\src\android_integration.rs:378:9 - speak: os.shiyi reads 该动身了 · 周日早上九点去菜市场买菜。地点 · 菜市场
+10-08 04:05:37.846 11795 11867 I TtsEngineProcessor: speak  sync  Begin, onlyOffline: 1500 text=该动身了 · 周日早上九点去菜市场买菜。地点 · 菜市场
+10-08 04:05:37.846 11795 11867 I TtsEngineProcessor: speak  sync  in  speak begin
+10-08 04:05:37.847 11795 11861 I CloudTtsEngine: speakInternal
+10-08 04:05:37.847 11795 11861 I CloudTtsEngine: speakInternal: text=该动身了 · 周日早上九点去菜市场买菜。地点 · 菜市场 eventId=ba3350eeed2943549d819f8b69f4c4e0
+10-08 04:05:42.354 11795 11867 I TtsEngineProcessor: speak  sync  out 

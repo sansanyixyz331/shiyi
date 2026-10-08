@@ -1,0 +1,91 @@
+--- a/crates/shell/src/android_integration.rs
++++ b/crates/shell/src/android_integration.rs
+@@ -369,6 +369,14 @@
+         fields.push(("operation", s(operation)));
+         cx.android_integration(channel, &obj(fields).to_json());
+         self.android_runtime.next_command
++    }
++    /// Speak `text` through Android's own TextToSpeech engine (拾意 reading a
++    /// card aloud); nothing elsewhere. Fire-and-forget: the bridge queues the
++    /// utterance and the OS engine owns the audio.
++    pub fn android_speak(&mut self, cx: &mut Cx, text: &str) {
++        if !cfg!(target_os = "android") { return; }
++        log!("speak: os.shiyi reads {}", text);
++        self.android_command(cx, "bridge", "speak", vec![("text", s(text))]);
+     }
+     /// A short haptic on Android for a committed shell action (`kind` is
+     /// `tick`, `confirm` or `long_press`); nothing elsewhere.
+--- a/crates/shell/src/lib.rs
++++ b/crates/shell/src/lib.rs
+@@ -4261,6 +4263,8 @@
+         // gist (the card's summary); a press opens the card.
+         let name = app_display_name(&note.app);
+         let title = note.title.strip_prefix(&format!("{name} \u{00b7} ")).unwrap_or(&note.title).to_string();
++        // 播报用（title 随后被 card_toast 拿走）。
++        let spoken_title = title.clone();
+         let card_toast = shell::notifications::Notification {
+             app: note.app.clone(),
+             caption: name,
+@@ -4283,6 +4287,13 @@
+             self.glance_shade_notes.record(id, &note.key);
+         }
+         log!("glance: {} notifies {}", note.app, note.key);
++        // 拾意会说话：os.shiyi 的通知同时用系统 TTS 读出来 —— 输出侧、只说不听。
++        // 用 Android 自带 TextToSpeech（与 33OS 无关，不碰任何 33OS 资产）；
++        // 其它平台 android_speak 是空操作。
++        if note.app == "os.shiyi" {
++            let spoken = if note.summary.is_empty() { spoken_title } else { format!("{spoken_title}。{}", note.summary) };
++            self.android_speak(cx, &spoken);
++        }
+         self.redraw_all(cx);
+     }
+ 
+--- a/phone/resources/android/java/dev/makepad/octosense/MakepadAppExtension.java
++++ b/phone/resources/android/java/dev/makepad/octosense/MakepadAppExtension.java
+@@ -1504,6 +1504,13 @@
+     private void requestResync() { offer(() -> { try { if(bridge!=null) bridge.requestSnapshot(session); } catch(RemoteException e) { bridge=null; bridgeState("disconnected","snapshot_request_failed"); } }); }
+     private void bridgeCommand(JSONObject command) throws Exception {
+         long id=command.optLong("id",++commandId); Protocol.requireCommand(id);
++        // 拾意的"嘴巴"：系统 TTS 直接在本进程读出来，不经 system-bridge，
++        // 也不需要 bridge 已连接（用 Android 自带 TextToSpeech，与 33OS 无关）。
++        if("speak".equals(command.optString("operation"))) {
++            speakText(command.optString("text",""));
++            emit("bridge.result",json("id",id,"status",Protocol.COMPLETED,"reason","speak_queued"));
++            return;
++        }
+         if(bridge==null) {
+             if("reply_send".equals(command.optString("operation"))) {
+                 String token=command.optString("token");main.post(() -> replyComposer.complete(token,Protocol.DISCONNECTED));
+@@ -1540,6 +1547,32 @@
+             case "snapshot": bridge.requestSnapshot(session); break;
+             default: emit("bridge.result",json("id",id,"status",Protocol.UNSUPPORTED,"reason","unknown_bridge_operation"));
+         }
++    }
++
++    // ---------------------------------------------------------------- 拾意的"嘴巴"
++    private android.speech.tts.TextToSpeech speech;
++    private boolean speechReady;
++    private String pendingSpeech;
++    /// Speak `text` through Android's own TextToSpeech engine: the engine owns
++    /// the audio (in this process), the app renders nothing and holds no model.
++    /// The engine initializes on first use; a queued utterance waits for onInit.
++    private void speakText(final String text) {
++        if(text==null) return;
++        final String spoken=text.trim();
++        if(spoken.isEmpty()) return;
++        activity.runOnUiThread(() -> {
++            if(speech==null) {
++                speech=new android.speech.tts.TextToSpeech(activity,status -> {
++                    speechReady=(status==android.speech.tts.TextToSpeech.SUCCESS);
++                    if(speechReady&&pendingSpeech!=null) {
++                        String queued=pendingSpeech;pendingSpeech=null;
++                        speech.speak(queued,android.speech.tts.TextToSpeech.QUEUE_ADD,null,"octos-"+System.nanoTime());
++                    }
++                });
++            }
++            if(speechReady) speech.speak(spoken,android.speech.tts.TextToSpeech.QUEUE_ADD,null,"octos-"+System.nanoTime());
++            else pendingSpeech=spoken;
++        });
+     }
+     @Override public void onResume() {
+         windowFocused=activity.hasWindowFocus();

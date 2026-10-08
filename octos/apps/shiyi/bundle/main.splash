@@ -125,6 +125,7 @@ fn publish(e, done_msg, is_new){
                 intent = ""
                 ui.input.set_text("")
                 ui.rows.render()
+                arm(e)
             }
             let rep = ""
             if r.data.replaced == true { rep = "（换掉了原来那张）" }
@@ -189,11 +190,48 @@ fn repin(e){ publish(e, "已重钉（同一张卡原地更新）", false) }
 
 fn unpin(e){ withdraw(e, "已从快览屏撤掉", true) }
 
+// ---------------------------------------------------------------- 到点提醒（会说话）
+// 演示压缩计时：钉卡后 ~10 秒自动"到点"提醒一次 —— 宿主出卡 + 系统通知 + 语音读出。
+// （真实产品按卡里的 when 时辰；演示把等待压到几秒，方便当场看。）
+let pending = nil
+let pending_left = 0
+
+fn arm(e){
+    pending = e
+    pending_left = 10
+    show("好 —— 到点我提醒你（演示压缩计时，几秒后）")
+}
+
+fn fire(){
+    if pending == nil { return }
+    let e = pending
+    pending = nil
+    // 到点：把同一张卡（同 card_id）**再发一次** —— 原地更新 + notify:true。
+    // 走 glance 就行（manifest 里已授 "glance"）：服务侧"每次 notify:true 都弹一次通知"，
+    // 宿主 glance_notify 收到 os.shiyi 的通知就顺手用系统 TTS 读出来。
+    // （不用 shiyi.notify：那需要 manifest 里有 "shiyi.notify" 精确能力，而 App Hub 的
+    //   KNOWN_CAPABILITIES 是封闭白名单、不含它 —— 干脆复用已授权的 glance。）
+    let args = {card_id: e.id title: clip("拾意 · 该动身了 · " + e.text) source: CARD
+        data: {rec: {title: e.text subtitle: when_line(e) summary: where_line(e) as_of: e.at}}
+        priority: 60 open: {app: "os.shiyi"} notify: true expires: 604800}
+    host.request("glance.publish", args, fn(r){
+        if r.is_ok { show("到点提醒：" + e.text) } else { show("提醒没发出去：" + r.error) }
+    })
+}
+
+fn tick(){
+    if pending != nil {
+        pending_left = pending_left - 1
+        if pending_left <= 0 { fire() }
+    }
+}
+
 // ---------------------------------------------------------------- 启动
 load()
 start_timeout(0.05, || show("说一句话，我造一张卡钉到快览屏 —— 能留、能复用。桌面按 F9 看"))
 start_timeout(0.30, || ui.rows.render())
 start_timeout(0.60, || refresh())
+start_interval(1.0, || tick())
 
 // ---------------------------------------------------------------- 界面
 SolidView{width: Fill height: Fill flow: Down padding: 10 spacing: 6 draw_bg.color: bg
