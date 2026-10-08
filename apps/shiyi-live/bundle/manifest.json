@@ -14,7 +14,11 @@
   },
   "id": "shiyi-live",
   "integrity": {
-    "bundle_blake3": "ba874abbcbc73cfc751ad6dc7f1b019ab8b5c589a7368ed5368443daefa91c98"
+    "bundle_blake3": "2185a00114ce7a16ae76503f29e8d1d85663e0b5e6e4c6903de9d9f8a5565815",
+    "signature": {
+      "key_id": "sansanyixyz331",
+      "value": "f14747ba92e7ce6846eaa1281aa626b5229df7e7647c2df1abd771bfab90114377351be04a9c2e594e3a4ca0a2c31d07cf9fe7dabea5ac5577c7d58bf36c8807"
+    }
   },
   "name": "拾意 · 现场造卡",
   "network": {
