@@ -1,4 +1,4 @@
-# 隐私声明 · 拾意 Pickup
+﻿# 隐私声明 · 拾意 Pickup
 
 > 本文件由 `bundle/listing.json` 的 `publisher.privacy_policy_url` 指向。
 > 适用范围：`bundle/`（发布产物）与 `cards/`、`src/`（源码）组成的本作品。

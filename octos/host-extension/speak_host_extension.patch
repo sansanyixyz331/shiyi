@@ -1,10 +1,208 @@
+--- a/crates/shell/src/glance.rs
++++ b/crates/shell/src/glance.rs
+@@ -600,6 +600,10 @@
+     pub title: String,
+     /// The notification's second line ([`note_summary`]); may be empty.
+     pub summary: String,
++    /// Whether the shell should read this notification aloud (`speak`, default
++    /// true). The phone's TTS speaks `os.shiyi`'s cards; a publisher can mute one
++    /// card with `speak: false` without losing the notification itself.
++    pub speak: bool,
+ }
+ 
+ /// A card notification's second line: the publisher's `summary`, else the
+@@ -715,6 +719,7 @@
+             open_app: caller.launch_id().to_string(),
+             title: title.to_string(),
+             summary,
++            speak: args.get("speak").and_then(Value::as_bool).unwrap_or(true),
+         });
+     }
+     if result.is_ok() && method != "list" {
+--- a/crates/shell/src/apps.rs
++++ b/crates/shell/src/apps.rs
+@@ -222,6 +222,10 @@
+         octosense_calendar_service::register();
+         octosense_calendar_service::on_publish_card(Some(std::sync::Arc::new(|app: &str, args: serde_json::Value| crate::glance::publish_for(app, &args))));
+         register_news();
++        // 拾意's own service (`shiyi.repin`, and its `shiyi.notify`): before
++        // the notice service, which only stands in for apps no service
++        // answers.
++        crate::shiyi::register();
+         // After every service of the shell's own: the notice service never
+         // stands in for one.
+         let served = crate::glance_notice::serve_system_apps();
+--- a/crates/shell/src/lib.rs
++++ b/crates/shell/src/lib.rs
+@@ -86,6 +86,8 @@
+ pub mod glance_digest;
+ #[cfg(any(feature = "app-hub", native_mobile))]
+ pub mod glance_notice;
++#[cfg(any(feature = "app-hub", native_mobile))]
++pub mod shiyi;
+ pub mod glance_panel;
+ pub mod glance_sheet;
+ mod card_presentation;
+@@ -4253,29 +4255,39 @@
+     /// a toast on a desktop, which opens that card in the card window
+     /// (glance_sheet.rs); a shade notification on the phone opens that same
+     /// card, with its Glance feed underneath for Close/Back.
++    ///
++    /// 手机端不弹桌面式 toast：手机屏窄，380 宽、贴右上角的卡片几乎铺满顶栏、
++    /// 从顶部压住控件，误触它还会直接跳进卡片详情页（0.3.5 手机端复测撞到的
++    /// "通知叠到详情页遮控件"）。手机的通知本体是下方系统通知中心（shade），
++    /// 下拉可见、点开同一张卡（mobile_app.rs），语音播报也照旧 ⇒ 只有桌面弹。
+     fn glance_notify(&mut self, cx: &mut Cx, note: &glance::GlanceNote) {
+         let body = if note.summary.is_empty() { "Open the card at a glance" } else { note.summary.as_str() };
+-        let notes = self.ui.widget(cx, ids!(shell_notes));
+         // Who it is from (the app's own icon and name), what (the title,
+         // without the app's name the publisher may have put first) and its
+         // gist (the card's summary); a press opens the card.
+         let name = app_display_name(&note.app);
+         let title = note.title.strip_prefix(&format!("{name} \u{00b7} ")).unwrap_or(&note.title).to_string();
+-        let card_toast = shell::notifications::Notification {
+-            app: note.app.clone(),
+-            caption: name,
+-            summary: title,
+-            body: note.summary.clone(),
+-            icon: Some(shell::ui::Ico::Bell),
+-            app_icon: Some(note.open_app.clone()),
+-            urgency: shell::notifications::Urgency::Normal,
+-            // A card's toast stays its longest, so it can still be opened.
+-            requested: 30.0,
+-            ..Default::default()
+-        };
+-        if let Some(id) = notes.borrow_mut::<shell::notifications::ShellNotifications>().map(|mut n| n.post(cx, card_toast)) {
+-            self.glance_toasts.record(id, &note.key);
+-            log!("glance: toast {id} opens {}", note.key);
++        // 播报用（title 随后被 card_toast 拿走）。
++        let spoken_title = title.clone();
++        // 只有桌面弹这张 toast；手机改走下方 shade 通知中心（见函数头注释）。
++        if !crate::mobile_navigation::ENABLED {
++            let card_toast = shell::notifications::Notification {
++                app: note.app.clone(),
++                caption: name,
++                summary: title,
++                body: note.summary.clone(),
++                icon: Some(shell::ui::Ico::Bell),
++                app_icon: Some(note.open_app.clone()),
++                urgency: shell::notifications::Urgency::Normal,
++                // A card's toast stays its longest, so it can still be opened.
++                requested: 30.0,
++                ..Default::default()
++            };
++            let notes = self.ui.widget(cx, ids!(shell_notes));
++            if let Some(id) = notes.borrow_mut::<shell::notifications::ShellNotifications>().map(|mut n| n.post(cx, card_toast)) {
++                self.glance_toasts.record(id, &note.key);
++                log!("glance: toast {id} opens {}", note.key);
++            }
+         }
+         let now = cx.seconds_since_app_start();
+         if let Some(state) = self.state.as_mut() {
+@@ -4283,6 +4295,13 @@
+             self.glance_shade_notes.record(id, &note.key);
+         }
+         log!("glance: {} notifies {}", note.app, note.key);
++        // 拾意会说话：os.shiyi 的通知同时用系统 TTS 读出来 —— 输出侧、只说不听。
++        // 用 Android 自带 TextToSpeech（与 33OS 无关，不碰任何 33OS 资产）；
++        // 其它平台 android_speak 是空操作。
++        if note.app == "os.shiyi" && note.speak {
++            let spoken = if note.summary.is_empty() { spoken_title } else { format!("{spoken_title}。{}", note.summary) };
++            self.android_speak(cx, &spoken);
++        }
+         self.redraw_all(cx);
+     }
+ 
+@@ -6295,11 +6314,83 @@
+     }
+ }
+ 
++/// Seconds east of UTC for the platform's current local zone, from the C
++/// library's own tz data (`localtime_r`'s `tm_gmtoff`, the same data the
++/// status clock reads). 0 where the platform exposes none.
++///
++/// The script VM's `std.local_time` adds this offset, but the platform never
++/// sets it itself (`platform::script::timer` ships it at 0 and only a host can
++/// raise it), so every `local_time()` in every app — a card's "as of" stamp,
++/// reminders, the store's dates — renders UTC until a host sets it here.
++pub fn local_utc_offset_secs() -> i64 {
++    #[cfg(unix)]
++    {
++        unsafe {
++            let now = libc::time(std::ptr::null_mut());
++            let mut tm: libc::tm = std::mem::zeroed();
++            if libc::localtime_r(&now, &mut tm).is_null() {
++                return 0;
++            }
++            tm.tm_gmtoff as i64
++        }
++    }
++    #[cfg(windows)]
++    {
++        // Windows has no C-library tz offset (`localtime_r`/`tm_gmtoff` are
++        // POSIX), so read the system zone through Win32: `Bias` is minutes
++        // *west* of UTC, hence seconds east of UTC = -(Bias) * 60, plus the
++        // daylight bias while DST is in effect.
++        #[repr(C)]
++        struct SysTime {
++            _parts: [u16; 8],
++        }
++        #[repr(C)]
++        struct TimeZoneInformation {
++            bias: i32,
++            standard_name: [u16; 32],
++            standard_date: SysTime,
++            standard_bias: i32,
++            daylight_name: [u16; 32],
++            daylight_date: SysTime,
++            daylight_bias: i32,
++        }
++        #[link(name = "kernel32")]
++        unsafe extern "system" {
++            fn GetTimeZoneInformation(lp: *mut TimeZoneInformation) -> u32;
++        }
++        unsafe {
++            let mut tz: TimeZoneInformation = std::mem::zeroed();
++            match GetTimeZoneInformation(&mut tz) {
++                0xFFFF_FFFF => 0, // TIME_ZONE_ID_INVALID
++                id => {
++                    let mut bias = tz.bias;
++                    if id == 2 {
++                        // TIME_ZONE_ID_DAYLIGHT
++                        bias += tz.daylight_bias;
++                    }
++                    -(bias as i64) * 60
++                }
++            }
++        }
++    }
++    #[cfg(not(any(unix, windows)))]
++    {
++        0
++    }
++}
++
+ /// The shell's half of `AppMain`: a package with work of its own (the
+ /// phone's Settings) wraps these in its own `App`; the desktop runs them
+ /// as they are (`impl AppMain for App` below).
+ impl App {
+     pub fn shell_script_mod(vm: &mut ScriptVm) -> ScriptValue {
++        // Set the local UTC offset once, before any module is evaluated, so
++        // `std.local_time` (and everything built on it) reads local time in
++        // every package and every app. Without this the platform's offset is 0
++        // and cards stamp UTC.
++        makepad_widgets::makepad_platform::script::timer::set_script_local_utc_offset_secs(
++            local_utc_offset_secs(),
++        );
+         host::set_child_env("MAKEPAD_HOME", octosense::paths::home().as_os_str());
+         desktop_style::install(vm,desktop_style::StyleSheet::load(desktop_style::DesktopStyle::Omarchy));
+         crate::makepad_widgets::script_mod(vm);
 --- a/crates/shell/src/android_integration.rs
 +++ b/crates/shell/src/android_integration.rs
-@@ -369,6 +369,14 @@
-         fields.push(("operation", s(operation)));
+@@ -370,6 +370,14 @@
          cx.android_integration(channel, &obj(fields).to_json());
          self.android_runtime.next_command
-+    }
+     }
 +    /// Speak `text` through Android's own TextToSpeech engine (拾意 reading a
 +    /// card aloud); nothing elsewhere. Fire-and-forget: the bridge queues the
 +    /// utterance and the OS engine owns the audio.
@@ -12,34 +210,10 @@
 +        if !cfg!(target_os = "android") { return; }
 +        log!("speak: os.shiyi reads {}", text);
 +        self.android_command(cx, "bridge", "speak", vec![("text", s(text))]);
-     }
++    }
      /// A short haptic on Android for a committed shell action (`kind` is
      /// `tick`, `confirm` or `long_press`); nothing elsewhere.
---- a/crates/shell/src/lib.rs
-+++ b/crates/shell/src/lib.rs
-@@ -4261,6 +4263,8 @@
-         // gist (the card's summary); a press opens the card.
-         let name = app_display_name(&note.app);
-         let title = note.title.strip_prefix(&format!("{name} \u{00b7} ")).unwrap_or(&note.title).to_string();
-+        // 播报用（title 随后被 card_toast 拿走）。
-+        let spoken_title = title.clone();
-         let card_toast = shell::notifications::Notification {
-             app: note.app.clone(),
-             caption: name,
-@@ -4283,6 +4287,13 @@
-             self.glance_shade_notes.record(id, &note.key);
-         }
-         log!("glance: {} notifies {}", note.app, note.key);
-+        // 拾意会说话：os.shiyi 的通知同时用系统 TTS 读出来 —— 输出侧、只说不听。
-+        // 用 Android 自带 TextToSpeech（与 33OS 无关，不碰任何 33OS 资产）；
-+        // 其它平台 android_speak 是空操作。
-+        if note.app == "os.shiyi" {
-+            let spoken = if note.summary.is_empty() { spoken_title } else { format!("{spoken_title}。{}", note.summary) };
-+            self.android_speak(cx, &spoken);
-+        }
-         self.redraw_all(cx);
-     }
- 
+     pub fn android_haptic(&mut self, cx: &mut Cx, kind: &str) {
 --- a/phone/resources/android/java/dev/makepad/octosense/MakepadAppExtension.java
 +++ b/phone/resources/android/java/dev/makepad/octosense/MakepadAppExtension.java
 @@ -1504,6 +1504,13 @@
@@ -56,11 +230,10 @@
          if(bridge==null) {
              if("reply_send".equals(command.optString("operation"))) {
                  String token=command.optString("token");main.post(() -> replyComposer.complete(token,Protocol.DISCONNECTED));
-@@ -1540,6 +1547,32 @@
-             case "snapshot": bridge.requestSnapshot(session); break;
+@@ -1541,6 +1548,32 @@
              default: emit("bridge.result",json("id",id,"status",Protocol.UNSUPPORTED,"reason","unknown_bridge_operation"));
          }
-+    }
+     }
 +
 +    // ---------------------------------------------------------------- 拾意的"嘴巴"
 +    private android.speech.tts.TextToSpeech speech;
@@ -86,6 +259,173 @@
 +            if(speechReady) speech.speak(spoken,android.speech.tts.TextToSpeech.QUEUE_ADD,null,"octos-"+System.nanoTime());
 +            else pendingSpeech=spoken;
 +        });
-     }
++    }
      @Override public void onResume() {
          windowFocused=activity.hasWindowFocus();
+         settingsAccessibility.setWindowFocused(windowFocused);
+--- /dev/null
++++ b/crates/shell/src/shiyi.rs
+@@ -0,0 +1,163 @@
++//! 拾意's own host service: its agent's `shiyi.*` tools (ADR 0004 §4, §7).
++//!
++//! | method | args | answer |
++//! |---|---|---|
++//! | `shiyi.repin` | `{card_id, title, when?, where?, as_of?, notify?}` | `{card_id, replaced, expires_at}` once the card is on the glance screen ([`repin`]) |
++//!
++//! **What it is for.** 拾意's card is where the person reads a sentence they
++//! asked 拾意 to keep; the card's own chat (card_chat.rs) is where they talk
++//! back. Without a tool the assistant can only talk. `shiyi.repin` gives it
++//! one arm: the newest text becomes the card. The card is republished under
++//! the **same `card_id`**, and cards are keyed by `(app, card_id)`
++//! (glance.rs), so the card the person is looking at is **replaced in
++//! place**, never duplicated.
++//!
++//! **Whose card.** The card's exact L0 source is taken from the live card
++//! ([`crate::glance::card`]) and only its `rec` data changes: what the model
++//! rewrites is text, never card code, and the edited card is byte-for-byte
++//! the app's own card. The publication goes out through
++//! [`crate::glance::publish_for`] as `os.shiyi`, the same road official
++//! Calendar's `calendar.notify` takes — the host checks admission, this
++//! service only fills in the values.
++//!
++//! **Who answers.** 拾意 is a system app, so its own namespace is its own
++//! service (script_apps.rs): registering this one means the generic notice
++//! service (glance_notice.rs) no longer stands in for `shiyi`, so this
++//! service answers `shiyi.notify` too, with the shell's notice card.
++use serde_json::{json, Value};
++
++/// 拾意's app id and tool namespace.
++pub const APP: &str = "os.shiyi";
++const FAMILY: &str = "shiyi";
++/// How long a repinned card lives, in seconds (seven days, as the app pins).
++const EXPIRES_S: u64 = 604800;
++
++/// `text` cut to `max` characters, an ellipsis last when it was longer.
++fn clip(text: &str, max: usize) -> String {
++    if text.chars().count() <= max {
++        return text.to_string();
++    }
++    let mut out: String = text.chars().take(max.saturating_sub(1)).collect();
++    out.push('\u{2026}');
++    out
++}
++
++/// One of the card's two labelled lines: the caller's value, or the live
++/// card's current line, or the app's own "nothing said" line — never empty,
++/// so the card states one thing or another, never a blank field.
++fn line(args: &Value, key: &str, prefix: &str, fallback: &str, old: Option<&Value>) -> String {
++    let given = args.get(key).and_then(Value::as_str).map(str::trim).unwrap_or("");
++    if !given.is_empty() {
++        // The caller may repeat the label ("时间 · 下周四") or give the bare
++        // value ("下周四"); keep exactly one label.
++        let bare = given.strip_prefix(prefix).map(str::trim).unwrap_or(given);
++        return format!("{prefix}{bare}");
++    }
++    if let Some(text) = old.and_then(Value::as_str).map(str::trim).filter(|t| !t.is_empty()) {
++        return text.to_string();
++    }
++    fallback.to_string()
++}
++
++fn field<'a>(args: &'a Value, key: &str) -> &'a str {
++    args.get(key).and_then(Value::as_str).unwrap_or("").trim()
++}
++
++/// `shiyi.repin`: replace 拾意 card `card_id` in place with the caller's
++/// text. The live card must exist and be an L0 card: its source is reused
++/// exactly, so what changes is only the data. Refused (with a reason the
++/// model can act on) when the card is gone, is not 拾意's, or the text is
++/// blank or too long.
++pub fn repin(app: &str, args: &Value) -> Result<Value, String> {
++    if app != APP {
++        return Err(format!("{FAMILY}.repin serves {APP} only"));
++    }
++    let card_id = field(args, "card_id");
++    if card_id.is_empty() {
++        return Err("shiyi.repin needs the card_id of the card to change".into());
++    }
++    let key = format!("{APP}/{card_id}");
++    let existing = crate::glance::card(&key)
++        .ok_or_else(|| format!("There is no live 拾意 card with card_id {card_id} on the glance screen."))?;
++    let l0 = existing.l0.as_ref().ok_or("That 拾意 card is not an L0 card, so it cannot be repinned.")?;
++    // The model rewrites values, never the card: its exact source comes back
++    // out unchanged.
++    let source = l0.source.clone();
++    let old = l0.data.get("rec");
++    let title = field(args, "title");
++    if title.is_empty() || title.chars().count() > crate::glance::TITLE_MAX {
++        return Err(format!("Provide a title of 1 to {} characters.", crate::glance::TITLE_MAX));
++    }
++    let subtitle = line(args, "when", "\u{65f6}\u{95f4} \u{00b7} ", "\u{65f6}\u{95f4} \u{00b7} \u{8fd9}\u{53e5}\u{8bdd}\u{91cc}\u{6ca1}\u{63d0}", old.and_then(|r| r.get("subtitle")));
++    let summary = line(args, "where", "\u{5730}\u{70b9} \u{00b7} ", "\u{5730}\u{70b9} \u{00b7} \u{8fd9}\u{53e5}\u{8bdd}\u{91cc}\u{6ca1}\u{63d0}", old.and_then(|r| r.get("summary")));
++    let as_of = field(args, "as_of");
++    let as_of = if as_of.is_empty() {
++        old.and_then(|r| r.get("as_of")).and_then(Value::as_str).unwrap_or("").to_string()
++    } else {
++        as_of.to_string()
++    };
++    let notify = args.get("notify").and_then(Value::as_bool).unwrap_or(false);
++    let publish = json!({
++        "card_id": card_id,
++        "title": clip(&format!("\u{62fe}\u{610f} \u{00b7} {title}"), crate::glance::TITLE_MAX),
++        "source": source,
++        "data": {"rec": {"title": title, "subtitle": subtitle, "summary": summary, "as_of": as_of}},
++        "priority": existing.priority,
++        "open": {"app": APP},
++        "notify": notify,
++        "expires": EXPIRES_S,
++    });
++    crate::glance::publish_for(APP, &publish)
++}
++
++/// 拾意's own host service: it answers `shiyi.repin` and `shiyi.notify`
++/// (the shell's notice card) for 拾意 alone.
++pub struct ShiyiService;
++
++impl octosense_appstore::services::HostService for ShiyiService {
++    fn family(&self) -> &'static str {
++        FAMILY
++    }
++    fn call(&mut self, call: octosense_appstore::services::ServiceCall, reply: octosense_appstore::services::Replier, _host: &mut dyn octosense_appstore::services::ServiceHost) {
++        if call.app_id != APP {
++            return reply.send(Err(format!("{FAMILY} serves {APP} only")));
++        }
++        match call.method() {
++            "repin" => reply.send(repin(&call.app_id, &call.args)),
++            "notify" => reply.send(crate::glance_notice::notify(&call.app_id, &call.args)),
++            other => reply.send(Err(format!("{FAMILY} has no method {other:?}"))),
++        }
++    }
++}
++
++/// Register [`ShiyiService`] for 拾意, before the generic notice service
++/// ([`crate::glance_notice::serve_system_apps`]): 拾意's own name is taken,
++/// so the notice service never stands in for it.
++pub fn register() {
++    octosense_appstore::services::register_host_service(Box::new(ShiyiService));
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    /// The caller's values win, a label already in them is not doubled, and
++    /// a missing one falls back to the live card's line or the app's own.
++    #[test]
++    fn a_line_keeps_exactly_one_label() {
++        let old = json!("\u{65f6}\u{95f4} \u{00b7} \u{660e}\u{5929}");
++        assert_eq!(line(&json!({"when": "\u{4e0b}\u{5468}\u{56db}"}), "when", "\u{65f6}\u{95f4} \u{00b7} ", "fallback", Some(&old)), "\u{65f6}\u{95f4} \u{00b7} \u{4e0b}\u{5468}\u{56db}");
++        assert_eq!(line(&json!({"when": "\u{65f6}\u{95f4} \u{00b7} \u{4e0b}\u{5468}\u{56db}"}), "when", "\u{65f6}\u{95f4} \u{00b7} ", "fallback", Some(&old)), "\u{65f6}\u{95f4} \u{00b7} \u{4e0b}\u{5468}\u{56db}");
++        assert_eq!(line(&json!({}), "when", "\u{65f6}\u{95f4} \u{00b7} ", "fallback", Some(&old)), "\u{65f6}\u{95f4} \u{00b7} \u{660e}\u{5929}");
++        assert_eq!(line(&json!({}), "when", "\u{65f6}\u{95f4} \u{00b7} ", "fallback", None), "fallback");
++    }
++
++    /// A repin the person's card cannot satisfy is refused with a reason,
++    /// before anything is published.
++    #[test]
++    fn a_repin_without_a_card_is_refused() {
++        assert!(repin("os.mail", &json!({"card_id": "x", "title": "y"})).unwrap_err().contains("serves os.shiyi only"));
++        assert!(repin(APP, &json!({"title": "y"})).unwrap_err().contains("card_id"));
++        assert!(repin(APP, &json!({"card_id": "shiyi-p9", "title": "y"})).unwrap_err().contains("no live"));
++    }
++}

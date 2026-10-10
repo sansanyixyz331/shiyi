@@ -1,4 +1,4 @@
-# l0-bindings-lint · 前后对照（本机实测 2026-10-04）
+﻿# l0-bindings-lint · 前后对照（本机实测 2026-10-04）
 
 ## ① 出货 bundle（好卡）—— 应 0 error / exit 0
 ```

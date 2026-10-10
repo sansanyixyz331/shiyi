@@ -1,21 +1,17 @@
 {
   "schema": 1,
-  "subtitle": "从你的聊天里，读出你没说出口的安排",
-  "description": "拾意读取你聊天里的一条消息，认出藏在里面的时间、地点与待办，做成一张等你点头的卡片；你确认后它去执行，并记住你的长期偏好，下次自动调整建议。Agent 干活，人保留控制。",
+  "subtitle": "一句话，现场造一张卡",
+  "description": "输入一句话，应用在本机识别出时间/地点/类型，现场长出一张按场景各不相同的卡，并把确认过的卡与偏好写进本机长期记忆（memory.json）。也可以在导入时绑定一个房间，直接读到那里的最近消息，挑一条就造卡；读到你的 Matrix 名字后，还会把聊天里「你自己发的」那几条标出来。确认一张卡时，会把这次的结论**真的发回你绑定的那个群** —— 从「记下了」变成「办成了」（发不出去会如实说明，退回只留本机）。不依赖任何服务也完整可用。",
   "category": "utilities",
   "keywords": [
-    "assistant",
     "intent",
-    "messages",
-    "memory",
-    "productivity"
+    "card",
+    "generator",
+    "l0",
+    "live"
   ],
   "screenshots": [
-    "screenshots/01-read.png",
-    "screenshots/02-ask.png",
-    "screenshots/03-plan.png",
-    "screenshots/04-memo.png",
-    "screenshots/05-done.png"
+    "screenshots/01.png"
   ],
   "icon": "assets/icon.svg",
   "platforms": [
@@ -26,7 +22,7 @@
     "support": "https://github.com/sansanyixyz331/shiyi",
     "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
   },
-  "release_notes": "0.3.3 — the bundle now asks for three host services. The opening screen still asks the device assistant what the message leaves out (octos.session.open, octos.turn.start), and it now also asks Rinx's mini-app host to post one line into the room chosen at import (matrix.send_message), so a reading can leave the card and reach the chat. Nothing here depends on a call succeeding: every read sits behind a boolean guard, and a host that serves none of these draws the same card, unchanged. Gate on the Linux hub: hub check PASSED — grants {matrix.send_message, octos.session.open, octos.turn.start}. The cards themselves are unchanged from 0.3.2.",
+  "release_notes": "0.7.4 - refreshes the bundled examples and the input placeholder so they read like the demo material (grocery run, plumber measuring the kitchen, parcel pickup, paying the foreman, no Friday-night socials) instead of one repeated business-trip line. No behavioural change: same on-device rules, same Matrix read, same send-back-on-confirm. Re-stamped bundle_blake3.",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

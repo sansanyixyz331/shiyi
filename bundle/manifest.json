@@ -1,29 +1,32 @@
 {
   "agent": null,
   "capabilities": [
-    "matrix.send_message",
-    "octos.session.open",
-    "octos.turn.start"
+    "storage",
+    "model",
+    "octos.session.history",
+    "matrix.read_messages",
+    "matrix.profile",
+    "matrix.send_message"
   ],
   "compute": {
     "instruction_budget": null,
     "memory_bytes": null
   },
-  "id": "shiyi",
+  "id": "shiyi-live",
   "integrity": {
-    "bundle_blake3": "986c4ac18113a198e6688a9b86084fdc1aa638d68d82db421b92ac41b74966a2",
+    "bundle_blake3": "2185a00114ce7a16ae76503f29e8d1d85663e0b5e6e4c6903de9d9f8a5565815",
     "signature": {
       "key_id": "sansanyixyz331",
-      "value": "df09e626b37492d2aa824adb8e4dbf99048d59763c0ccf9f79517fa210c02b85e00bbe26fd1bc432db0dc54f3aca4272a7c339207e39468a399d1a684f222302"
+      "value": "f14747ba92e7ce6846eaa1281aa626b5229df7e7647c2df1abd771bfab90114377351be04a9c2e594e3a4ca0a2c31d07cf9fe7dabea5ac5577c7d58bf36c8807"
     }
   },
-  "name": "拾意 Pickup",
+  "name": "拾意 · 现场造卡",
   "network": {
     "hosts": []
   },
   "schema": 1,
   "storage": {
-    "max_bytes": null
+    "max_bytes": 262144
   },
-  "version": "0.3.3"
+  "version": "0.7.4"
 }

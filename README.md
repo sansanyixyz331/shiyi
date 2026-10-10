@@ -1,9 +1,17 @@
-# 拾意 · Pickup
+﻿# 拾意 · Pickup
 
 > **从你的聊天里，读出你没说出口的安排。**
 > *Reads the plan you never said out loud, from the messages you already sent.*
 
 GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
+
+---
+
+> ### ⚠️ 复赛结构变更（2026-10-10）
+> 按官方复赛建议「`bundle/` 放仓库根、一仓一应用」，本仓**复赛版已对调形态位置**：
+> **根 `bundle/` = 带 AI 的脚本应用（复赛主提交）**；**L0 卡片包 → `apps/shiyi-card/bundle/`**。
+> 初赛版（tag `gosim-semifinal-submission`）**一字节未动**；**下文中 `bundle/` 的路径，凡描述"卡片形态"的，对应 `apps/shiyi-card/bundle/`**。
+> 详见 [`docs/复赛结构变更说明_20261010.md`](docs/复赛结构变更说明_20261010.md)。
 
 ---
 
@@ -14,9 +22,9 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
 | **这是什么** | **OctoScript L0 卡片应用**——把消息里一句随手的话变成一张"等你确认"的卡片；你确认它才执行，并写进长期记忆 |
 | **固定版本（初赛参赛版）** | **tag `gosim-initial-submission`** —— 评委按此 tag 拉取即为**参赛版**（含形态①②③全量；`bundle/` 内容版本 = `0.3.3`） |
 | **怎么跑** | 见 **§5 启动说明**（官方宿主 + Rust 工具链）；卡片包本身**与平台无关**（纯 manifest + card + kit 数据），`python build/verify_flow.py` 可一键跑五屏 + 失败态 + 记忆取证并产出证据 <br>※ 我方另有一个**内部跨机验证包**（`card-host.exe` + 内嵌 Python，拷去别的电脑零依赖跑），属**自用工具、非提交物**，见 [`docs/回归清单.md`](docs/回归清单.md) 四·补3 |
-| **形态 / 场景** | **两种官方承认的形态 + 一条本体形态**：① **L0 卡片包**（主提交，`bundle/`）② **脚本应用 · 现场造卡**（`apps/shiyi-live/`）③ **OctoSense 系统 app**（`octos/`，原生快览屏卡 + **助手原地改卡**）；官方 12 场景之「**即时消息**」（宿主 **Rinx**，即早期 `robrix2`） |
+| **形态 / 场景** | **两种官方承认的形态 + 一条本体形态**（**复赛起 ①为复赛主提交**）：① **脚本应用 · 现场造卡**（根 `bundle/`，**带 AI**）② **L0 卡片包**（`apps/shiyi-card/bundle/`）③ **OctoSense 系统 app**（`octos/`，原生快览屏卡 + **助手原地改卡**）；官方 12 场景之「**即时消息**」（宿主 **Rinx**，即早期 `robrix2`） |
 | **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅（[`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)）· 2 分 17 秒演示 ✅（**带中文旁白**，[`docs/演示旁白稿.md`](docs/演示旁白稿.md)） |
-| **三种交付面** | ① **L0 卡片**（`bundle/`）：打开即渲染五屏 + 三条**总线调用**（读助手记忆 / 问助手 / 真发消息）；② **脚本应用**（`apps/shiyi-live/`）：**一句话当场长出卡**，改一下 / **确认（结果真发回绑定群）** / 再来一张，真交互；③ **OctoSense 系统 app**（`octos/`）：卡钉在**快览屏**、**助手能在卡的对话里原地改卡**（桌面 + 手机双端已跑通，未碰内核一行）。同一套识别口径与长期记忆 |
+| **三种交付面** | ① **L0 卡片**（`apps/shiyi-card/bundle/`）：打开即渲染五屏 + 三条**总线调用**（读助手记忆 / 问助手 / 真发消息）；② **脚本应用**（根 `bundle/`，**复赛主提交**）：**一句话当场长出卡**，改一下 / **确认（结果真发回绑定群）** / 再来一张，真交互；③ **OctoSense 系统 app**（`octos/`）：卡钉在**快览屏**、**助手能在卡的对话里原地改卡**（桌面 + 手机双端已跑通，未碰内核一行）。同一套识别口径与长期记忆 |
 | **一页速览** | [`评审速览.md`](评审速览.md)（3 分钟看懂）· **[`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（逐条对官方评分口径）** · 材料对照 [`SUBMISSION.md`](SUBMISSION.md) |
 | **🔧 造 App 的机器** | 拾意不只是"一张卡"，仓库里还有**一台把意图变成卡片的机器**：一条命令从一句话走到「通过官方门禁的 L0 bundle + 渲染出图 + 自评修订」；**识别走两条路**（设备助手 `model.complete` 优先 / 本地规则兜底，结果卡上自己标注走的是哪条）。一页说明见 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，代码 `build/pipeline.py` / `build/gen_screens.py` / `src/intent_model.py`，对照证据 [`docs/evidence/identify/`](docs/evidence/identify/)、[`docs/evidence/model-path/`](docs/evidence/model-path/)、[`docs/evidence/assist-memory/`](docs/evidence/assist-memory/)、[`docs/evidence/live-app/`](docs/evidence/live-app/) |
 

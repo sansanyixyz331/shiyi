@@ -1,4 +1,4 @@
-// 拾意 · 一句话，一张常驻卡（shiyi / OctoSense 版）0.2.0
+// 拾意 · 一句话，一张常驻卡（shiyi / OctoSense 版）0.3.9
 // 一句话进去，一张卡钉到「快览屏」（glance）—— 卡会留着、能复用。
 // 官方「意图即应用」：不装 App、说完就有一个正好干这件事的东西，还能留下来。
 //
@@ -9,6 +9,92 @@
 //   ④ 每行都能「重钉」（原地更新同一张卡）或「撤掉」（glance.withdraw）；
 //   ⑤ 每次进来问一次 glance.list，如实告诉你有几张真的在快览屏上；
 //   ⑥ 发失败绝不记账 —— 没钉上就不进列表。
+//
+// 0.3.0（本地试验 · 未推 2026-10-09）两件事：
+//   甲、状态变化 → 原地改卡 → **留痕**（第 7 类信号）：
+//     说「那个改到周五」→ 认出这是在改一张已有的卡（不是新造），匹配到那张 →
+//     同 card_id 重发 = 原地更新；卡上自动留痕：时间行写「（原：下周三）」、
+//     右上角由「钉于…」变成「改于…」—— 一眼看得出这张卡确实被改过、从哪天改到哪天。
+//     「那个取消了」→ 撤掉那张卡；匹配不到 → 如实说"没找到要改的那张卡"，绝不新造。
+//   乙、群消息自动触发：新消息里出现状态变化（改期/取消）就**自动改那张卡**，不用再打一遍。
+//     WATCH 开时：接真房间走 matrix.read_messages（需 app 绑房间）；
+//     本机桌面宿主没有房间 ⇒ 走本地收件箱 group-inbox.json（stand-in），
+//     本地就能把「群消息 → 自动改卡 → 留痕」整条链验通。WATCH_REAL=true 时读真房间。
+//
+// 0.3.1（本地试验 · 未推 2026-10-09）把「时间」写严谨：
+//   卡上不再只写光秃秃的相对词（「下周三」「周五」——今天周五时到底哪个周五？歧义），
+//   一律在**原话后面加括弧写全日期**：下周三 → 下周三（10月14日）；明天上午10点 → 明天上午10点（10月10日）。
+//   换算照搬脚本版（同款引擎）：today_m / wd_num / date_str / day_abs / week_abs。
+//   算不出日期就原样保留、绝不瞎写；「原：…」留痕里也带日期，改前改后一对就明白。
+//
+// 0.3.2（本地试验 · 未推 2026-10-09）两处「表述」修正（功能不变）：
+//   ① 改卡时，**卡正文里那句时间也一起换掉**：原文「下周三去开会」改到周五后，
+//      正文变成「周五（10月16日）去开会」——不再出现「大字还写旧时间、小字已是新时间」的自相矛盾。
+//      （用户只看大字，若不换，会以为还是下周三。）用 text.replace 换，换不到就原样，不硬改。
+//   ② 页头那句自夸式说明（「时间一律写全日期（下周三 → 下周三（10月14日））…」）删掉 —— 太刻意；
+//      功能照做，但不必在界面上自证。
+//
+// 0.3.3（本地试验 · 未推 2026-10-09）去掉「单一主题」感（功能不变）：
+//   页头 / 输入框灰字 / 各处提示语里写死的示例（带地名的「XX那个改到周五」）全部换成通用说法
+//   （「那个改到周五」「那个取消了」）——这应用是给**任何一句话**做卡的，
+//   示例不该让人以为它只为某一个主题定做。
+//
+// 0.3.4（本地试验 · 未推 2026-10-09）示例改成占位符（功能不变）：
+//   0.3.3 只去了「地名」，「时间」还钉死在「周五」——一样会让人以为它只为「周五」定做。
+//   这次把所有**用户可见文案**里写死的具体时间/地点示例，统一换成占位符〈新的时间〉／〈新的地点〉；
+//   例子里不出现任何具体值，才真的呼应「任何一句话都行」。
+//
+// 0.3.5（本地试验 · 未推 2026-10-09）加「语音播报」开关（手机专属差异点）：
+//   手机宿主（glance_notify → 系统 TTS）会把 os.shiyi 的卡**读出来**；半夜/安静场所嫌吵时，
+//   界面上多一个开关：**开（默认）= 会念出来；关 = 只留卡、不出声**（通知仍在，只是不念）。
+//   关掉只掐「念」这一步，不改卡、不改提醒是否弹出。开关状态落盘，重开还记得。
+//   桌面宿主本就不发声（android_speak 是空操作）⇒ 这个开关对桌面无感，只对手机有效。
+//
+// 0.3.6（本地试验 · 未推 2026-10-10）把「到点提醒」从**演示**做成**真排程**（助手性质）：
+//   老版是假的 —— 钉卡后固定 10 秒 fire 一次，只为当场看效果。
+//   现在按卡里的「时间」真算**该什么时候提醒你**，三件事：
+//     ① 提前：默认提前 1 小时（临期提醒，不是钉的时候吵一次就完）。
+//     ② 合适时机：**绝不半夜打扰** —— 算出的提醒点若落在 22:00–08:00，自动挪到
+//        「次日早 8 点」或「前一晚 9 点」（取仍在事件之前、且最近的那个）。
+//     ③ 到点：把这张卡**置顶**（priority 抬到 95）再发一次 + 弹通知 + 自动念（手机）。
+//   「时间」怎么读：先认相对词（今天/明天/后天/周末/周X/下周X），再认绝对日期（N月N日，扫 0..60 天），
+//   钟点认 上午/下午/晚上/中午/早上/凌晨 + 中文或阿拉伯数字；只给日期没给钟点 → 按当天上午 9 点。
+//   **算不出就不瞎算** —— 只在界面如实说"时间没读准"，卡照留，不排提醒。
+//   另加一个「演示加速」开关（默认关）：只把「等多久」压成几秒，好录视频；
+//   **算出的真实提醒时刻照样写在界面上**，不拿假的糊弄。
+//
+// 0.3.7（本地试验 · 未推 2026-10-10）修三处「看得见」的毛病（功能不变，只让界面说实话）：
+//   ① 刚排好却显示"没读准"：原来卡列表在写提醒**之前**就重画了，画面用的是旧值；
+//      现在「写提醒」这一步自己重画列表 ⇒ 排好的那一刻，卡上就显示真正的提醒时刻。
+//   ② 到点提醒过之后，卡上又变成"时间没读准"（把人绕晕）：现在到点后写 −1 作"已提醒过"，
+//      卡上写「已提醒过（原定 X 的事）」，不再谎报"没读准"。
+//   ③「已钉到快览屏」与「会提醒你：…」原本两句抢同一行、只看得见前一句；
+//      现在拼成一行（动作 + 提醒点），钉下去就能一眼看到"什么时候会提醒我"。
+//
+// 0.3.8（本地试验 · 未推 2026-10-10）「演示加速」措辞对齐：
+//   加速开着时卡面原来写「10月10日 9:54（提前1小时…）」——8 秒后的钟点配"提前1小时"的解释，自相矛盾。
+//   现在加速时卡面那行如实写「演示加速：8 秒后当到点」；**真按什么时刻提醒仍由状态行给出**（stamp2(p.t)），不糊弄。
+//
+// 0.3.9（本地试验 · 未推 2026-10-10）治本：把「时间」和「地点」的边界一次性划清楚。
+//   起因（真机实测撞出来的，不是想出来的）：群消息里说「那个改到下午三点」⇒ 卡的**地点被写成了「下午三点」**，
+//   而且写坏之后这张卡**再也匹配不到**（按地点找它就永远找不到）⇒ 功能不是难看，是**永久失效**。
+//   根因不是某一行写错，是**三处结构缺陷叠在一起**：
+//    ① 项目里有**两套时间解析器**、互不通气：0.3.6 的提醒引擎（hour_of_day）认中文数字「三点」，
+//       换成卡面提取（when_of）只认阿拉伯数字「10点」⇒ 「下午三点」在提取层等于没看见。
+//    ② 地点一律抓「去/在/到/回/来」后面那一截 ⇒ 「改**到**下午三点」必然被抓走；
+//       而防撞车的那段保护绑在 `if nw != ""` 里 ⇒ **时间一提取失败，保护整块跳过** ⇒ 污染发生。
+//    ③ 污染不可逆：where 字段一旦变成时间，这张卡就从匹配视野里消失了。
+//   这一版三处一起治本（不是绕开）：
+//    甲、**时间词表归一**：抽一个 CLOCK 出来（中文数字 / 阿拉伯 / 冒号 / 半·刻），
+//       when_of 与提醒引擎用同一套口径 ⇒ 不会再出现「引擎认得、卡面认不得」。
+//    乙、**地点自守**：地点候选先过一遍体检 looks_like_time（不依赖时间那边成没成功），
+//       看着像时间就丢；还通过「先把句子里的时间挖掉再找」+「跳过连着的两个介词」两条回退，
+//       让「改到下午三点，在协和」这种复合句也能把真地名挖出来。
+//    丙、**改卡继承日期 + 单卡兜底**：没给日期的新时间继承原卡那天（改到下午三点 = 那天的下午三点）；
+//       只有一张卡时说「改到…」就直接改它 ⇒ 就算将来数据脏了也不会出现「找得到消息却改不了卡」。
+//   另外补掉同一 bug 的下半截：**只给钟点、没给日期时提醒引擎直接放弃**（排不出提醒）⇒
+//   现在按今天算；今天的这个点已经过去了就顺延到明天（提醒一个已经过去的时间没有意义）。
+//   验证：D_治本_群消息改卡/tvfy_rootfix.py —— 18 条用例，修前翻车 11 条，修后 0 条。
 //
 // 机制：host.request("glance.publish", {source: <L0 卡>, data: <值>})
 //   卡按 (app, card_id) 键控：同一个 card_id 再发 = 替换，不是又建一张。
@@ -28,17 +114,47 @@ let accentD = #x5fb9a2
 
 // ---------------------------------------------------------------- 卡模板（L0）
 // 换行用 \n（Splash 字符串支持转义）；整串用单引号，里面的双引号就不用转义。
-// 注意：sys.dataset 是固定字段集（title/subtitle/summary/as_of… 就这些），
+// sys.dataset 的字段集由这张卡自己声明（fields: [...]）；glance 只校验"声明了就要绑值"。
 // TextTitle / TextRow / TextBody 只吃 text:，不吃 value:（那是 TextCaption 的）。
-let CARD = '# ledger os.shiyi@0.2.0\n# level:   L0\n# profile: ui/l0\n#\n# 拾意 card: one sentence a person asked 拾意 to keep. rec is a sys.dataset\n# record the app fills from that sentence: title is what they said, subtitle\n# the time it names, summary the place, as_of when they pinned it. The card\n# states nothing the app did not put in its data.\n\nsource rec sys.dataset(fields: [title, subtitle, summary, as_of])\n\ncopy app { class: vocabulary, en: "拾意" }\n\nview root Surface(pad: .tight) {\n  Col(gap: 10) {\n    Row(gap: 8, align: .center) {\n      Icon(name: .bookmark, size: .row)\n      TextCaption(text: copy.app, width: .fill)\n      TextCaption(value: rec.as_of)\n    }\n    TextTitle(text: rec.title, width: .fill)\n    TextRow(text: rec.subtitle, width: .fill)\n    TextBody(text: rec.summary, width: .fill)\n  }\n}\n'
+let CARD = '# ledger os.shiyi@0.3.8\n# level:   L0\n# profile: ui/l0\n#\n# 拾意 card: one sentence a person asked 拾意 to keep. rec is a sys.dataset\n# record the app fills from that sentence: title is what they said, subtitle\n# the time it names, summary the place, as_of when they pinned it. The card\n# states nothing the app did not put in its data.\n\nsource rec sys.dataset(fields: [title, subtitle, summary, as_of])\n\ncopy app { class: vocabulary, en: "拾意" }\n\nview root Surface(pad: .tight) {\n  Col(gap: 10) {\n    Row(gap: 8, align: .center) {\n      Icon(name: .bookmark, size: .row)\n      TextCaption(text: copy.app, width: .fill)\n      TextCaption(value: rec.as_of)\n    }\n    TextTitle(text: rec.title, width: .fill)\n    TextRow(text: rec.subtitle, width: .fill)\n    TextBody(text: rec.summary, width: .fill)\n  }\n}\n'
 
 // ---------------------------------------------------------------- 状态
 let intent = ""     // 输入框里那句话
-let picks  = []     // 已钉的卡：[{id, text, when, where, at, key}]，最多 4 张
+let picks  = []     // 已钉的卡：[{id, text, when, where, at, key, pw, pp}]，最多 4 张
+                    //   pw / pp = 上一版的 时间 / 地点（留痕用；改卡时把旧值记下来）
 let seq    = 0      // 发号器（id 只能 [A-Za-z0-9]，所以是 shiyi-p1、shiyi-p2…）
 let board  = ""     // glance.list 的如实回执
 let MAX_CARDS = 4   // glance 服务每 app 上限；满了先撤最旧的一张
 let DATA = "/picks.json"
+let speak_on = true // 0.3.5 语音播报：开(默认)=钉卡/到点时宿主用系统 TTS 念出来；关=只留卡、不出声
+let fast     = false // 0.3.6 演示加速：开=提醒只等 8 秒（录视频用）；关=按真实算出的时刻等。只压等待，不改算出的时刻
+
+// ---------------------------------------------------------------- 语音播报开关（0.3.5）
+// 只影响「念不念」这一步；卡该不该发、通知该不该弹，都不受它管。
+fn speak_state(){ if speak_on { return "开·会念出来" } return "关·只留卡不出声" }
+fn toggle_speak(){
+    if speak_on { speak_on = false } else { speak_on = true }
+    save()
+    ui.speakstate.set_text(speak_state())
+    show("语音播报：" + speak_state())
+}
+// 演示加速开关：只影响「等到点」要等多久（录视频用），不改真实算出的提醒时刻。
+fn fast_state(){ if fast { return "开·8 秒就当到点" } return "关·按真实时刻" }
+fn toggle_fast(){
+    if fast { fast = false } else { fast = true }
+    save()
+    ui.faststate.set_text(fast_state())
+    show("演示加速：" + fast_state())
+}
+
+// ---- 群消息自动触发（第 7 类信号的「主动」版）
+// 群/收件箱里来了「改期/取消」这种状态变化 → 自动改那张卡，不用人再打一遍。
+// 真房间：matrix.read_messages（需 app 绑定房间；本机桌面宿主没有 ⇒ 走 stand-in）。
+let WATCH      = true           // 开：群消息自动触发
+let WATCH_REAL = false          // false = 读本地收件箱（stand-in）；true = 读真房间
+let INBOX = "/group-inbox.json" // 本地收件箱：{messages:[{sender, body, ts}, …]}（旧→新排列）
+let watch_seen  = 0             // 已处理到第几条消息（去重，落盘）
+let watch_state = ""            // 如实状态
 
 // ---------------------------------------------------------------- 组件
 let Flat = ButtonFlat{height: 34 padding: Inset{left: 16 right: 16}
@@ -56,6 +172,73 @@ fn show(s){ ui.status.set_text(s) }
 fn as_of_text(){
     let lt = local_time()
     return "" + lt.year + "-" + lt.month + "-" + lt.day + " " + lt.hour + ":" + lt.minute
+}
+
+// ---- 「相对时间词 → 绝对日期」：卡上不写光秃秃的「下周三 / 周五」——
+// 相对词本身有歧义（今天周五时，「周五」是今天还是下周？），所以一律在原文**后面加括弧写出日期**：
+//   下周三 → 下周三（10月14日）；周五 → 周五（10月16日）；明天上午10点 → 明天上午10点（10月10日）。
+// 写法照搬脚本版（同款 splash 引擎），保证一致。
+fn today_m(){                       // 今天周几：周一=1 … 周日=7（引擎里 0=周日，先归一）
+    let wd = local_time().weekday
+    if wd == 0 { return 7 }
+    return wd
+}
+fn wd_num(ch){                      // 「三」→ 3；「日 / 天」→ 7
+    if ch == "一" { return 1 }
+    if ch == "二" { return 2 }
+    if ch == "三" { return 3 }
+    if ch == "四" { return 4 }
+    if ch == "五" { return 5 }
+    if ch == "六" { return 6 }
+    return 7
+}
+fn date_str(epoch){                 // epoch（秒）→ 「10月14日」
+    let lt = local_time(epoch)
+    return ("" + lt.month) + "月" + ("" + lt.day) + "日"
+}
+// 把「下周三 / 明天 / 周末 / 下个月…」算成一个绝对日期串；算不出就给空串（那就原样不加括弧）。
+fn day_abs(d){
+    if d == "" { return "" }
+    if regex("今天|今晚", "i").test(d) { return date_str(time_now()) }
+    if regex("明天|明早", "i").test(d) { return date_str(time_now() + 86400.0) }
+    if regex("大后天", "i").test(d)    { return date_str(time_now() + 3.0 * 86400.0) }
+    if regex("后天", "i").test(d)      { return date_str(time_now() + 2.0 * 86400.0) }
+    if regex("周末", "i").test(d) {     // 周末 → 最近的周六
+        let m = today_m()
+        let nx = 6 - m
+        if nx < 0 { nx = nx + 7 }
+        return date_str(time_now() + nx * 86400.0)
+    }
+    if regex("下下个月", "i").test(d) {
+        let mo = local_time().month + 2
+        if mo > 12 { mo = mo - 12 }
+        return ("" + mo) + "月"
+    }
+    if regex("下个月", "i").test(d) {
+        let mo = local_time().month + 1
+        if mo > 12 { mo = 1 }
+        return ("" + mo) + "月"
+    }
+    if regex("这个月", "i").test(d) { return ("" + local_time().month) + "月" }
+    // 周几（周一…周日 / 下周X / 下下周X）
+    let ch = ""
+    for c in WD_CH {
+        if ch == "" { if regex(c, "").test(d) { ch = c } }
+    }
+    if ch != "" { return week_abs(d, ch) }
+    return ""
+}
+fn week_abs(d, ch){                 // 「下周三」「周五」→ 那天到底几月几号
+    let m = today_m()
+    let tgt = wd_num(ch)
+    let nx = tgt - m
+    if nx <= 0 { nx = nx + 7 }      // 本周这天已过 → 顺延到下周
+    // 「下周X」：只在这天还没到（tgt>m、仍在本周内）时才再顺延一周；
+    //   否则上面那步已经把它推到了下周，再加就多算一周（10/14 会被算成 10/21）。
+    if regex("下周|下星期|下礼拜", "i").test(d) {
+        if tgt > m { nx = nx + 7 }
+    }
+    return date_str(time_now() + nx * 86400.0)
 }
 
 // 用一条正则从句子里把一段话挑出来（挑不到给空串）。
@@ -78,26 +261,328 @@ fn grab_cap(t, pat){
 // 标题超长就截断（glance 的 title 上限 80 字）。
 fn clip(t){ return grab(t, "^.{0,54}") }
 
+// 记录里有没有这个键 —— splash 里**点缺失的键是报错、不是 nil**，所以一律先问有没有。
+fn has_key(o, key){
+    for k v in o {
+        if k == key { return true }
+    }
+    return false
+}
+
 // 从句子里挑时间 / 地点 —— 用的就是他自己那句话里的字。
 // 时间按「日期 + 钟点」整体挑（明天上午10点 → 明天上午10点，不是只挑到「明天」）。
 let DAY = "(大后天|后天|明天|今天|明早|今晚|下下周|下下个月|下个月|这个月|这周末|周末|下周[一二三四五六日天]|下个星期|下星期|这个星期|周[一二三四五六日天]|星期[一二三四五六日天])"
 let PART = "(上午|下午|晚上|中午|早上|凌晨|傍晚)"
+let WD_CH = ["一","二","三","四","五","六","日","天"]
+
+// -------- 0.3.9 治本：时间与地点共用一套词表，不再各写一份 --------
+// 钟点：认中文数字（三点 / 十点半 / 晚上八点半）、阿拉伯（10点30 / 10:30）、以及「半 / 一刻 / 三刻」。
+// 这套口径与 0.3.6 提醒引擎的 hour_of_day 对齐 —— 之前两边各写一套，
+// 引擎认得「三点」、卡面提取认不得，于是同一个时间在两条路上得出两个结论。
+let NUM  = "([0-9]{1,2}|十[一二]?|[一二三四五六七八九])"
+let MINU = "([0-9]{1,2}|十[一二三四五]?|[一二三四五六七八九])"
+let TAIL = "(" + MINU + "分|半|一刻|三刻)?"
+let CLOCK = "(" + PART + NUM + "?(点|时)" + TAIL + "|" + NUM + "(点|时)" + TAIL + "|" + NUM + ":[0-9]{2})"
+// 地名的「切断字表」：地名里不会出现、却常跟在地名后面的动作 / 虚词 / 语气词。
+let STOP  = "[^，,。；;！!?？? 的见开做吃拿买发打看聊谈写改送取接陪要想要去过讨了啊呢吧呀吗嘛哦哈就还也再都]"
+// 备用表：把介词本身也排掉 —— 专治「改到…在…」这种第一介词后面还蹲着第二个介词的情况。
+let STOP2 = "[^，,。；;！!?？? 的见开做吃拿买发打看聊谈写改送取接陪要想要去过讨了啊呢吧呀吗嘛哦哈就还也再都去在到回来]"
+
+// 地名候选看着像不像「时间」—— 这一层**不依赖when_of有没有提取成功**。
+// 之前那道防撞车的保护挂在 `if nw != ""` 里面 ⇒ 时间一提取失败，保护整块被跳过 ⇒ 污染就这么进来的。
+fn looks_like_time(s){
+    if s == "" { return false }
+    if grab(s, "^" + DAY + "$") != "" { return true }   // 整段就是相对日期词（周五 / 明天）
+    if grab(s, DAY) != "" { return true }               // 里头夹着相对日期词
+    if regex(PART, "").test(s) { return true }          // 上午 / 下午 / 晚上 …
+    if regex("([0-9]{1,2}|十[一二]?|[一二三四五六七八九])(点|时|分)|[0-9]{1,2}:[0-9]{2}|(点半|点整|一刻|三刻)", "").test(s) { return true }
+    return false
+}
+// 按「介词 + 地名」抓候选，过不了体检的一律丢弃。
+fn place_in(t, stop){
+    let p = grab_cap(t, "[去在到回来](" + stop + "{1,8})")
+    if p == "" { return "" }
+    if looks_like_time(p) { return "" }
+    return p
+}
+// 先把句子里的时间片段挖掉，再去找地点 —— 「改到下午三点，在协和」这类复合句里，
+// 第一个介词撞到的永远是时间，不挖掉就永远看不见真正的地名。
+fn strip_time(t){
+    let w = grab(t, DAY + PART + "?" + CLOCK + "|" + DAY + PART + "?|" + PART + "?" + CLOCK)
+    if w == "" { return t }
+    return t.replace(w, "")
+}
+
+// 甲方案·第 7 类信号「状态变化」：改期 / 推迟 / 提前 / 取消。
+// 命中即「更新一张已存在的卡」，而不是又造一张（设计档 §3 第 4 类，官方点名的一类）。
+let UPD_VERB   = "(改到|改成|改在|换成|推迟|延后|提前|取消|不去了|不办了|不开了|不搞了)"
+let UPD_CANCEL = "(取消|不去了|不办了|不开了|不搞了|算了)"
+// 指代主语：「见客户那个」「那趟」「这张」→ 取"那个/那趟"之前那截。
+// 用排除式字符类（与 where_of 同款），避开 \u 转义。
+let SUBJ = "([^，,。；;！!？? 的见开做吃拿买发打看聊谈写改送取接陪要想要去过讨]{2,8}?)(那个|那趟|这趟|这张|这次|那次)"
 fn when_of(t){
-    return grab(t, "(" + DAY + PART + "?[0-9]{1,2}(点|时)[0-9]{0,2}分?|" + DAY + PART + "?|" + PART + "[0-9]{0,2}(点|时)?)")
+    // 先按「日期 + 钟点」整体抓原话（明天上午10点 → 明天上午10点，不是只挑到「明天」）。
+    // 顺序有讲究：最完整的「日期+钟点」放最前面（这里用的是最左优先，先中先用）。
+    let raw = grab(t, "(" + DAY + PART + "?" + CLOCK + "|" + DAY + PART + "?|" + PART + "?" + CLOCK + ")")
+    if raw == "" { return "" }
+    // 再给相对词补一个绝对日期（后面加括弧）；算不出就原样，绝不写错日期。
+    let d = grab(t, DAY)
+    if d == "" { return raw }
+    let abs = day_abs(d)
+    if abs == "" { return raw }
+    return raw + "（" + abs + "）"
+}
+// 卡片存的「时间」值（如「下周三（10月14日）」）→ 去掉括弧后的原话（「下周三」）。没有括弧就原样返回。
+fn when_phrase(w){
+    if w == "" { return "" }
+    let ps = w.split("（")
+    if ps.len() > 1 { return ps[0] }
+    return w
+}
+// 改卡时把**卡正文里**那句时间也一并换掉 —— 否则正文还写着旧时间、底下列着新时间，自相矛盾、用户会搞错。
+// 旧时间直接从卡片**已经存好的** when 值里取（old_when / when_phrase），不重新解析一遍正文：
+// 少一层「对正文再跑正则」，更稳。先按整段带日期替换（正文已改过一次时）；正文里若只有相对词，
+// 再退回按原话替换。替换不到就原样返回，绝不硬改。
+fn retime_body(text, old_when, new_when){
+    if new_when == "" { return text }
+    if old_when != "" {
+        let r = text.replace(old_when, new_when)
+        if r != text { return r }
+        let ph = when_phrase(old_when)
+        if ph != "" {
+            let r2 = text.replace(ph, new_when)
+            if r2 != text { return r2 }
+        }
+    }
+    return text
+}
+// 与 retime_body 同理：改了地点，正文里那句旧地点也要一起换掉。
+// 不然卡上会出现「大字还写着公司会议室、底下的地点字段已是星巴克」的自相矛盾 ——
+// 0.3.2 只为「时间」立过这条规矩，地点漏了，这里补齐。
+fn rewhere_body(text, old_p, new_p){
+    if new_p == "" { return text }
+    if old_p != "" {
+        let r = text.replace(old_p, new_p)
+        if r != text { return r }
+    }
+    return text
 }
 fn where_of(t){
-    // 排除字表 = 地点名里不会出现、但常出现在地名之后的动作或虚词，用来切断贪婪捕获。
-    // 例：在公司会议室过方案 → 在「过」处停 → 公司会议室（不加过会吃到 公司会议室过方案）。
-    return grab_cap(t, "[去在到回来]([^，,。；;！!？? 的见开做吃拿买发打看聊谈写改送取接陪要想要去过讨]{1,8})")
+    // 三层漏斗：① 原句直接找 ② 挖掉时间后再找 ③ 再按「连着的两个介词」找第二个。
+    // 每一层取到的候选都要过体检 —— 看着像时间的一律丢，绝不把时间当成地点写进卡里。
+    let p = place_in(t, STOP)
+    if p == "" {
+        let st = strip_time(t)
+        if st != t {
+            p = place_in(st, STOP2)
+            if p == "" { p = place_in(st, STOP) }
+        }
+    }
+    return p
+}
+
+// ---------------------------------------------------------------- 甲方案：状态变化 → 原地改卡
+// 识别「这句话是在改一张已有的卡，而不是新造一张」。
+fn is_update(t){ return regex(UPD_VERB, "").test(t) }
+fn is_cancel(t){ return regex(UPD_CANCEL, "").test(t) }
+fn subject_of(t){ return grab_cap(t, SUBJ) }
+
+// 匹配「要改哪张卡」：① 指代词命中（按地点/标题）→ ② 句中出现某张卡的地点 → ③ 无指代取最近一张。
+// 匹配不到返回 nil —— 那一路如实说"没找到"，绝不新造。
+fn match_card(t){
+    let subj = subject_of(t)
+    if subj != "" {
+        for e in picks {
+            if e.where != "" {
+                if regex(e.where, "").test(subj) { return e }
+            }
+        }
+        for e in picks {
+            if regex(subj, "").test(e.text) { return e }
+        }
+    }
+    for e in picks {
+        if e.where != "" {
+            if regex(e.where, "").test(t) { return e }
+        }
+    }
+    if subj == "" {
+        if picks.len() > 0 { return picks[picks.len() - 1] }
+    }
+    // 兜底：只有一张卡的时候，说「改到…」「那个取消了」指的一定是它。
+    // 曾吃过亏：某张卡的 where 被时间污染后，按地点再也匹配不到 ⇒ 消息读到了、卡却永远改不动。
+    if picks.len() == 1 { return picks[0] }
+    return nil
+}
+
+// 留痕：一句人话描述这次改了什么（给状态栏用）——「改期 下周三→周五」。没改的那项不写。
+fn trace_text(ow, nw, op, np){
+    let s = ""
+    if nw != "" {
+        if nw != ow {
+            let o = ow
+            if o == "" { o = "（原无）" }
+            s = "改期 " + o + "→" + nw
+        }
+    }
+    if np != "" {
+        if np != op {
+            let o = op
+            if o == "" { o = "（原无）" }
+            if s != "" { s = s + "；" }
+            s = s + "改点 " + o + "→" + np
+        }
+    }
+    return s
+}
+
+// 这张卡被「原地改」过没有 —— 判据：当前值 != 改之前的旧值（pw / pp）。
+fn changed(e){
+    let pw = e.pw
+    let pp = e.pp
+    if pw != "" { if pw != e.when { return true } }
+    if pp != "" { if pp != e.where { return true } }
+    return false
+}
+// 右上角那行的时间戳：改过的写「改于…」，没改过的写「钉于…」（这就是留痕的一部分）。
+fn stamp(e){
+    if changed(e) { return "改于 " + e.at }
+    return "钉于 " + e.at
+}
+
+// 状态变化口令：匹配到卡就原地改（取消则撤下）；匹配不到就如实说没有。
+fn apply_update(t){
+    let e = match_card(t)
+    if e == nil {
+        show("没找到要改的那张卡 —— 说清是哪一张（例：那个改到〈新的时间〉）")
+        return
+    }
+    if is_cancel(t) {
+        withdraw(e, "已把「" + clip(e.text) + "」取消并撤下", true)
+        return
+    }
+    let nw  = when_of(t)
+    let npl = where_of(t)
+    // 新地点若看着像时间就丢掉。
+    // 注：原来这道保护写在 `if nw != ""` 里面 ⇒ 时间一提取失败（如「下午三点」）整块跳过 ⇒ 污染就是这么进来的。
+    //     where_of 内部已经自带体检，这里留一道不依赖任何条件的双保险。
+    if npl != "" { if looks_like_time(npl) { npl = "" } }
+    // 新时间没给日期 ⇒ 继承这张卡原来那天的日期。
+    //   「明天上午9点」被改成「下午三点」⇒ 是「明天下午三点」，不是「今天下午三点」——人物就是这么说的。
+    if nw != "" {
+        if grab(nw, DAY) == "" {
+            let od = grab(e.when, DAY)
+            if od != "" { nw = od + nw }
+        }
+    }
+    let w2 = e.when
+    let p2 = e.where
+    if nw != "" { w2 = nw }
+    if npl != "" { p2 = npl }
+    if nw == "" { if npl == "" {
+        // 既没给新时间也没给新地点 —— 改不出新东西，如实说清，不动那张卡。
+        show("没听出要改成什么 —— 说清改到〈新的时间〉或〈新的地点〉")
+        return
+    }}
+    // 留痕：把「改之前」的 时间/地点 一块存进去（pw / pp），卡上就能写「（原：…）」。
+    // 正文里那句旧时间也一并换成新的 —— 免得「大字还写旧时间、小字已是新时间」自相矛盾（用户只看大字就会搞错）。
+    let nt = e.text
+    if nw != "" { nt = retime_body(e.text, e.when, nw) }
+    if npl != "" { nt = rewhere_body(nt, e.where, npl) }
+    let e2 = {id: e.id text: nt when: w2 where: p2 at: as_of_text() key: e.key pw: e.when pp: e.where rt: 0.0 rd: 0.0 rn: ""}
+    let np = []
+    for p in picks { if p.id == e.id { np.push(e2) } else { np.push(p) } }
+    picks = np
+    save()
+    ui.rows.render()
+    let tr = trace_text(e.when, w2, e.where, p2)
+    let msg = "已原地更新「" + clip(e2.text) + "」"
+    if tr != "" { msg = msg + "　（" + tr + "）" }
+    publish(e2, msg, false)   // 改期了：publish 里会顺带重排提醒
 }
 
 fn when_line(e){
     if e.when == "" { return "时间 · 这句话里没提" }
-    return "时间 · " + e.when
+    let s = "时间 · " + e.when
+    // 时间值自己已带「（月日）」，所以留痕这层不再套括弧，写成「　原：…」——免得括弧套括弧。
+    if e.pw != "" { if e.pw != e.when { s = s + "　原：" + e.pw } }
+    return s
 }
 fn where_line(e){
     if e.where == "" { return "地点 · 这句话里没提" }
-    return "地点 · " + e.where
+    let s = "地点 · " + e.where
+    if e.pp != "" { if e.pp != e.where { s = s + "　原：" + e.pp } }
+    return s
+}
+// 卡上那行「到点提醒」：说明这张卡已经排好、什么时候提醒你、为什么是这个点。
+fn rem_line(e){
+    if e.rt > 0.0 { return "到点提醒 · " + stamp2(e.rt) + "（" + e.rn + "）" }
+    if e.rt < 0.0 { return "到点提醒 · 已提醒过（" + stamp2(e.rd) + " 的事）" }
+    return "到点提醒 · 时间没读准，暂未排"
+}
+
+// ---------------------------------------------------------------- 群消息自动触发
+fn watch_boot(){
+    if !WATCH { return "群消息自动触发：关" }
+    if WATCH_REAL { return "群消息自动触发：开（读真房间）" }
+    return "群消息自动触发：开（本地收件箱 " + INBOX + "）"
+}
+fn watch_note(s){
+    watch_state = s
+    ui.watch.set_text(s)
+}
+
+// 一条消息的正文（枚举取 body，不点缺失的键）。
+fn watch_msg_text(m){
+    let b = ""
+    for fk fv in m { if fk == "body" { b = fv } }
+    return b
+}
+
+// 嚼一批消息：只处理「还没处理过的」那些；里面出现状态变化就自动改卡。
+fn watch_ingest(doc){
+    if doc == nil { return }
+    if !has_key(doc, "messages") { watch_note("收件箱里没有 messages 字段") return }
+    let msgs = doc.messages
+    let n = msgs.len()
+    if n <= watch_seen { return }
+    let i = 0
+    let acted = 0
+    for m in msgs {
+        if i >= watch_seen {
+            let b = watch_msg_text(m)
+            if is_update(b) {
+                apply_update(b)
+                acted = acted + 1
+                watch_note("群里来了新消息，已自动改卡：" + clip(b))
+            }
+        }
+        i = i + 1
+    }
+    watch_seen = n
+    save()
+    if acted == 0 {
+        if n > 0 { watch_note("看了 " + ("" + n) + " 条群消息，没有要改卡的（都是普通聊天）") }
+    }
+}
+
+// 看一眼群消息：真房间（matrix.read_messages）或本地收件箱（stand-in）。
+fn watch_poll(){
+    if !WATCH { return }
+    if WATCH_REAL {
+        if host.has("matrix.read_messages") {
+            host.request("matrix.read_messages", {limit: 10}, fn(r){
+                if r.is_ok { watch_ingest(r.data) }
+                else { watch_note("没读到群消息：" + r.error) }
+            })
+        } else {
+            watch_note("宿主没提供读群消息这项服务 —— 该 app 没绑房间")
+        }
+        return
+    }
+    if fs.exists(INBOX) {
+        watch_ingest(fs.read(INBOX).parse_json())
+    }
 }
 
 // ---------------------------------------------------------------- 落盘
@@ -105,31 +590,51 @@ fn load(){
     if !fs.exists(DATA) { return }
     let v = fs.read(DATA).parse_json()
     if v == nil { return }
-    if v.picks != nil { picks = v.picks }
     if v.seq != nil { seq = v.seq }
+    if has_key(v, "speak") { speak_on = v.speak }
+    if has_key(v, "fast") { fast = v.fast }
+    if has_key(v, "seen") { watch_seen = v.seen }
+    if v.picks != nil {
+        // 归一化：老数据没有 pw/pp（留痕用的旧值）与 rt/rd/rn（提醒），补默认 —— 免得后面点缺失的键报错。
+        let np = []
+        for p in v.picks {
+            let pw = ""
+            let pp = ""
+            let rn = ""
+            let rt = 0.0
+            let rd = 0.0
+            if has_key(p, "pw") { pw = p.pw }
+            if has_key(p, "pp") { pp = p.pp }
+            if has_key(p, "rn") { rn = p.rn }
+            if has_key(p, "rt") { rt = p.rt }
+            if has_key(p, "rd") { rd = p.rd }
+            np.push({id: p.id text: p.text when: p.when where: p.where at: p.at key: p.key pw: pw pp: pp rt: rt rd: rd rn: rn})
+        }
+        picks = np
+    }
 }
-fn save(){ fs.write(DATA, {seq: seq picks: picks}.to_json()) }
+fn save(){ fs.write(DATA, {seq: seq picks: picks seen: watch_seen speak: speak_on fast: fast}.to_json()) }
 
 // ---------------------------------------------------------------- 发卡
 // 把一张卡发到快览屏（同一个 id 再发 = 原地更新）。
 // is_new：发成功才把它记进 picks —— 没钉上就不记账。
 fn publish(e, done_msg, is_new){
     let args = {card_id: e.id title: clip("拾意 · " + e.text) source: CARD
-        data: {rec: {title: e.text subtitle: when_line(e) summary: where_line(e) as_of: e.at}}
-        priority: 60 open: {app: "os.shiyi"} notify: true expires: 604800}
+        data: {rec: {title: e.text subtitle: when_line(e) summary: where_line(e) as_of: stamp(e)}}
+        priority: 60 open: {app: "os.shiyi"} notify: true speak: speak_on expires: 604800}
     host.request("glance.publish", args, fn(r){
         if r.is_ok {
+            let rep = ""
+            if r.data.replaced == true { rep = "（换掉了原来那张）" }
             if is_new {
                 picks.push(e)
                 save()
                 intent = ""
                 ui.input.set_text("")
-                ui.rows.render()
-                arm(e)
             }
-            let rep = ""
-            if r.data.replaced == true { rep = "（换掉了原来那张）" }
-            show(done_msg + rep + " —— 按 F9 看")
+            // 钉上后紧接着排提醒 —— 动作回执与「什么时候提醒你」拼成一行；
+            // schedule 末尾才 show，保证最后落屏的就是这句（看得见"钉了 + 提醒点"）。
+            schedule(e, done_msg + rep)
         } else {
             show("没能钉上：" + r.error)
         }
@@ -158,11 +663,25 @@ fn refresh(){
     })
 }
 
+// ---------------------------------------------------------------- AI 提取（接官方 model.complete）
+// 一句话（群消息 / 随手一说）交给宿主的一次性模型调用，拿回 {title, when, where} 结构化结果再造卡。
+// 有 AI：主推；宿主没提供 / 调用失败：回落到本地规则（保证照常能用）。
+fn ai_schema(){
+    return {type: "object" additionalProperties: false required: ["title", "when", "where"]
+        properties: {
+            title: {type: "string" maxLength: 80}
+            when:  {type: "string" maxLength: 80}
+            where: {type: "string" maxLength: 120}
+        }}
+}
+fn ai_task(){
+    return "把用户这句话里「要做的事」提取成一张卡的三个字段：title=要做的事（简短，可保留原话）；when=话里的时间（照原话说法，没提就空串）；where=话里的地点（没提就空串）。只输出 JSON，不要解释。"
+}
+
 // ---------------------------------------------------------------- 钉 / 撤 / 重钉
-fn pin_new(){
-    if intent == "" { show("先说一句话") return }
-    let key = intent.trim()
-    // 同一句话再钉 = 更新原来那张，不重复建卡。
+// 造一张卡并钉到快览屏；via 只用于状态回执（「AI 提取」/「本地规则」），让人看得出这次是怎么来的。
+fn pin_card(text, when, where, via){
+    let key = text
     for e in picks {
         if e.key == key {
             show("这句已经钉过了 —— 原地更新")
@@ -171,7 +690,7 @@ fn pin_new(){
         }
     }
     seq = seq + 1
-    let e = {id: "shiyi-p" + seq text: intent when: when_of(intent) where: where_of(intent) at: as_of_text() key: key}
+    let e = {id: "shiyi-p" + seq text: text when: when where: where at: as_of_text() key: key pw: "" pp: "" rt: 0.0 rd: 0.0 rn: ""}
     // 钉满 4 张：先撤最旧的一张（等真撤了再钉新的，免得被服务拒）。
     if picks.len() >= MAX_CARDS {
         let old = picks[0]
@@ -179,65 +698,278 @@ fn pin_new(){
             picks.retain(|p| p.id != old.id)
             save()
             ui.rows.render()
-            publish(e, "已钉到快览屏（钉满 " + MAX_CARDS + " 张，撤掉了最早那张：" + clip(old.text) + "）", true)
+            publish(e, "已钉到快览屏（" + via + "；钉满 " + MAX_CARDS + " 张，撤掉了最早那张：" + clip(old.text) + "）", true)
         })
         return
     }
-    publish(e, "已钉到快览屏", true)
+    publish(e, "已钉到快览屏（" + via + "）", true)
+}
+
+fn pin_new(){
+    if intent == "" { show("先说一句话") return }
+    // 先认「这是不是在改一张已有的卡」——是就走原地改/撤；不是才往下造新卡。
+    if is_update(intent) { apply_update(intent) return }
+    let t = intent.trim()
+    // 有 AI：交给模型提取（主推）；没有 / 失败：回落本地规则（降级照常能用）。
+    if host.has("model") {
+        show("正在让 AI 提取…")
+        host.request("model.complete", {
+            task: ai_task()
+            input: {text: t}
+            schema: ai_schema()
+            class: "fast"
+        }, fn(r){
+            if r.is_ok && r.data != nil && r.data.output != nil {
+                let o = r.data.output
+                pin_card(t, o.when, o.where, "AI 提取")
+            } else {
+                let e = ""
+                if !r.is_ok { e = r.error }
+                show("AI 没接上（" + e + "）—— 改走本地规则")
+                pin_card(t, when_of(t), where_of(t), "本地规则")
+            }
+        })
+        return
+    }
+    show("宿主没开 AI —— 走本地规则")
+    pin_card(t, when_of(t), where_of(t), "本地规则")
 }
 
 fn repin(e){ publish(e, "已重钉（同一张卡原地更新）", false) }
 
 fn unpin(e){ withdraw(e, "已从快览屏撤掉", true) }
 
-// ---------------------------------------------------------------- 到点提醒（会说话）
-// 演示压缩计时：钉卡后 ~10 秒自动"到点"提醒一次 —— 宿主出卡 + 系统通知 + 语音读出。
-// （真实产品按卡里的 when 时辰；演示把等待压到几秒，方便当场看。）
-let pending = nil
-let pending_left = 0
+// ---------------------------------------------------------------- 到点提醒引擎（0.3.6 · 真排程）
+// 把卡里的「时间」算成一个绝对时刻，再定"该在什么时候提醒你"：提前 + 避开半夜 + 到点置顶并出声。
+let LEAD       = 3600.0   // 提前量（秒）：临期提前 1 小时
+let QUIET_FROM = 22       // 安静时段起：22 点
+let QUIET_TO   = 8        // 安静时段止：8 点
+let CN_C = ["一","二","三","四","五","六","七","八","九","十","十一","十二"]
+let CN_V = [1,2,3,4,5,6,7,8,9,10,11,12]
 
-fn arm(e){
-    pending = e
-    pending_left = 10
-    show("好 —— 到点我提醒你（演示压缩计时，几秒后）")
+// 「三」/「十一」/「12」→ 数字；认不出给 -1
+fn cn_hour(s){
+    let d = s.to_f64()
+    if d >= 0 { return d }
+    let i = 0
+    let r = -1
+    for c in CN_C {
+        if r < 0 { if c == s { r = CN_V[i] } }
+        i = i + 1
+    }
+    return r
 }
-
-fn fire(){
-    if pending == nil { return }
-    let e = pending
-    pending = nil
-    // 到点：把同一张卡（同 card_id）**再发一次** —— 原地更新 + notify:true。
-    // 走 glance 就行（manifest 里已授 "glance"）：服务侧"每次 notify:true 都弹一次通知"，
-    // 宿主 glance_notify 收到 os.shiyi 的通知就顺手用系统 TTS 读出来。
-    // （不用 shiyi.notify：那需要 manifest 里有 "shiyi.notify" 精确能力，而 App Hub 的
-    //   KNOWN_CAPABILITIES 是封闭白名单、不含它 —— 干脆复用已授权的 glance。）
+// 从句子里取钟点（24 小时制）；取不到给 -1
+fn hour_of_day(w){
+    let m = w.match_str(regex("(上午|下午|晚上|傍晚|中午|早上|凌晨|晚)?([0-9]{1,2}|十[一二]?|[一二三四五六七八九])(点|时)", ""))
+    if m == nil { return -1 }
+    let part = ""
+    let num = ""
+    if m.captures != nil {
+        if m.captures.len() > 1 { if m.captures[1] != nil { part = m.captures[1] } }
+        if m.captures.len() > 2 { if m.captures[2] != nil { num = m.captures[2] } }
+    }
+    let h = cn_hour(num)
+    if h < 0 { return -1 }
+    if regex("下午|晚上|傍晚|晚", "").test(part) { if h < 12 { h = h + 12 } }
+    if regex("中午", "").test(part) { if h < 12 { h = h + 12 } }
+    return h
+}
+// 取分钟；没有给 0
+fn min_of_day(w){
+    let m = w.match_str(regex("(点|时)([0-9]{1,2}|十[一二三四五]?)分", ""))
+    if m == nil { return 0 }
+    if m.captures == nil { return 0 }
+    if m.captures.len() < 3 { return 0 }
+    if m.captures[2] == nil { return 0 }
+    let v = cn_hour(m.captures[2])
+    if v < 0 { return 0 }
+    return v
+}
+// 句子里的日期 → 距今天的天数；算不出给 -999
+fn day_off(w){
+    let d = grab(w, DAY)
+    if d != "" {
+        if regex("今天|今晚", "i").test(d) { return 0 }
+        if regex("明天|明早", "i").test(d) { return 1 }
+        if regex("大后天", "i").test(d) { return 3 }
+        if regex("后天", "i").test(d) { return 2 }
+        if regex("周末", "i").test(d) {
+            let nx = 6 - today_m()
+            if nx < 0 { nx = nx + 7 }
+            return nx
+        }
+        let ch = ""
+        for c in WD_CH { if ch == "" { if regex(c, "").test(d) { ch = c } } }
+        if ch != "" {
+            let m0 = today_m()
+            let tgt = wd_num(ch)
+            let nx = tgt - m0
+            if nx <= 0 { nx = nx + 7 }
+            if regex("下周|下星期|下礼拜", "i").test(d) { if tgt > m0 { nx = nx + 7 } }
+            return nx
+        }
+    }
+    // 「N月N日」绝对日期：从今天起 0..60 天扫，谁的日期串对上就是它
+    let md = w.match_str(regex("([0-9]{1,2})月([0-9]{1,2})日", ""))
+    if md != nil {
+        if md.captures != nil {
+            if md.captures.len() > 2 {
+                if md.captures[1] != nil {
+                    if md.captures[2] != nil {
+                        let target = md.captures[1] + "月" + md.captures[2] + "日"
+                        for k in 61 {
+                            if date_str(time_now() + k * 86400.0) == target { return k }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // 「这个月/下个月/下下个月 + N号/N日」
+    let mo = -1
+    if regex("下下个月", "").test(w) { mo = local_time().month + 2 }
+    if mo < 0 { if regex("下个月", "").test(w) { mo = local_time().month + 1 } }
+    if mo < 0 { if regex("这个月", "").test(w) { mo = local_time().month } }
+    if mo > 12 { mo = mo - 12 }
+    if mo > 0 {
+        let dd = w.match_str(regex("([0-9]{1,2})[号日]", ""))
+        if dd != nil {
+            if dd.captures != nil {
+                if dd.captures.len() > 1 {
+                    if dd.captures[1] != nil {
+                        let want = dd.captures[1].to_f64()
+                        for k in 75 {
+                            let lt = local_time(time_now() + k * 86400.0)
+                            if lt.month == mo { if lt.day == want { return k } }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return -999
+}
+// 把某天（epoch）挪到当天的 h 点 mi 分
+fn at_hour(ep, h, mi){
+    let lt = local_time(ep)
+    return ep + (h - lt.hour) * 3600.0 + (mi - lt.minute) * 60.0 - lt.second
+}
+// 卡里的时间原话 → 绝对时刻（epoch）；算不出给 0
+fn when_epoch(w){
+    if w == "" { return 0.0 }
+    let off = day_off(w)
+    if off < -100 {
+        // 同一个 bug 的下半截：只给了钟点、没给日期（「改到下午三点」）时，
+        // 原来直接放弃 ⇒ 卡改成功了、提醒却排不出来，界面只好老实说「时间没读准」。
+        // 现在：没给日期就按今天算（这是最自然的解释）；今天这个点已经过去了 ⇒ 顺延到明天
+        // —— 提醒一个已经过去的时间没有意义。
+        off = 0
+        let h0 = hour_of_day(w)
+        if h0 >= 0 {
+            let lt = local_time(time_now())
+            let due0 = time_now() + (h0 - lt.hour) * 3600.0 - lt.minute * 60.0 - lt.second
+            if due0 < time_now() { off = 1 }
+        }
+    }
+    let h = hour_of_day(w)
+    let mi = min_of_day(w)
+    if h < 0 { h = 9 mi = 0 }   // 只说了日期没说钟点 → 按当天上午 9 点
+    return at_hour(time_now() + off * 86400.0, h, mi)
+}
+// 「合适时机」：把提醒点挪开半夜 —— 得出真正该提醒的时刻 + 一句人话解释
+fn plan_remind(due){
+    let r = due - LEAD
+    let lt = local_time(r)
+    if lt.hour >= QUIET_FROM {
+        let t = at_hour(r + 86400.0, 8, 0)
+        if t < due { return {t: t note: "避开半夜，改到次日早8点"} }
+        return {t: at_hour(r, 21, 0) note: "避开半夜，改到当晚9点"}
+    }
+    if lt.hour < QUIET_TO {
+        let t = at_hour(r, 8, 0)
+        if t < due { return {t: t note: "避开半夜，改到当天早8点"} }
+        return {t: at_hour(r - 86400.0, 21, 0) note: "避开半夜，改到前一晚9点"}
+    }
+    return {t: r note: "提前1小时（临期）"}
+}
+fn hm2(m){ if m < 10 { return "0" + m } return "" + m }
+fn stamp2(ep){
+    let lt = local_time(ep)
+    return ("" + lt.month) + "月" + ("" + lt.day) + "日 " + ("" + lt.hour) + ":" + hm2(lt.minute)
+}
+fn fast_tag(){ if fast { return "　（演示加速：8 秒后当到点）" } return "" }
+// 把提醒三项（rt=提醒时刻 / rd=事件时刻 / rn=解释）写回 picks 里那张卡
+fn set_rem(id, rt, rd, rn){
+    let np = []
+    for p in picks {
+        if p.id == id { np.push({id: p.id text: p.text when: p.when where: p.where at: p.at key: p.key pw: p.pw pp: p.pp rt: rt rd: rd rn: rn}) }
+        else { np.push(p) }
+    }
+    picks = np
+    save()
+    ui.rows.render()   // 提醒一写就重画卡列表，免得"刚排好却仍显示时间没读准"
+}
+// 排定一张卡的提醒（算出后写进卡里 + 落盘）；算不出就如实说，不瞎排。
+// head = 这次动作的回执前缀（已钉到快览屏 / 已原地更新 / 已重钉），拼在同一行里，让人一眼看到"钉了 + 什么时候提醒"。
+fn schedule(e, head){
+    let pre = ""
+    if head != "" { pre = head + " · " }
+    let due = when_epoch(e.when)
+    if due <= 0.0 {
+        set_rem(e.id, 0.0, 0.0, "")
+        show(pre + "时间没读准（没日期或没钟点）—— 卡先留着，临到我会提示")
+        return
+    }
+    let p = plan_remind(due)
+    let rt = p.t
+    let rn = p.note
+    // 演示加速只压缩"等多久"：卡面那行如实写"演示加速"，别让「9:54（提前1小时）」这种自相矛盾上屏；
+    // 真按什么时刻提醒，看下面状态行里的 stamp2(p.t)。
+    if fast { rt = time_now() + 8.0  rn = "演示加速：8 秒后当到点" }
+    set_rem(e.id, rt, due, rn)
+    show(pre + "会提醒你：" + stamp2(p.t) + "（" + p.note + "）" + fast_tag())
+}
+// 到点：把这张卡**置顶**（priority 抬到 95）再发一次 + 弹通知 + 自动念（手机）
+fn fire_rem(e){
     let args = {card_id: e.id title: clip("拾意 · 该动身了 · " + e.text) source: CARD
-        data: {rec: {title: e.text subtitle: when_line(e) summary: where_line(e) as_of: e.at}}
-        priority: 60 open: {app: "os.shiyi"} notify: true expires: 604800}
+        data: {rec: {title: e.text subtitle: when_line(e) summary: where_line(e) as_of: stamp(e)}}
+        priority: 95 open: {app: "os.shiyi"} notify: true speak: speak_on expires: 604800}
     host.request("glance.publish", args, fn(r){
-        if r.is_ok { show("到点提醒：" + e.text) } else { show("提醒没发出去：" + r.error) }
+        if r.is_ok { show("到点提醒（已置顶）：" + e.text) } else { show("提醒没发出去：" + r.error) }
     })
 }
-
+// 每秒看一眼：有没有卡到点了（rt>0 且已过）。命中就把它的 rt 清掉再 fire，免得重复。
 fn tick(){
-    if pending != nil {
-        pending_left = pending_left - 1
-        if pending_left <= 0 { fire() }
+    let now = time_now()
+    let hit = nil
+    for e in picks {
+        if hit == nil {
+            if e.rt > 0.0 { if now >= e.rt { hit = e } }
+        }
+    }
+    if hit != nil {
+        set_rem(hit.id, -1.0, hit.rd, hit.rn)   // -1 = 已提醒过（不再是"没读准"）
+        fire_rem(hit)
     }
 }
 
 // ---------------------------------------------------------------- 启动
 load()
-start_timeout(0.05, || show("说一句话，我造一张卡钉到快览屏 —— 能留、能复用。桌面按 F9 看"))
+start_timeout(0.05, || show("说一句话，我造一张卡钉到快览屏；要改就说「那个改到〈新的时间〉」，它会原地改那张卡并留痕"))
 start_timeout(0.30, || ui.rows.render())
+start_timeout(0.35, || ui.speakstate.set_text(speak_state()))
+start_timeout(0.37, || ui.faststate.set_text(fast_state()))
 start_timeout(0.60, || refresh())
+start_timeout(0.80, || watch_note(watch_boot()))
 start_interval(1.0, || tick())
+start_interval(3.0, || watch_poll())
 
 // ---------------------------------------------------------------- 界面
 SolidView{width: Fill height: Fill flow: Down padding: 10 spacing: 6 draw_bg.color: bg
     Label{text: "拾意" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}
-    Label{width: Fill text: "一句话 → 一张卡，钉到你的快览屏。卡留着、点得开；都收在这，随时重钉或撤掉。" draw_text.color: dim draw_text.text_style.font_size: 12}
-    input := TextInput{width: Fill height: 32 empty_text: "例：下周三去深圳见客户"
+    Label{width: Fill text: "一句话 → 一张卡，钉到你的快览屏；什么话都行。卡留着、点得开。要改期、改地点或取消，照着说一句（例：「那个改到〈新的时间〉」「那个取消了」），它会原地改那张卡、并留痕。" draw_text.color: dim draw_text.text_style.font_size: 12}
+    input := TextInput{width: Fill height: 32 empty_text: "例：记得给妈打个电话 ／ 要改就说「那个改到〈新的时间〉」"
         on_change: |t| { intent = ("" + t).trim() }
         on_return: |t| { intent = ("" + t).trim() pin_new() }
         draw_bg +: {color: field color_hover: field color_focus: field color_empty: field
@@ -247,6 +979,19 @@ SolidView{width: Fill height: Fill flow: Down padding: 10 spacing: 6 draw_bg.col
     }
     Flat{text: "造卡 · 钉到快览屏" on_click: || pin_new()}
     status := Label{width: Fill text: "" draw_text.color: accent draw_text.text_style.font_size: 11}
+    watch := Label{width: Fill text: "" draw_text.color: faint draw_text.text_style.font_size: 10}
+    // 语音播报开关（手机差异点）：只掐「念不念」这一步 —— 通知照弹、卡照留。
+    View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
+        Label{text: "语音播报" draw_text.color: dim draw_text.text_style.font_size: 11}
+        speakstate := Label{width: Fill text: "" draw_text.color: accent draw_text.text_style.font_size: 11}
+        Mini{text: "切换" on_click: || toggle_speak()}
+    }
+    // 演示加速开关：只压「等到点」要等多久（录视频用），不改真实算出的提醒时刻。
+    View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
+        Label{text: "演示加速" draw_text.color: dim draw_text.text_style.font_size: 11}
+        faststate := Label{width: Fill text: "" draw_text.color: accent draw_text.text_style.font_size: 11}
+        Mini{text: "切换" on_click: || toggle_fast()}
+    }
     // 标题按自然宽（Fit），计数/回执行吃掉剩余宽（Fill）——
     // 手机窄屏上「快览屏上现在有 N 张（和我记的对得上）」很长，若反过来（标题 Fill）
     // 标题会被挤到 0 宽、逐字竖排；桌面 990 宽不触发，手机必现。
@@ -264,10 +1009,11 @@ SolidView{width: Fill height: Fill flow: Down padding: 10 spacing: 6 draw_bg.col
             SolidView{width: Fill height: Fit flow: Down padding: 6 spacing: 3 draw_bg +: {color: panel border_radius: 9.0}
                 Label{width: Fill text: e.text draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 13}}
                 View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
-                    Label{width: Fill text: when_line(e) + "   " + where_line(e) + "   ·   钉于 " + e.at draw_text.color: dim draw_text.text_style.font_size: 11}
+                    Label{width: Fill text: when_line(e) + "   " + where_line(e) + "   ·   " + stamp(e) draw_text.color: dim draw_text.text_style.font_size: 11}
                     Mini{text: "重钉" on_click: || repin(e)}
                     Mini{text: "撤掉" on_click: || unpin(e)}
                 }
+                Label{width: Fill text: rem_line(e) draw_text.color: accent draw_text.text_style.font_size: 11}
             }
         }
     }}

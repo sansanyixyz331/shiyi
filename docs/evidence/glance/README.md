@@ -1,4 +1,4 @@
-# 快览屏（glance）—— 拾意做成 OctoSense 系统 app 的底层实证
+﻿# 快览屏（glance）—— 拾意做成 OctoSense 系统 app 的底层实证
 
 > 这是**第三条交付面**（`octos/` 系统 app）**最底层**的一段：拾意被做成 OctoSense 的
 > **原生 system app**（`os.shiyi`），卡**钉进系统快览屏（glance）**、和应用同生命周期。

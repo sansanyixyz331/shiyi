@@ -1,4 +1,4 @@
-# 拾意 · 应用自己的 Agent
+﻿# 拾意 · 应用自己的 Agent
 
 本文件是「拾意 Pickup」**随包携带的 Agent 契约**。App Hub 的 `agent.instructions`
 指向它；它说明这个 Agent 被唤醒时做什么、产出必须满足什么标准、记忆怎么用、

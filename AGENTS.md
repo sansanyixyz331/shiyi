@@ -1,4 +1,4 @@
-# Developing this Hub app
+﻿# Developing this Hub app
 
 Before changing this app, read the shared guides in a local Hub checkout and
 record its revision; do not invent missing requirements:

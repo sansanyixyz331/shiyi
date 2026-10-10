@@ -1,4 +1,4 @@
-# 拾意「会说话」真机证据 · 2026-10-08 04:05 · 设备 f40f11dc(小米13)
+﻿# 拾意「会说话」真机证据 · 2026-10-08 04:05 · 设备 f40f11dc(小米13)
 # 抓法: adb logcat -d  (已先 logcat -c 清场)
 
 10-08 04:05:33.331  1660  1722 I Makepad : crates\shell\src\glance.rs:724:41 - glance: os.shiyi published shiyi-p14

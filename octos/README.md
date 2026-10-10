@@ -1,4 +1,4 @@
-# octos/ — 拾意做成 OctoSense 系统 app（快览屏 / 原地改卡 / 会说话）
+﻿# octos/ — 拾意做成 OctoSense 系统 app（快览屏 / 原地改卡 / 会说话）
 
 这一目录**不进提交包**（不在 `bundle/` 里）。它装的是「拾意」跑在 **OctoSense 本体**上的三段能力所需文件与实证：
 
@@ -49,7 +49,7 @@
 |---|---|---|
 | `apps/shiyi/bundle/tools.json` | **新增** | 拾意工具清单（此前不存在）。声明唯一工具 `shiyi.repin`，`risk:"act"`、`background:false`、`implemented_by:"host-service"`；input `card_id`(必填)/`title`(必填,1-80)/`when`/`where`/`as_of`；output `{card_id,replaced,expires_at}` |
 | `apps/shiyi/bundle/main.splash` | **修改** | 拾意的造卡 app。**D1 到点提醒**：+38 行（`arm()/fire()/tick()`；到点**复用已授权的 `glance.publish` + `notify:true`** 把同一张卡再发一次 = 原地更新 + 再弹一次通知）。repin 复用活卡的 L0 源码 |
-| `apps/shiyi/bundle/manifest.json` | 已有 | 系统 app 清单（`bundle_blake3` 留空，构建期由 `pack_system_app` 自动盖章）。**版本 0.2.0 → 0.2.1**（加语音） |
+| `apps/shiyi/bundle/manifest.json` | 已有 | 系统 app 清单（`bundle_blake3` 留空，构建期由 `pack_system_app` 自动盖章）。**版本 0.2.0 → 0.2.1**（加语音）。**（本地试验 · 未推）0.2.1 → 0.3.0**：+ `matrix.read_messages`（群消息自动触发用）。**0.3.0 → 0.3.1**：时间写全日期（见 §2.2） |
 | `crates/shell/src/shiyi.rs` | **新增** | 拾意的 host service。`repin(app,args)`：从**活卡**取 L0 源码**原样复用**（模型只改数据、不改卡代码），只换 `rec` 数据 → `crate::glance::publish_for("os.shiyi", &publish)`。含 2 单测 |
 | `crates/shell/src/lib.rs` | **修改** | ① 加 `pub mod shiyi;`（`:90`）；② **`glance_notify()` 里 `note.app == "os.shiyi"` → `android_speak`**（**D2·输出侧、只说不听**；`spoken_title` 先 clone 规避 move）；③ `local_utc_offset_secs()`（**#343 时区修复**，另述） |
 | `crates/shell/src/apps.rs` | **修改** | `register_host_services()` 加 `crate::shiyi::register();`（`:228`，在 `glance_notice::serve_system_apps()` 兜底之前） |
