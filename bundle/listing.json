@@ -22,7 +22,7 @@
     "support": "https://github.com/sansanyixyz331/shiyi",
     "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
   },
-  "release_notes": "0.7.4 - refreshes the bundled examples and the input placeholder so they read like the demo material (grocery run, plumber measuring the kitchen, parcel pickup, paying the foreman, no Friday-night socials) instead of one repeated business-trip line. No behavioural change: same on-device rules, same Matrix read, same send-back-on-confirm. Re-stamped bundle_blake3.",
+  "release_notes": "0.8.0 - the assistant now works as the decision core. Besides telling what the sentence is about, it writes a human title, decides whether to remind and how far ahead, and drafts the line to say at reminder time - none of which a keyword table can produce. With no model available, the on-device rules still make the card (without the title/reminder lines) and the card says so honestly. Matrix read and send-back-on-confirm are unchanged.",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

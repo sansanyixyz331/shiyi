@@ -1,5 +1,13 @@
-// 拾意 · 现场造卡（shiyi-live）0.7.4
-// 一句话进去，一张卡出来。识别在本机做，不依赖任何服务。
+// 拾意 · 现场造卡（shiyi-live）0.8.0
+// 一句话进去，一张卡出来。
+//
+// 0.8.0 · 助手当「决策核心」（A2）
+//   接上设备助手（model.complete）时，助手不只知道"这是哪一类事"——
+//   它还负责「标题怎么起 / 要不要提醒 / 提前多久 / 提醒时说什么」。
+//   这几件，正则词表在原理上做不到：词表只能命中关键词，
+//   写不出人话标题，也判不出"这件事该提前一天、还是提前一小时提醒"。
+//   助手不可用时（例如本机 Rinx 不给 model），退为「本机规则」——
+//   仍判类型与时间、卡照出、事照记，只是没有标题与提醒建议，且如实标注降级。
 //
 // 长期记忆：存在应用自己的 jail 里（memory.json），与生成器同一套 schema
 //   version / prefs / places / log
@@ -37,6 +45,13 @@ let built = false
 let done = false
 let note = "写一句话，或点下面的例子"
 let hints = []          // 这次卡上「记忆参与」的行
+
+// ---- 助手当决策核心时多出来的几件（0.8.0）—— 走规则兜底时一律为空
+let title = ""          // 人话标题（助手起；规则兜底留空 ⇒ 卡上回退到原句）
+let ai_why = ""         // 助手给的一句话依据
+let remind = ""         // none | at_time | lead_hour | lead_day —— 助手对"要不要提醒、提前多久"的判断
+let remind_text = ""    // 提醒时该说的那句话（助手写；这是词表写不出来的）
+let ai_skip = false     // 助手判断"这条不必安排"（kind=none）⇒ 不造卡，如实说明
 
 // ---- 识别来源（复赛接 AI 就走这条）
 let src = "rules"              // rules | model | model-standin
@@ -179,6 +194,14 @@ fn kind_zh(k){
     if k == "reminder" { return "提醒" }
     if k == "pref" { return "习惯" }
     return "记录"
+}
+
+// 助手给的「提醒策略」→ 卡上那行中文（词表给不出这个判断）
+fn remind_zh(p){
+    if p == "at_time" { return "到点提醒" }
+    if p == "lead_hour" { return "提前 1 小时（临期）" }
+    if p == "lead_day" { return "提前 1 天" }
+    return ""
 }
 
 fn today_m(){
@@ -645,20 +668,29 @@ fn forget(){
 // 失败是 "<code>: <句子>"（no_provider / budget / rate / bad_request / invalid_output / …）。
 // 本地 card-host 没有 model 服务，会答 no service answers "model" —— 那就回退规则。
 fn model_task(){
-    return "把用户这句话里的事，识别成一张卡需要的四个字段。"
-        + "kind 只能是 trip / meeting / errand / purchase / reminder / pref / none 之一；"
-        + "when_text 写中文时间，能确定日期就写成「周X · N月N日」；"
-        + "where 只写地点名，没有就留空串；why 一句话说明依据。"
-        + "不要输出 URL。只输出符合 schema 的 JSON。"
+    return "你是「拾意」的识别与安排助手：读用户说的一句话，替他把这件事安排成一张卡。请判断并给出："
+        + "① kind：trip 出行 / meeting 会面 / errand 代办 / purchase 采买 / reminder 提醒 / pref 习惯 / "
+        + "note 杂记 / none 无事（纯寒暄、没有可安排的事，就用 none）；"
+        + "② title：用一句人话给这件事起个标题，不超过 16 字，说人话，不要照抄原句；"
+        + "③ when_text：中文时间，能确定日期就写成「周X · N月N日」，没有就留空串；"
+        + "④ where：只写地点名，没有就留空串；"
+        + "⑤ remind：要不要提醒？none 不用 / at_time 到点提醒 / lead_hour 提前 1 小时（临期）/ lead_day 提前 1 天；"
+        + "⑥ remind_text：若需提醒，写提醒时对用户说的那句话——像人一样，带上关键信息（比如要带什么、给谁），"
+        + "不超过 20 字；不用提醒就留空串；"
+        + "⑦ why：一句话写你的依据。"
+        + "只依据这句话本身，不要编造；不要输出 URL；只输出符合 schema 的 JSON。"
 }
 
 fn model_schema(){
     return {type: "object" additionalProperties: false
-        required: ["kind" "when_text" "where" "why"]
+        required: ["kind" "title" "when_text" "where" "remind" "remind_text" "why"]
         properties: {
             kind: {type: "string"}
+            title: {type: "string"}
             when_text: {type: "string"}
             where: {type: "string"}
+            remind: {type: "string"}
+            remind_text: {type: "string"}
             why: {type: "string"}
         }}
 }
@@ -674,27 +706,43 @@ fn standin_output(){
 
 fn apply_model_output(o, t){
     let k = ""
+    let ti = ""
     let wt = ""
     let wh = ""
+    let rm = ""
+    let rt = ""
+    let wy = ""
     for fk fv in o {
         if fk == "kind" { k = fv }
+        if fk == "title" { ti = fv }
         if fk == "when_text" { wt = fv }
         if fk == "where" { wh = fv }
+        if fk == "remind" { rm = fv }
+        if fk == "remind_text" { rt = fv }
+        if fk == "why" { wy = fv }
     }
-    if k == "none" { k = "" }
     raw = t
-    kind = k
+    title = ti
     when = wt
     where = wh
+    remind = rm
+    remind_text = rt
+    ai_why = wy
     done = false
     hints = []
-    if kind == "" {
-        note = "助手也没看准 —— 换个说法再试"
+    if k == "none" {
+        // 助手判断"这条不必安排" —— 这是词表给不出的判断（词表永远硬塞一个类别）
+        kind = ""
+        ai_skip = true
+        built = false
+        note = "助手看了：这条不必安排 —— 没造卡"
     } else {
-        note = "读出一张「" + kind_zh(kind) + "」卡"
+        kind = k
+        ai_skip = false
+        built = true
+        note = "助手读出一张「" + kind_zh(kind) + "」卡"
     }
     mem_hints(t)
-    built = true
     ui.card.render()
 }
 
@@ -725,9 +773,9 @@ fn ask_model(t){
 }
 
 fn src_line(){
-    if src == "model" { return "识别来源 · 设备助手（长期记忆已带上）" }
+    if src == "model" { return "识别来源 · 设备助手（决策：类型 + 标题 + 提醒）" }
     if src == "model-standin" { return "识别来源 · 设备助手（本地替身：本机没有 model 服务）" }
-    if model_state != "" { return "识别来源 · 本机规则（" + model_state + "）" }
+    if model_state != "" { return "识别来源 · 本机规则 · 降级（" + model_state + "）" }
     if !ASK_MODEL { return "识别来源 · 本机规则（不依赖任何服务）" }
     return "识别来源 · 本机规则（不依赖任何服务）"
 }
@@ -757,6 +805,11 @@ fn recognize(t){
         done = false
         raw = ""
         hints = []
+        title = ""
+        ai_why = ""
+        remind = ""
+        remind_text = ""
+        ai_skip = false
         note = "先写一句话，再点「造卡」"
         ui.card.render()
         return
@@ -799,6 +852,11 @@ fn identify_rules(t){
     where = ""
     kind = ""
     done = false
+    title = ""
+    ai_why = ""
+    remind = ""
+    remind_text = ""
+    ai_skip = false
 
     // 先说习惯（「我不坐飞机」这类）—— 优先于任何场景
     if regex("^我(不|讨厌|怕|喜欢|习惯)|^(别|不要)(安排|约|定)", "i").test(t) {
@@ -926,6 +984,11 @@ fn reset(){
     when = ""
     where = ""
     kind = ""
+    title = ""
+    ai_why = ""
+    remind = ""
+    remind_text = ""
+    ai_skip = false
     built = false
     done = false
     hints = []
@@ -1044,11 +1107,23 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
           Label{width: Fill text: note draw_text.color: dim draw_text.text_style.font_size: 12}
 
           if !built {
-              Label{text: "卡会出现在这里" draw_text.color: faint draw_text.text_style.font_size: 12}
+              if ai_skip {
+                  Label{width: Fill text: "助手判断这条不必安排 —— 没有造卡"
+                    draw_text.color: faint draw_text.text_style.font_size: 12}
+              } else {
+                  Label{text: "卡会出现在这里" draw_text.color: faint draw_text.text_style.font_size: 12}
+              }
           } else {
               Label{text: kind_zh(kind) + " · 现场造的卡" draw_text.color: accent draw_text.text_style.font_size: 11}
-              Label{width: Fill text: "「" + raw + "」" draw_text.color: ink
-                draw_text.text_style: theme.font_bold{font_size: 18}}
+              if title != "" {
+                  Label{width: Fill text: title draw_text.color: ink
+                    draw_text.text_style: theme.font_bold{font_size: 18}}
+                  Label{width: Fill text: "原话 · 「" + raw + "」" draw_text.color: dim
+                    draw_text.text_style.font_size: 12}
+              } else {
+                  Label{width: Fill text: "「" + raw + "」" draw_text.color: ink
+                    draw_text.text_style: theme.font_bold{font_size: 18}}
+              }
 
               if when != "" {
                   Label{width: Fill text: label_of("when") + " · " + when draw_text.color: ink
@@ -1067,8 +1142,25 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
                   }
               }
 
+              // 提醒建议 —— 只有助手接上时才有（词表写不出"提前多久 + 到时说什么"）
+              if remind != "" {
+                  if remind != "none" {
+                      Label{width: Fill text: "提醒 · " + remind_zh(remind) draw_text.color: accent
+                        draw_text.text_style.font_size: 13}
+                      if remind_text != "" {
+                          Label{width: Fill text: "到时说 · 「" + remind_text + "」" draw_text.color: warn
+                            draw_text.text_style.font_size: 12}
+                      }
+                  }
+              }
+
               for h in hints {
                   Label{width: Fill text: h draw_text.color: warn draw_text.text_style.font_size: 12}
+              }
+
+              if ai_why != "" {
+                  Label{width: Fill text: "依据 · " + ai_why draw_text.color: faint
+                    draw_text.text_style.font_size: 10}
               }
 
               Label{width: Fill text: src_line()

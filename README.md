@@ -12,6 +12,7 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
 > **根 `bundle/` = 带 AI 的脚本应用（复赛主提交）**；**L0 卡片包 → `apps/shiyi-card/bundle/`**。
 > 初赛版（tag `gosim-semifinal-submission`）**一字节未动**；**下文中 `bundle/` 的路径，凡描述"卡片形态"的，对应 `apps/shiyi-card/bundle/`**。
 > 详见 [`docs/复赛结构变更说明_20261010.md`](docs/复赛结构变更说明_20261010.md)。
+> **当前版本**：主应用（根 `bundle/`）**0.8.0**（助手当决策核心）· 卡片包 **0.3.3** · 系统 app（`octos/`）**0.3.9** —— 速查 [`STRUCTURE.md`](STRUCTURE.md)。
 
 ---
 
