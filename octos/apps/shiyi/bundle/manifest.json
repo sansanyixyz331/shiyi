@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "id": "os.shiyi",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "name": "拾意",
   "integrity": { "bundle_blake3": "" },
   "capabilities": ["storage", "glance", "model", "matrix.read_messages", "octos.session.open", "octos.session.history", "octos.turn.start", "octos.turn.interrupt"]
