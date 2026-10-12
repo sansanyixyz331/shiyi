@@ -1,21 +1,24 @@
-﻿# 拾意 · 现场造卡（shiyi-live）0.7.4　→　**现为 0.8.0**
+﻿# 拾意 · 现场造卡（shiyi-live）0.8.6
 
-> 🔢 **版本注**：本文件写于 **0.7.4**，正文里的能力描述仍然成立；**当前版本是 0.8.0**
-> —— 在 0.7.4 基础上把助手升为**决策核心**（给**人话标题** / 判**要不要提醒、提前多久** / 写**提醒时那句话** / 给**依据**，
-> 并在纯寒暄 `kind=none` 时**主动不造卡**）；规则路径照常兜底。
+> **0.8.6 新增**：**自动读群消息** —— 应用跑起来后**自己每隔几秒看一次群**，群里来了新消息**它自己读到就造卡**
+> （与桌面那套「自动读邮件」同构；首启只登记基线，房间里原有的旧消息不刷成卡；它自己发回群的结论也不重复造卡）。
+> 这一步让「手机＝日常＝群消息」这个场景**不再需要人点一下**。
+>
+> **0.8.0 主升级**：把设备助手升为**决策核心**（给**人话标题** / 判**要不要提醒、提前多久** / 写**提醒时那句话** / 给**依据**，
+> 纯寒暄 `kind=none` 时**主动不造卡**）；助手不可用时**规则路径照常兜底**。
 > 当前版本以根 [`bundle/manifest.json`](../../bundle/manifest.json) 与 [`STRUCTURE.md`](../../STRUCTURE.md) 为准。
 
-> 📍 **位置说明（2026-10-10 结构整理）**：这个形态的**可交付 bundle 已经移到仓库根 [`bundle/`](../../bundle/)** ——
-> 因为它是本仓**唯一带 `model`（AI）能力的 App Hub 形态**，按官方评分口径（无模型调用则"需求与任务价值"封顶）
-> 应当占据主提交位。**本文件保留为形态②的详细说明**（能力、宿主、证据索引），内容仍然有效。
-> 旧目录里的 `manifest.json.bak_20261008` 属构建残留，已移到 `F:\废品站\shiyi_repo_tidy_20261010\`。
+> 📍 **位置说明（2026-10-10 结构整理）**：这个形态的**可交付 bundle 已移到仓库根 [`bundle/`](../../bundle/)**，
+> 作为**复赛主提交**（本仓带 `model`（真实模型调用）能力的 App Hub 形态）。**本文件保留为形态①的详细说明**
+> （能力、宿主、证据索引），内容仍然有效。
+> 旧目录里的 `manifest.json.bak_20261008` 属构建残留，已移到 仓外归档目录（不随提交）。
 
 **一个能用的应用**：输入一句话，它在**本机**识别出时间/地点/类型，**现场长出一张卡**，
 并把确认过的卡与你的习惯**记住**（长期记忆）。不依赖任何服务，离线也完整可用。
 
-- 形态：**Rinx 迷你应用**（`main.splash`，OctoScript 脚本应用）—— 有逻辑、能交互（输入框 / 按钮 / 动态渲染 / 定时器 / 文件读写）。**运行方式 = 在 Rinx 里「导入应用 + 绑定房间」**，**不是网页、没有 URL**（官方"网页小程序"是另一类、需 URL 卡片，本作品不属该类）。
+- 形态：**Rinx 迷你应用**（`main.splash`，OctoScript 脚本应用）—— 有逻辑、能交互（输入框 / 按钮 / 动态渲染 / 定时器 / 文件读写）。**运行方式 = 在 Rinx 的「小应用」页导入一次、之后点「打开」直接进去用；读哪个聊天在应用界面顶部随时切换（不再在导入时绑定）**，**不是网页、没有 URL**（官方"网页小程序"是另一类、需 URL 卡片，本作品不属该类）。
 - 宿主：**Rinx `v1.1.0`**（`hagency-org/Rinx`；本地 checkout 修订 `7d66b14`，2026-10-05）**真机已跑通**（导入 → Run → 说习惯 → 确认 → 记忆更新 → 造出行卡带记忆行 → 再确认；
-  证据 `docs/evidence/live-run/`（20.7s 连续真录屏）与 `docs/evidence/chat-read/`），官方参考宿主 `card-host` 也跑得通
+  证据 `docs/evidence/live-run/`（20.7s 连续真录屏）与 `docs/evidence/chat-read/`），官方参考宿主 `card-host` 也跑得通。**本作品所用宿主经我方做了一轮可用性改造**（分界线、「打开/修改/删除」三个按钮、房间选择挪进应用界面、双击后零点击直进、浅色主题、中英双标；并新增三项**宿主服务扩展** `rinx.schedule` / `rinx.notify` / `rinx.speak` —— 到点排程、系统通知、念出来）——逐条清单与许可说明见 [`docs/Rinx宿主改造说明.md`](../../docs/Rinx宿主改造说明.md)。
 - 识别口径：与生成器同一套（强信号优先：提醒 / 买 → 寄取 → 见碰 → 去飞）
 - **按场景长不同的卡**：出行 / 会面 / 代办 / 采买 / 提醒 —— 题头、行标签、动作各不同
 - **长期记忆**（见下）：与生成器**同一套 schema**
@@ -43,7 +46,7 @@
 2. **确认 = 记住**：写 `log` 一条、把地方记进 `places`（**保留原有 `default_depart`/`from` 等字段，不覆盖掉**）、
    从原文里学几条明确的偏好（`不坐飞机` / `高铁` / `周三下午别安排` —— 只认这几种，不猜）
 3. **`mem_brief()`**：把记忆拼成一段话。**接上设备助手时，这段就是随用户那句话一起发给模型的上下文**
-   —— 现在还没接，但接口留给它了
+   —— **现已接上**（提交版声明 `model`，桌面 + 手机双端跑通）
 
 **要用它，清单里必须声明 `storage`**（`capabilities: ["storage"]` + `storage.max_bytes`）。
 不声明也**可能**能写（宿主给了 jail 就行），但隐私摘要来自这个声明，所以照实声明。
@@ -60,7 +63,7 @@
 Linux 算 `/`）。而**这个应用跑在 Windows 的 Rinx / card-host 上** ⇒ **必须用 Windows 的 hub 盖章**：
 
 ```bash
-hub.exe stamp apps/shiyi-live/bundle     # ← 本应用用 Windows 的 hub
+hub.exe stamp bundle                     # ← 本应用用 Windows 的 hub（复赛结构：bundle 在仓库根）
 ```
 
 **实测**：Linux hub 盖出 `3292adc8…`，而 Windows card-host 自己算出 `1eb813d4…` ⇒ **当场被拒**；
@@ -77,7 +80,7 @@ card-host: shiyi-live 0.5.0 admitted — capabilities {"model","storage"}, stora
 > 定案实验：取**改动前**的包内容 + **Windows** hub 重算 → 得到的正好是清单里原本那个值
 > ⇒ **原来的章是对的**，之前的"不一致"纯粹是拿 Linux 看 Windows 的包。
 >
-> 注意与 `bundle/`（初赛提交物）**相反**：那是交到 **Linux** 评测的，所以**留 Linux digest**。
+> 注意与**卡片包形态**（`apps/shiyi-card/bundle/`，交 **Linux** 评测）**相反**：那边**留 Linux digest**。
 > 一句话：**谁运行它，就用谁的 hub 盖章。**
 >
 > 补充实测：Windows 的 `hub check` 目前**本身还跑不通**（同一个 #75 的路径 bug，
@@ -88,10 +91,11 @@ card-host: shiyi-live 0.5.0 admitted — capabilities {"model","storage"}, stora
 
 ```bash
 # 官方参考宿主
-card-host --bundle apps/shiyi-live/bundle --app-data <tmp> --allow-unsigned --remote 8977
+card-host --bundle bundle --app-data <tmp> --allow-unsigned --remote 8977
 # 抓帧： curl "http://127.0.0.1:8977/g?raw=1" -o frame.png
 
-# Rinx 真机：Mini apps → 导入应用 → 填 bundle 绝对路径 → Review bundle → Run
+# Rinx 真机：Mini apps → 点应用那行的「打开」（首次先在「导入应用」里导入一次，路径已自动填好）→ 直接进应用；读哪个聊天在应用界面顶部随时切换。
+      # 老流程（原版宿主）：导入应用 → 填 bundle 绝对路径 → Review bundle → Run
 ```
 
 ## 录
@@ -240,7 +244,7 @@ host.request("matrix.read_messages", {limit: 10}, fn(r){
 })
 ```
 
-**闭环**（这才是评委「任务验证」要的那个）：**读到消息 → 点一条 → 它变成输入 → 现场造卡 → 确认 → 写回记忆**。
+**真闭环**（这才是评委「任务验证」要的那个）：**读到消息 → 点一条 → 它变成输入 → 现场造卡 → 确认 → 写回记忆**。**（头：消息它自己读进来；尾：确认即真发回群——两头都真。）**
 每条消息行是一个 `Msg` 按钮，`on_click` 直接 `use_one(chat_texts[i])`。
 
 **开关**（`main.splash` 顶部，默认都关）：
@@ -258,7 +262,7 @@ host.request("matrix.read_messages", {limit: 10}, fn(r){
 
 **真机 Rinx 全链路**（`docs/evidence/chat-read/`，2026-10-05 · 0.7.1 出厂态）：
 
-> 🎬 **演示片（27.5 秒，帧序列合成 · 非连续录屏）**：`docs/evidence/chat-read/demo-rinx-loop.mp4` —— 从 Mini apps → 导入（绑房间）
+> 🎬 **演示片**：原 27.5 秒**帧序列合成**片（非连续录屏）已于 2026-10-12 **去重移出仓库**（该目录 5 张真机截图仍在）；同能力另有**真连续录屏** `docs/evidence/act/rinx-act-end-to-end.mp4`（27s）。从 Mini apps → 导入（绑房间）
 > → Review → Run → 读到 ×3 条 → 造卡 → 确认 → 记忆 4→5。
 > **该片由逐步帧合成**（825 帧中 203 唯一帧）；要看**连续真录屏**请见同目录 README 指向的
 > `live-run/rinx-live-end-to-end.mp4`（20.7s）与 `act/rinx-act-end-to-end.mp4`（27s）。

@@ -1,3 +1,5 @@
+# NOTE(2026-10-12): 本脚本面向**旧版主演示片**；该片已于 2026-10-12 移出仓库，已移出本仓（仓外归档，不随提交）。
+# 现行交付片（两条场景正片）见 docs/evidence/demo-desktop-mail-20261011/ 与 docs/evidence/demo-phone-groupmsg-20261012/。
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """拾意 · 演示片旁白（TTS + 混流）

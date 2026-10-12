@@ -1,0 +1,10 @@
+﻿# shiyi / Rinx 安卓安装包 · 校验清单
+# 生成: 2026-10-13  |  源: rinx.apk（含 AI 内核 liboctos.so；含 10-13 全部界面改造 / 手机精简 / 应用常驻修复）
+#
+# 合并后的整包（先合并，再校验这个；不要校验分卷本身）:
+1d92030484bd2cedf8fc794afc2250d681e185b6a8f445f8a1306f5dd85e8fe3  shiyi-rinx-android-1.1.0-ai-arm64-v8a.apk
+# 整包大小: 128670020 字节 (122.71 MB)
+#
+# 分卷:
+ff8fa8770d755f57122fe0027020047b072f01f8f239a7e8d536cae1f7e81012  shiyi-rinx-android-1.1.0-ai-arm64-v8a.apk.part1   # 67108864 bytes
+692c4225b90ebe05a2bb0fe39876bb75c436c28284b963039a9cffc673d28464  shiyi-rinx-android-1.1.0-ai-arm64-v8a.apk.part2   # 61561156 bytes

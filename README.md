@@ -1,265 +1,234 @@
 ﻿# 拾意 · Pickup
 
-> **从你的聊天里，读出你没说出口的安排。**
-> *Reads the plan you never said out loud, from the messages you already sent.*
+> **从你的聊天和邮件里，读出你没说出口的安排。**
+> *Reads the plan you never said out loud — from your chats and your mail.*
 
-GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品。
-
----
-
-> ### ⚠️ 复赛结构变更（2026-10-10）
-> 按官方复赛建议「`bundle/` 放仓库根、一仓一应用」，本仓**复赛版已对调形态位置**：
-> **根 `bundle/` = 带 AI 的脚本应用（复赛主提交）**；**L0 卡片包 → `apps/shiyi-card/bundle/`**。
-> 初赛版（tag `gosim-semifinal-submission`）**一字节未动**；**下文中 `bundle/` 的路径，凡描述"卡片形态"的，对应 `apps/shiyi-card/bundle/`**。
-> 详见 [`docs/复赛结构变更说明_20261010.md`](docs/复赛结构变更说明_20261010.md)。
-> **当前版本**：主应用（根 `bundle/`）**0.8.0**（助手当决策核心）· 卡片包 **0.3.3** · 系统 app（`octos/`）**0.3.9** —— 速查 [`STRUCTURE.md`](STRUCTURE.md)。
+GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品 · 队伍 **三三Claw**
 
 ---
 
 ## ⚡ 30 秒版（评委先看这段）
 
-| | |
-|---|---|
-| **这是什么** | **OctoScript L0 卡片应用**——把消息里一句随手的话变成一张"等你确认"的卡片；你确认它才执行，并写进长期记忆 |
-| **固定版本（初赛参赛版）** | **tag `gosim-initial-submission`** —— 评委按此 tag 拉取即为**参赛版**（含形态①②③全量；`bundle/` 内容版本 = `0.3.3`） |
-| **怎么跑** | 见 **§5 启动说明**（官方宿主 + Rust 工具链）；卡片包本身**与平台无关**（纯 manifest + card + kit 数据），`python build/verify_flow.py` 可一键跑五屏 + 失败态 + 记忆取证并产出证据 <br>※ 我方另有一个**内部跨机验证包**（`card-host.exe` + 内嵌 Python，拷去别的电脑零依赖跑），属**自用工具、非提交物**，见 [`docs/回归清单.md`](docs/回归清单.md) 四·补3 |
-| **形态 / 场景** | **两种官方承认的形态 + 一条本体形态**（**复赛起 ①为复赛主提交**）：① **脚本应用 · 现场造卡**（根 `bundle/`，**带 AI**）② **L0 卡片包**（`apps/shiyi-card/bundle/`）③ **OctoSense 系统 app**（`octos/`，原生快览屏卡 + **助手原地改卡**）；官方 12 场景之「**即时消息**」（宿主 **Rinx**，即早期 `robrix2`） |
-| **达标** | OctoScript 应用 ✅ · 公开仓 Apache-2.0 ✅ · README ✅ · 失败态 ✅（[`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)）· 2 分 17 秒演示 ✅（**带中文旁白**，[`docs/演示旁白稿.md`](docs/演示旁白稿.md)） |
-| **三种交付面** | ① **L0 卡片**（`apps/shiyi-card/bundle/`）：打开即渲染五屏 + 三条**总线调用**（读助手记忆 / 问助手 / 真发消息）；② **脚本应用**（根 `bundle/`，**复赛主提交**）：**一句话当场长出卡**，改一下 / **确认（结果真发回绑定群）** / 再来一张，真交互；③ **OctoSense 系统 app**（`octos/`）：卡钉在**快览屏**、**助手能在卡的对话里原地改卡**（桌面 + 手机双端已跑通，未碰内核一行）。同一套识别口径与长期记忆 |
-| **一页速览** | [`评审速览.md`](评审速览.md)（3 分钟看懂）· **[`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（逐条对官方评分口径）** · 材料对照 [`SUBMISSION.md`](SUBMISSION.md) |
-| **🔧 造 App 的机器** | 拾意不只是"一张卡"，仓库里还有**一台把意图变成卡片的机器**：一条命令从一句话走到「通过官方门禁的 L0 bundle + 渲染出图 + 自评修订」；**识别走两条路**（设备助手 `model.complete` 优先 / 本地规则兜底，结果卡上自己标注走的是哪条）。一页说明见 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，代码 `build/pipeline.py` / `build/gen_screens.py` / `src/intent_model.py`，对照证据 [`docs/evidence/identify/`](docs/evidence/identify/)、[`docs/evidence/model-path/`](docs/evidence/model-path/)、[`docs/evidence/assist-memory/`](docs/evidence/assist-memory/)、[`docs/evidence/live-app/`](docs/evidence/live-app/) |
+|                |                                                                                                                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **这是什么**       | 把**聊天或邮件**里一句随手的话——「下周三我得去趟深圳」——变成**一张等你点头的卡**；你确认它才动手；**到点主动提醒你、还把卡念出来**；并且**记得你的老规矩**                                                                                            |
+| **三种形态**       | ① **脚本应用**（根 `bundle/`，**0.8.6**，**复赛主提交**）② **L0 卡片包**（`apps/shiyi-card/bundle/`，**0.3.3**）③ **OctoSense 系统 app**（`octos/`，`os.shiyi` **0.3.11**）                                 |
+| **两个端**        | **桌面（Windows）✅ ／ 安卓真机 ✅** —— 两端都端到端跑通                                                                                                                                              |
+| **两个场景**（演示分场） | **桌面＝消息来源「邮件」** ｜ **手机＝「家庭日常」**                                                                                                                                                    |
+| **AI 在哪**      | 接在**宿主服务层**，**不写在卡里**（L0 规范本身就禁止卡内调用）；**换任意 OpenAI 兼容模型，作品代码零改动**                                                                                                                  |
+| **怎么跑**        | 见 [§8 启动说明](#8-怎么跑复现)；门禁自检 `"$HUB_BIN" check bundle --allow-unsigned` → **PASSED**；五屏端到端 + 失败态 + 记忆取证 `python build/verify_flow.py`                                                |
+| **达标**         | OctoScript 应用 ✅ · 公开仓 **Apache-2.0** ✅ · README ✅ · **失败态** ✅（[`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)）· 演示片 ✅ · **答辩幻灯片** ✅（[`docs/拾意_复赛答辩幻灯片.pptx`](docs/拾意_复赛答辩幻灯片.pptx)） |
+| **🔧 造 App 的机器** | 拾意不只是"一张卡"：本仓还有**一台把意图变成卡片的机器** —— 一条命令从一句话走到「通过官方门禁的 L0 bundle + 渲染出图 + 自评修订」；识别**两条路**（设备助手优先 / 本机规则兜底，**卡上自己标注走哪条**）。一页说明 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，代码 `build/pipeline.py`、`src/intent_model.py` |
+| **材料清单**       | [`MATERIALS.md`](MATERIALS.md) —— 按类别列出本仓提交的全部材料（作品本体 / 演示 / 证据 / 说明 / 复现 / 仓库文件）；**到文件级的全量索引见 [`FILE-INDEX.md`](FILE-INDEX.md)** |
+| **一页速览**       | [`评审速览.md`](评审速览.md)（3 分钟看懂）· [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（逐条对官方评分口径）· 材料对照 [`SUBMISSION.md`](SUBMISSION.md)                                                       |
+
+> **本仓库只有一个提交物**：根 `bundle/`。卡片形态在 `apps/shiyi-card/bundle/`，系统 app 形态在 `octos/`，
+>   
+> 两者都**不以 App Hub 上架作品计**（下面 §3 讲清三种形态各自证什么）。结构速查：[`STRUCTURE.md`](STRUCTURE.md)。
 
 ---
 
 ## 1. 一句话
 
-聊天里一条随手的话——"下周三我得去趟深圳"——藏着时间、地点、和一个没人接手的待办。
-**拾意**把它认出来，做成一张**等你点头的卡片**；你确认，它去执行；同时它记得你的老规矩
-（"我不坐飞机""周三下午别排事"），下次自动避开。
+一句话，不管它落在**聊天里**还是**邮件里**——「下周三我得去趟深圳」「周五那笔付款记得办」——都藏着
+  
+时间、地点、和一个没人接手的待办。**拾意**把它认出来，做成一张**等你点头的卡片**；你确认，它才去执行；
+  
+**到了点，它会主动来找你**（把卡念给你听）；同时它**记得你的老规矩**（「我不坐飞机」「周三下午别排事」），下次自动避开。
 
 **Agent 干活，人保留控制。**
 
+**而且它是一个「真闭环」**：**来源是它自己读进来的**（不用你打字、不用你粘贴）——**办成了，群里/通道里真多一条回执**（不是界面上写一句“已完成”）。**头是真读、尾是真发，两头都真，环才闭得上。**
+
 ## 2. 赛题对应
 
-| 官方题眼 | 拾意的对应 |
-|---|---|
-| 意图不一定来自你说的话 | 意图来自**消息正文**（不是 prompt） |
-| 藏在一条消息、一个时间点、一次状态变化里 | 时间词 / 地点词 / 承诺词 / 状态变化 |
-| 整理成**等用户确认的卡片** | 每步一张待确认卡，确认后才执行 |
-| 应用为人保留控制 | 全程可撤回、可接管、来源可查 |
+| 官方题眼                 | 拾意的对应                   |
+| -------------------- | ----------------------- |
+| 意图不一定来自你说的话          | 意图来自**消息正文**（不是 prompt） |
+| 藏在一条消息、一个时间点、一次状态变化里 | 时间词 / 地点词 / 承诺词 / 状态变化  |
+| 整理成**等用户确认的卡片**      | 每步一张待确认卡，确认后才执行         |
+| 应用为人保留控制             | 全程可撤回、可接管、来源可查          |
 
-**官方 12 场景**：本作品落在「**即时消息**」场景（宿主 **Rinx**，即官方早期的 `robrix2`）。
+**官方 12 场景**：本作品落在「**即时消息**」（宿主 **Rinx**）。
 
-## 3. 与官方范例的差异（我们做什么不一样）
+## 3. 三种形态
 
-官方范例 `aircon` 演示的是"**购物—物流—安装—付款**"的服务链路（事实来自外部服务）。
-拾意演示的是"**消息 → 意图 → 卡片 → 执行**"的认知链路（事实来自消息原文 + 真实服务），
-并且多一层 **长期记忆**：它不仅处理这一条消息，还**记得你的历史偏好**并据此改变建议。
+官方复赛建议「`bundle/` 放仓库根、**一仓一应用**」，我们照做了——**根 `bundle/` 换成带 AI 的脚本应用**，
+  
+卡片包退到 `apps/shiyi-card/bundle/`。三种形态**各证一件事**，不是摊大饼：
 
-## 4. 仓库结构
+| 形态                  | 位置 / 版本                               | 运行方式                   | 它在证明什么                                       |
+| ------------------- | ------------------------------------- | ---------------------- | -------------------------------------------- |
+| **① 脚本应用**（**主提交**） | 根 `bundle/` · **0.8.6**               | 官方宿主直接开（`main.splash`） | **「一句话 → 一张卡」**&#x8FD9;条链真的能跑，且**带 `model`** |
+| **② L0 卡片包**        | `apps/shiyi-card/bundle/` · **0.3.3** | 导入 Shell 渲染五屏          | 作品**遵循官方 L0 卡片规范**                           |
+| **③ 系统 app**        | `octos/` · `os.shiyi` **0.3.11**      | 随宿主源码构建                | 能往**宿主能力**上做深度扩展（**技术深度证据**，不走 App Hub）      |
+
+> **形态归类**：官方按三类收——**进程应用 / Hub 卡片包 / 原生宿主扩展**。本作品
+>   
+> ① 属**进程应用**、② 属**Hub 卡片包**、③ 属**原生宿主扩展**。
+>   
+> **本作品没有"网页小程序"那一类**（脚本应用靠**导入/宿主加载**运行、**没有 URL**）⇒ **无 URL 卡片不是缺项**。
+>   
+> ③ 是**原生宿主扩展**形态，只作**技术深度证据**，**不占本仓 App Hub 上架位**。
+>   
+> 当前结构以 [`STRUCTURE.md`](STRUCTURE.md) 为准。
+
+## 4. 两个端 · 两个真场景
+
+两端的**信息来源不同**，刚好覆盖两个应用场景：
+
+| 端               | 消息来源            | 一条链走到哪（= 真闭环）                              |
+| --------------- | --------------- | --------------------------------------------- |
+| **桌面（Windows）** | **邮件**（会议 / 行程） | 邮件进来 → 点一条当场造卡 → 确认 → **发回通道**                |
+| **安卓真机（小米13）**  | **家庭日常**        | 群里一句家常话 → 出卡 → 卡钉进**快览屏** → **到点自己弹提醒、把卡念出来** |
+
+> **如实边界**：演示用的房间与消息**由演示者投放**——「**读消息 → 判断 → 出卡 → 回执**」这条链是**真的、零 mock**；
+>   
+> 邮件是**场景素材的呈现方式**（把邮件原文作为一条消息投递），**不是我们接入了某个邮箱服务**。
+>   
+
+## 5. 仓库结构
 
 ```
 shiyi/
-  AGENTS.md              # 开发约定（给 agent / 协作者）
   README.md              # 本文件
   LICENSE                # Apache-2.0
-  PRIVACY.md             # 数据与隐私声明（listing.privacy_policy_url 指向它）
-  bundle/                # ★ 唯一的发布产物（提交物）—— 只带首屏
-    manifest.json        # 应用身份 / 版本 / 完整性与能力声明（capabilities: matrix.send_message, octos.session.open, octos.turn.start）
-    listing.json         # 商店条目：描述 / 分类 / 截图 / 图标 / 许可
-    bindings.json        # 能力接线：on_open 问本机设备助手一句，结果写进卡片数据槽 read
-    page.card            # 屏 1 · 识别（Octoscript L0，手写）
-    page.data.json       # 该屏布局（坐标实测）
-    kit/native/light/kit.json   # 五屏共用的组件包（16 组件 / 12 token）
-    assets/icon.svg
-    screenshots/         # 五屏真实截图（01-read … 05-done）
-  cards/                 # ★ 完整五屏：屏 = 独立卡（官方 aircon 12 屏同构）
-    shiyi-01-read/       #   page.card + page.data.json
-    shiyi-02-ask/        #   + service-actions.json（该屏按钮的含义）
-    shiyi-03-plan/       #   + screenshots/01.png（该屏真实截图）
-    shiyi-04-memo/
-    shiyi-05-done/
+  PRIVACY.md             # 数据与隐私声明
+  STRUCTURE.md           # 三形态路径与版本速查
+  SUBMISSION.md          # 交付说明书（逐条对官方材料要求）
+  bundle/                # ★ 唯一的 App Hub 提交物 —— 脚本应用（main.splash，0.8.6）
+    manifest.json        #   身份 / 版本 / 完整性 / 能力声明
+    listing.json         #   商店条目：描述 / 分类 / 截图 / 图标 / 许可
+    main.splash          #   脚本应用主程序（一句话 → 现场造卡）
+    screenshots/         #   真实截图（官方发布要求）
+  apps/shiyi-card/bundle/    # ★ L0 卡片包（0.3.3，五屏卡片形态）
+  cards/                     #   五屏卡片源码（卡片包形态的唯一真源）
+    shiyi-01-read/ … shiyi-05-done/
   src/                   # 服务逻辑（Agent 侧）
-    intent_card.py       # 识别内核：消息 → 结构化事实（每条带来源）
-    shiyi_flow.py        # 五屏流程状态机（事件名直接读 service-actions.json）
-    memory_store.py      # 本机长期记忆：真读写 .local-state/memory.json（零权限/零网络）
-  docs/
-    作品设计_拾意.md      # 选题 / 流程 / 数据来源 / no-facts 声明
-    小程序机制笔记.md      # Hub app / Card bundle / Image-to-AppCard 机制
-  ai/                    # ★ 不进 bundle：接设备助手（AI）的契约备件
-    AGENT.md             #   应用自己的 Agent 契约（角色 / 输入 / 验收 / 记忆 / 降级）
-    tools.json           #   三个工具：intent.read / memo.read / memo.save
-    manifest.ai.json     #   AI 版清单（capabilities: storage, model + agent 块）
-    本地跑通_20261004.md  #   ★ 本地 AI 跑通实证与配方（Rinx → 本地 octos 内核 → DeepSeek）
-    证据/                 #   内核会话 / 内核日志 / 验收截图 / **卡片显示回复**实拍（已脱敏）
-    templates/            #   ★ 显示 AI 回复的卡 + bindings + data 占位（可直接复用）
-  rinx/                  # ★ 不进 bundle：宿主执行扩展 + 真机实证
-    manifest.send.json   #   执行版清单（capabilities: matrix.send_message）；「真发送」的独立接线参考与真机实证（同一能力自 0.3.3 起已进 bundle）
-    bindings.json        #   能力接线：on_open 声明
-    证据/                 #   真机实证（Review / Run 截图 + 房间消息 JSON）
-  octos/                 # ★ 不进 bundle：OctoSense 本体扩展（快览屏 system app + 助手「原地改卡」）
-    apps/shiyi/bundle/   #   拾意做成 OctoSense 系统 app（manifest + main.splash + tools.json 声明 shiyi.repin）
-    crates/shell/src/    #   宿主侧扩展（shiyi.rs：捡起自己的 host service；对齐官方 Calendar/notice 的写法）
-    README.md            #   原理 / 代码落点 / 复现 / 边界（未碰内核一行）
-  docs/evidence/         # ★ 不进 bundle：各条链路的真机取证
-    glance/              #   快览屏底层：注册 / 3 卡常驻 / 落盘 / 同 id 原地替换 / 桌面 53s + 手机 26s 录屏
-    repin/               #   助手原地改卡：桌面 52s + 手机 150s 端到端录屏 + 工具审计
-    act/  live-run/      #   脚本应用「确认 = 真办事」/ 端到端连续录屏
-    chat-read/ profile/  #   读绑定房间消息成卡 / 认自己（matrix.profile）
-    phone-live-20261008/ #   手机端真机：一句话 → 造卡 → 钉进系统快览屏（25s 连续录屏 + 3 帧 + picks.json）
-  build/                 # ★ 不进 bundle
-    render_cards.py      # 逐屏渲染：组临时 bundle → 盖章 → 起宿主 → 抓图 → 裁图
-    sync_bundle.py       # 首屏 + 五张截图 → bundle（单一真源，防止两份不一致）
-    crop_png.py          # 纯 stdlib 裁图
-    review.json          # 官方审查包（scan 产物）
+    intent_card.py       #   识别内核：消息 → 结构化事实（每条带来源）
+    shiyi_flow.py        #   五屏流程状态机
+    memory_store.py      #   本机长期记忆：真读写 .local-state/memory.json（零权限 / 零网络）
+  octos/                 # ★ 系统 app 形态（os.shiyi，0.3.11）+ 宿主扩展
+    apps/shiyi/bundle/   #   拾意做成 OctoSense 系统 app
+    host-extension/      #   宿主扩展（语音 / repin）与可应用补丁
+    README.md            #   原理 / 落点 / 复现 / 边界
+  android/               # 安卓现成安装包（复核用）：宿主 APK 分卷（含 AI 内核）+ 拾意应用包
+    README.md            #   分卷合并 / 安装 / 导入 / 验收 / 坑清单
+  docs/                  # 设计 / 数据来源 / 失败场景 / 答辩材料 / 证据索引
+  build/                 # 构建与取证脚本（渲染 / 同步 / 端到端验证 / 录片）
+  ai/  rinx/             # AI 契约备件 / 宿主执行扩展的实证
 ```
 
-> 规则：**只有 `bundle/` 是提交物**；源码、脚本、密钥、审查包一律留在 `bundle/` 外。
+> 规则：**只有 `bundle/` 是 App Hub 提交物**；源码、脚本、密钥、审查包一律留在它之外。
+> `android/` 与 `octos/host-extension/` 都是**复核用附件**（前者给现成安卓包，后者给可构建补丁），不参与 App Hub 提交。
 
-## 4b. 五屏
+## 6. 五屏（卡片包形态）
 
-一个消息走完五个决策点，**一屏一屏推进**（屏 = 独立卡，不是卡内状态机）：
+一条消息走完五个决策点，**一屏一屏推进**（屏 = 独立卡，不是卡内状态机）：
 
-| 屏 | 目录 | 这一屏在干什么 |
-|---|---|---|
-| 1 识别 | `cards/shiyi-01-read` | 原话 + 抽出的事实（每条标「出自原文」或「识别所得」）→ 确认 |
-| 2 追问 | `cards/shiyi-02-ask` | 只问消息永远说不出的两样（几点走 / 从哪出发）→ 定 |
-| 3 方案 | `cards/shiyi-03-plan` | 把老规矩摆出来，再给一版被它筛过的候选 → 选 |
-| 4 记忆 | `cards/shiyi-04-memo` | 旧规矩 vs 这次要加的，都可读可改 → 记 / 不记 |
-| 5 完成 | `cards/shiyi-05-done` | 回执三行：**一件真做了、两件明说没动**（不摆"已完成"的样子），无积分无徽章 → 看行程 / 重开 |
+| 屏    | 目录                    | 这一屏在干什么                                     |
+| ---- | --------------------- | ------------------------------------------- |
+| 1 识别 | `cards/shiyi-01-read` | 原话 + 抽出的事实（每条标「出自原文」或「识别所得」）→ 确认            |
+| 2 追问 | `cards/shiyi-02-ask`  | 只问消息永远说不出的两样（几点走 / 从哪出发）→ 定                 |
+| 3 方案 | `cards/shiyi-03-plan` | 把老规矩摆出来，再给一版被它筛过的候选 → 选                     |
+| 4 记忆 | `cards/shiyi-04-memo` | 旧规矩 vs 这次要加的，都可读可改 → 记 / 不记                 |
+| 5 完成 | `cards/shiyi-05-done` | 回执三行：**一件真做了、两件明说没动**（不摆"已完成"的样子）→ 看行程 / 重开 |
 
-## 4c. 扩展能力：设备助手（AI）与宿主执行
+> **卡片自己跳不到下一屏**：Kit 节点不能声明事件（`kit_pack::visit` 只接受 `component`/`instance`/`part`）。
+>   
+> 所以每屏按钮的含义写在它旁边的 `service-actions.json`（`控件名 → 事件名`），**由 Agent 读、由 Agent 决定下一屏**
+>   
+> ——官方 `aircon` 的 12 屏正是这个形状。
 
-`bundle/manifest.json` 声明**三条官方白名单能力**：`octos.session.open`、`octos.turn.start`、
-`matrix.send_message`。`bundle/bindings.json` 在打开首屏时按序做三件事：开一个与设备助手的会话、
-问它一句、把这一屏的回执发进**导入时选定的**聊天房间。**三条全部在提交物里**，不是备件：
+## 7. AI 与宿主能力
 
-| 线 | 接到哪（官方能力） | 状态 | 位置 |
-|---|---|---|---|
-| **设备助手（AI）** | `octos.session.open` · `octos.turn.start` | ✅ **已进提交物**：`bundle/` 声明 + `bindings.json` 接线，首屏卡多一行"助手给的答案" | `bundle/` + [`ai/`](ai/) |
-| **宿主执行（真发消息）** | `matrix.send_message` | ✅ **已进提交物**（0.3.3 起）：同一条 `bindings.json` 把回执发进聊天；发不出去也不影响卡片 | `bundle/` + [`rinx/`](rinx/) |
+**① AI 接在哪一层**
 
-**① AI 线 —— 接"设备助手"（已经写进提交物本身）**
-`bundle/manifest.json` 声明官方白名单能力 **`octos.session.open` + `octos.turn.start`**；
-`bundle/bindings.json` 在打开时问本机助手一句"这句话还缺什么才能排成行程"，答案**印在首屏卡上**，
-与本地规则那条**并列**：
+**AI 不接在卡片里，接在卡片旁边的服务层。** 官方 L0 卡片规范明确「L0 = 只有 UI 声明，没有表达式、没有调用」，
+  
+卡片**写不出** `host.request(...)`。所以拾意是这个形状：
 
 ```
-还没定：坐哪班、几点。这一步我不猜。          ← 本地规则（永远在）
-还缺出发城市和（往返）时间                    ← 设备助手（本机 octos 内核）
+聊天消息  →  Agent 层（识别）  ── 助手可用 → 宿主提供的模型服务
+                  │              └─ 不可用  → 本地规则（src/intent_card.py）
+                  ▼
+            卡片（只显示结果，不做调用）
 ```
 
-- **两条路都真实，且卡不依赖任何服务成功**：助手在 → 多渲染一行助手答案；
-  助手不在 / 回合失败（例如宿主没配 provider）→ `when read.is_ok` guard 为假，**那条路径根本不求值** ⇒
-  卡片照常显示、**不报错**（这条是实测出来的：见 [`ai/证据/`](ai/证据/) 的两张对照图）。
-- 官方门禁实测（Linux 侧 `hub`）：`hub check` → **`shiyi 0.3.3 — PASSED`**（**发布者签名版，无告警**；未签名包在开发期需加 `--allow-unsigned`），`grants: capabilities {matrix.send_message, octos.session.open, octos.turn.start}`；
-  官方参考宿主 `card-host` 也正常 admit + 渲染（**23 节点、0 诊断**）。
-- **在官方 `card-host` 里长什么样（重要，避免误判为缺陷）**：官方参考宿主**不提供任何 host service**，
-  所以它渲染的是**本地规则行**（23 节点）——**这就是官方要求的"不依赖服务也完整可用"**，不是缺功能。
-  助手行只在**配了本机助手的宿主**（如 Rinx + 本机 octos 内核）里多出来。**两处都是设计意图**：
-  官方原文 "`card-host` provides no host services … **build the app to be complete without them**"，
-  我方用 `when read.is_ok` guard 兑现了这一点。
-- 完整实证与配方：[`ai/本地跑通_20261004.md`](ai/本地跑通_20261004.md)（内核往返 4 轮 + 出货版实拍）、
-  [`ai/templates/`](ai/templates/)（可复用三件）、[`ai/README.md`](ai/README.md)（接入面说明）。
+**两条路输出同一个结构，卡片上如实写出这次是谁做的**（「识别来源 · 设备助手」/「识别来源 · 本地规则」）。
+  
+**拿掉助手，它照样能用**——五屏照走、卡照样出，只是退到规则路径。对外口径：**AI 决定它的上限，规则守住它的下限。**
 
-**② 执行线 —— 让这一屏的回执真的发出去**
+**② 模型不绑定**
 
-`matrix.send_message` 也在同一份 `bundle/bindings.json` 里：打开首屏时，宿主把一句话发进
-**导入时选定的房间**。这一条**本机真跑通** —— Review 界面明写 `Services: matrix.send_message`
-与 `Allowed room`，消息 **API 可查**（见 [`rinx/证据/`](rinx/证据/)）：
+作品**只声明"需要一个会回结构化输出的多语种模型"**（`agent.model.needs`），**用哪个模型由宿主决定**——
+  
+**换任意 OpenAI 兼容模型，作品代码一行都不用改**。
 
-```json
-{ "content": { "body": "【拾意 Pickup】下周三去深圳 — 已确认，日程已记下。",
-               "msgtype": "m.text" },
-  "sender": "@sansanyi331:matrix.rinx.chat",
-  "room_id": "!6OTFycyqxSkwYHJuBr:matrix.rinx.chat",
-  "type": "m.room.message" }
-```
+**③ 能力清单（主提交 = 根 `bundle/`，脚本应用）**
 
-- **全流程实录**：[`rinx/证据/演示视频_Rinx执行链_拾意.mp4`](rinx/证据/演示视频_Rinx执行链_拾意.mp4)（43 秒，带字幕：导入 → 填房间 → Review → Run → 消息进聊天）
-- **真机连续录屏（0.7.2 五能力端到端）**：[`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/rinx-live-end-to-end.mp4)（**20.7 秒，一段连续真实录屏，非帧拼**：Review 5 服务 → Run → 读房间消息 → 造卡 → 确认 → 记忆 0→1；由 Rinx 自带 `MAKEPAD_REMOTE` 遥控口驱动，复现见同目录 README）
+| 能力                                | 出厂    | 干什么                                                    |
+| --------------------------------- | ----- | ------------------------------------------------------ |
+| `storage`                         | **开** | 长期记忆（`memory.json`）                                    |
+| **`model`**（服务名 `model.complete`） | **开** | **助手当决策核心**：给人话标题 / 判要不要提醒、提前多久 / 写提醒话术 / 给依据；纯寒暄主动不造卡 |
+| `octos.session.history`           | **开** | 读设备助手与你的会话，进记忆盒                                        |
+| `matrix.read_messages`            | **开** | 读**绑定房间**的最近消息 → 点一条直接造卡                               |
+| `matrix.profile`                  | **开** | 读你的 Matrix 名字 → 聊天列表里标出「（你）」                           |
+| `matrix.send_message`             | **开** | **确认一张卡 = 把结论真发回绑定房间**——卡不是「记下了」，是「办成了」；发不出去如实回退「只留本机」 |
 
-> **它放在哪里、为什么会这样**：`matrix.send_message` **在官方封闭能力清单里**（45 个 `matrix.*` 之一），
-> 声明它是**合法**的。发到哪个房间**不是卡片说了算** —— 房间在**导入表单里手填、由宿主绑进租约**，
-> 没填就答 `not attached to a room`。而官方参考宿主 `card-host` **不注册任何 host service**
-> ⇒ 在那里三个调用**一个都不会发生**（本机实测：带 `bindings.json` 与不带，首屏渲染**逐字节相同**），
-> 卡片照常完整显示。**每个读服务结果的路径都包在 `when X.is_ok` 里**：助手不在、房间没绑、模型没配，
-> 都只是让那一行不出现，**不会让卡片崩，也不会让应用打不开**。
+> ⚠️ 两个宿主给模型的方式不同：桌面壳（OctoSense shell）直接给服务 `model.complete`；手机壳（Rinx）不提供 `model.complete`，但自带**设备助手**服务 `octos.turn.start`（一句话进去、一段文本回来）。
+>   
+> 作品按 `octos.turn.start` → `model.complete` → 本机规则 的顺序探测，**任一条通就不降级** ⇒ **两个宿主上这一项都是「开」**。
+>
+> 实证：在 Rinx 宿主上输入「下周一带孩子去打疫苗，顺便把上次的体检单交给医生」，返回的卡标题「带娃打疫苗顺便交体检单」由模型给出（规则词表产不出该措辞）。
 
-## 4d. 端到端环境：这条线是在 Windows 上跑通的
+## 8. 怎么跑（复现）
 
-本作品把设备助手 `octos.*` **真接线、真跑通**，整条链（宿主 → 内核 → 模型 → 回复上卡）是在 **Windows** 上走完的。
+### 8.0 先看这里：你要验到哪一层（**前置与耗时如实标注**）
 
-在 Windows 上跑通，我们遇到了两个坑、各自填掉：
+| 层                     | 能验到什么                                        | 前置                                       | 耗时      |
+| --------------------- | -------------------------------------------- | ---------------------------------------- | ------- |
+| **L0 · 看已有证据（零安装）**   | 五屏端到端 + **两个失败态** + 记忆真读写——**我方已跑完留下的原始产物**  | **无**（纯文件，直接打开）                          | 约 5 分钟  |
+| **L1 · 一键重跑（需 Rust）** | `python build/verify_flow.py` 在你机器上重跑 L0 那一套 | 需先按 §8.2 **从源码编译**官方 `hub` + `card-host` | 编译数十分钟起 |
+| **L2 · 改着试**          | 改 `bundle/` 里任意一张卡，看宿主怎么反应（含被拒）              | 同 L1                                     | 同 L1    |
 
-1. **官方预编译的 octos 对不上。** Rinx 用 `packaging/octos.lock.json` 把内核钉在一个**精确 commit**（`fe08d8e6…`）上；而官方发行的预编译包是按 **release tag** 出的（rc.10–rc.13 对应的 commit 都不是它）⇒ **只能按 lock 从源码编**（`tools/package-octos.py desktop`）。
-2. **官方 `hub` 门禁在 Windows 上自身有 bug。** 新准入门（PR #56）里，目录遍历产出的相对路径在 Windows 是 `\`，紧接着的校验又**禁止路径含 `\`** ⇒ **Windows 上任何带子目录的包都会被拒**（Linux/macOS 出 `/`，不触发）。我们在 **WSL/Linux** 另编一份同版本 `hub` 来跑门禁（官方判据环境本就是 Linux/macOS），并把该 bug 报给了官方（**issue #75**）。
+> ⚠️ **诚实说明**：**「30 秒」指的是"看懂"，不是"跑起来"**。完整复现要走官方参考宿主，而宿主**必须从 Rust 源码编译**——
+>   
+> 这一步我们省不掉，**也不假装能省掉**。不方便编译就看 **L0**：那一层不需要任何工具链。
 
-填完这两个坑之后的端到端结果：
+**L0 证据入口**（全在仓内）：`build/_evidence/flow_run.json`（全步骤）· `build/_evidence/host_*.log`（每屏宿主原始日志）
+  
+· `neg_unsigned.* / neg_tampered.*`（两个失败态）· `bundle/screenshots/`。
 
-- **Rinx（Windows）+ 本机自编 octos 内核 + DeepSeek**：首屏卡的助手行**连续 4 轮渲染出各不相同的真实回复**（[`ai/本地跑通_20261004.md`](ai/本地跑通_20261004.md)）。
-- **消息真发出**：经 Rinx 把确认消息发进 Matrix 房间 `!6OTFycyqxSkwYHJuBr:matrix.rinx.chat`（[`rinx/证据/`](rinx/证据/)，房间消息 API 可查）。
+> 判据：**只看宿主日志的 `admitted` / `refused`**。`[SPLASH] eval` **不是**判据——宿主被拒后画的"拒绝说明页"也会打这行。
 
-> 这一版是在 **Windows**——官方工具支持相对弱的平台——上完成的端到端助手往返；过程中顺手替官方抓到一个 Windows 专属的门禁 bug（#75）。这是**实测填坑**，不是配置出来的。
+### 8.1 复现环境（让评审拿到同一版本）
 
-## 5. 怎么跑（官方参考宿主）
+| 项        | 值                                                                    |
+| -------- | -------------------------------------------------------------------- |
+| **宿主**   | 官方 OctoSense App Hub 参考实现 `card-host`；系统 app 形态为 **OctoSense 本体**    |
+| **宿主修订** | `card-host` 本地 checkout `e014fa9`（2026-10-04，含结构化准入门禁）               |
+| **支持平台** | 卡片包**与平台无关**（纯数据）。端到端在 **Windows 桌面参考宿主**完成；发布前门禁在 **Linux/WSL** 复核  |
+| **依赖**   | Rust 工具链 + 共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`） |
 
-### 5.0 先看这里：你要验到哪一层（**前置与耗时如实标注**）
+### 8.2 启动说明
 
-| 层 | 能验到什么 | 前置 | 耗时 |
-|---|---|---|---|
-| **L0 · 看已有证据（零安装）** | 五屏端到端 + **两个失败态** + 记忆真读写——全部是**我方已跑完留下的原始产物** | **无**（纯文件，直接打开） | 约 5 分钟 |
-| **L1 · 一键重跑（需 Rust）** | `python build/verify_flow.py` 在你自己机器上重跑 L0 那一套，产出同名证据 | 需先按 §5.2 **从源码编译**官方 `hub` + `card-host`（Rust 工具链 + Makepad/Octoscript checkout） | 编译数十分钟起，跑约 3 分钟 |
-| **L2 · 改着试** | 改 `bundle/` 里任意一张卡，看宿主怎么反应（含被拒） | 同 L1 | 同 L1 |
-
-> ⚠️ **诚实说明**：**「30 秒」指的是"看懂"，不是"跑起来"。**
-> 完整复现要走官方参考宿主，而宿主**必须从 Rust 源码编译**——这一步我们省不掉，**也不假装能省掉**。
-> 若不方便编译，请直接看 **L0**：那一层不需要任何工具链，证据是本仓现成的原始日志与截图。
-
-**L0 证据入口**（全在仓内，无需任何安装）：
-
-| 证据 | 路径 |
-|---|---|
-| 五屏端到端 + 失败态 + 记忆取证（全步骤记录） | `build/_evidence/flow_run.json` |
-| 五屏宿主原始日志（每屏一份，含 `admitted` / `refused` 判据原文） | `build/_evidence/host_shiyi-01-read.log` … `05-done.log` |
-| 两个失败态（未签名 / 摘要不符）——**我方卡片一张都不渲染** | `build/_evidence/neg_unsigned.log`（+`.png`）、`neg_tampered.log`（+`.png`） |
-| 五屏真实截图 | `bundle/screenshots/` |
-| 操作录屏（2 分 17 秒，含失败态） | `build/_video/shiyi-walkthrough.mp4` |
-
-> 判据怎么看：**只看宿主日志的 `admitted` / `refused`** —— 准入成功打 `admitted`，被拒只打 `refused`。
-> `[SPLASH] eval` **不是**判据：宿主被拒后画的"拒绝说明页"也会打这一行，那是宿主画的、不是我方卡片。
-
-### 5.1 复现环境（让评审拿到同一版本）
-
-| 项 | 值 |
-|---|---|
-| **宿主** | 官方 OctoSense App Hub 参考实现 `card-host` |
-| **宿主修订** | 本地 checkout 最新 `e014fa9`（2026-10-04，含结构化准入门禁）；早期端到端验证在 `e86d43f5`（09-23）上完成 |
-| **构建** | `hub` / `card-host` 自 2026-09-26 起从源码构建（本机隔离环境）；发布前门禁另在 **WSL/Linux** 重建同版本复核 |
-| **支持平台** | 卡片包**与平台无关**（纯数据）；本作品在 **Windows 桌面参考宿主**完成端到端验证，发布前门禁在 **Linux** 复核通过；**目标设备平台尚未验证**（官方运行包未公布）——故 `listing.platforms` 只如实声明 `["windows"]` |
-| **依赖** | Rust 工具链 + 共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`） |
-
-### 5.2 启动说明
-
-前置：Rust 工具链 + 共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`）。
-
-下面的命令里，`$WORK` 就是**你的工作区**——一个放官方 hub 源码与构建产物、且**和本作品仓库分开**的目录
-（我们示例用 `~/gosim_build`，实测通过；你换成自己的路径即可）。`hub` 与 `card-host` 就在它里面从源码编译。
+前置：Rust 工具链 + 共享 Makepad/Octoscript checkout。`$WORK` 是**你的工作区**（放官方 hub 源码与构建产物，
+  
+且**与本作品仓库分开**；示例用 `~/octosense-work`）。
 
 ```sh
-export WORK=~/gosim_build            # ← 改成你的工作区
-source "$WORK/env.sh"                # 官方 checkout 自带的构建环境入口
+export WORK=~/octosense-work            # ← 改成你的工作区
+source "$WORK/env.sh"
 export HUB_BIN="$WORK"/cache/target/debug/hub.exe          # Linux/macOS 去掉 .exe
 export CARD_HOST_BIN="$WORK"/cache/target/debug/card-host.exe
-export APP_REPO=~/shiyi               # ← 本作品仓库（本文件所在目录）
+export APP_REPO=~/shiyi               # ← 本作品仓库
 
 # 1. 盖章（每次改完 bundle 都要重盖；改动会改变摘要）
 "$HUB_BIN" stamp "$APP_REPO/bundle"
 
-# 2. 门禁自检（v0.3.3 已签名；未签名包加 --allow-unsigned 的告警属开发期正常）
+# 2. 门禁自检（→ PASSED）
 "$HUB_BIN" check "$APP_REPO/bundle" --allow-unsigned
-# 2b. 复检发布者签名（可选）
-# "$HUB_BIN" check "$APP_REPO/bundle" --publisher-key sansanyixyz331=<公钥>
 
 # 3. 生成审查包（必须放 bundle 之外）
 "$HUB_BIN" scan "$APP_REPO/bundle" --packet "$APP_REPO/build/review.json"
@@ -267,233 +236,95 @@ export APP_REPO=~/shiyi               # ← 本作品仓库（本文件所在目
 # 4. 参考宿主运行（须在 Hub 仓库里启动，宿主资源才解析得到）
 cd "$WORK"/octosense-org/OctoSense-App-Hub
 "$CARD_HOST_BIN" --bundle "$APP_REPO/bundle" --app-data "$APP_REPO/.local-state" --allow-unsigned --remote
-
-# 5. 抓真实截图（端点取第 4 步日志里打印的 127.0.0.1:<PORT>）
-curl --fail --silent --show-error "$APP_ENDPOINT/g?raw=1" -o "$APP_REPO/build/shots/shot.png"
-curl --fail --silent --show-error "$APP_ENDPOINT/quit"
 ```
 
-截图带宿主自绘标题栏（约 42 px），用 `build/crop_png.py`（纯 stdlib，零依赖）
-裁掉后再放进 `bundle/screenshots/`。
-
-以上是手工路径。**五屏已自动化**，日常只用两条命令：
-
-```sh
-# 五屏全跑一遍：每屏组临时 bundle（共用 kit）→ 盖章 → 起宿主 → 抓图 → 裁图
-python build/render_cards.py                 # 或只跑某屏：render_cards.py shiyi-02-ask
-
-# 同步：首屏 → bundle/page.card，五张截图 → bundle/screenshots/，顺带刷新 listing
-python build/sync_bundle.py
-
-# 然后照旧 stamp / check / scan
-```
-
-`cards/` 是五屏的唯一真源，`bundle/` 由 `sync_bundle.py` 从它生成 —— 不存在
-"bundle 和 cards 两份首屏互相不一致"这种事。跑流程看逻辑：
-
-```sh
-python src/shiyi_flow.py        # 走完五屏，打印每屏内容与走过的决定
-```
-
-**端到端验证（A3 + B4 一次跑完）**：
+**端到端验证（正流程 + 两个失败态 + 记忆取证，一次跑完）**：
 
 ```sh
 python build/verify_flow.py                 # 正流程 + 两个失败态
 python build/verify_flow.py --positive      # 只跑正流程
 python build/verify_flow.py --negative      # 只跑失败态
+python src/shiyi_flow.py                    # 只看流程逻辑（打印每屏内容与决定）
 ```
 
-它把「一条消息 → 逐屏卡 → 用户点按钮 → 下一屏」在官方参考宿主里真跑一遍：
-每屏先组包盖章、起宿主、等稳定帧、抓图，再用 `/snap` 证实目标控件**在、可见、可点**，
-然后 `/click` 打到它的中心，取该控件在 `service-actions.json` 里声明的事件名推下一屏。
-证据落在 `build/_evidence/`：`flow_run.json`（全步骤）+ `shots/*.png`（每屏宿主内截图）+ 宿主日志。
+它在官方参考宿主里真跑一遍：每屏组包盖章、起宿主、等稳定帧、抓图，用 `/snap` 证实目标控件**在、可见、可点**，
+  
+再用 `/click` 打到它的中心，取该控件在 `service-actions.json` 里声明的事件名推下一屏。证据落 `build/_evidence/`。
 
-同一次运行里还做**长期记忆的真读写取证**（对应官方「结果核验」轴），三条断言：
+**长期记忆的真读写取证**（三条断言，进 `flow_run.json` 的 `memory` 段）：
 
-| 断言 | 做法 | 期望 |
-|---|---|---|
-| `keep_wrote_file` | 点「记下」 | 本机记忆文件真被写（留路径 / sha / 内容 / 时间戳） |
-| `memory_is_effective` | 再跑一遍 | 读得到上一遍写进去的东西（证明不是常量） |
-| `skip_left_file_untouched` | 点「这次别记」 | 文件 sha 一个字节不变 |
+| 断言                         | 做法      | 期望                              |
+| -------------------------- | ------- | ------------------------------- |
+| `keep_wrote_file`          | 点「记下」   | 本机记忆文件真被写（留路径 / sha / 内容 / 时间戳） |
+| `memory_is_effective`      | 再跑一遍    | 读得到上一遍写进去的东西（证明不是常量）            |
+| `skip_left_file_untouched` | 点「这次别记」 | 文件 sha 一个字节不变                   |
 
-三条都记进 `flow_run.json` 的 `memory` 段。只想看记忆层本身：`python src/memory_store.py`。
+## 9. 证据索引
 
-**演示短片（A4）**：
+| 证据                                     | 位置                                                                                                         |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 五屏端到端 + 失败态 + 记忆断言                     | `build/_evidence/flow_run.json`                                                                            |
+| 五屏真实截图                                 | `bundle/screenshots/`                                                                                      |
+| 审查包（官方 `hub scan` 产物）                  | `build/review.json`                                                                                        |
+| **确认 = 真办事**（读房间 → 造卡 → 确认 → 群里真多一条回执） | `docs/evidence/act/` + `chat-read/`                                                                        |
+| **端到端连续录屏**（非帧拼）                       | `docs/evidence/live-run/rinx-live-end-to-end.mp4`（20.7s）· `docs/evidence/act/rinx-act-end-to-end.mp4`（27s） |
+| **助手原地改卡**（OctoSense 本体，桌面 + 手机）       | `docs/evidence/repin/`（桌面 52s / 手机 150s 端到端录屏 + 工具审计）                                                      |
+| **快览屏底层**（钉卡 / 落盘 / 同 id 原地替换）         | `docs/evidence/glance/`                                                                                    |
+| **到点主动提醒 + 语音读卡**                      | `docs/evidence/speak/`（系统 TTS 引擎日志逐行留证）                                                                    |
+| **手机端真机**（读群 → 出卡 → 确认 → 发回群）          | `docs/evidence/phone-live-20261008/`                                                                       |
+| **★ 冻结版正片 · 桌面「工作 · 邮件」**（一镜到底 40.8s，旁白 + 硬字幕） | `docs/evidence/demo-desktop-mail-20261011/` |
+| **★ 冻结版正片 · 手机「日常 · 群消息」**（一镜到底 111.9s，旁白 + 硬字幕） | `docs/evidence/demo-phone-groupmsg-20261012/` |
+| 宿主语音扩展（可应用补丁）                          | `octos/host-extension/`                                                                                    |
 
-```sh
-python build/record_demo.py                 # 全片（片头卡 + 五屏正流程 + 两个失败态 + 片尾卡）
-python build/record_demo.py --from-frames   # 只重编码，不重录
-python build/record_demo.py --no-caption    # 不要字幕
-```
+## 10. 已知限制（诚实声明）
 
-跑的是上面同一条链路，区别只在**一边跑一边逐帧录宿主窗口本身**（宿主自带的
-`/g?raw=1`，10 fps），再用 ffmpeg 合成 mp4。字幕用的全是卡内真实文案，并且先在
-底部 pad 出一条字幕带再画进去 —— 不遮卡片、不盖按钮。
+- **演示数据**：演示房间 / 群由演示者自建、消息由演示者投放（该服务器关闭注册）。**「读消息 → 判断 → 回执」这条链是真的**；
+    
+  识别在桌面段走**本机规则**、手机段走**真模型**，片内与文档都如实说。
+- **车次为演示样例**（`source: sample`）：`src/shiyi_flow.py` 的 S3 三个班次是**示例**，接真实票务服务前**不当作事实**。
+- **长期记忆存在本机文件**：`.local-state/memory.json`（纯本地、不联网）；首次运行用内建初始值播种并如实标注来源。
+- **模型可替换**：演示环境用的模型是**宿主侧配置**，**作品不绑定任何提供方**；换模型**作品零改动**。
 
-全片四段：① 片头卡 → ② 五屏正流程（每步真点击）→ ③ **两个失败态**（未签名 /
-包被改过一个字符 → 真起宿主、真被拒、录到拒绝后的空窗口，画面上叠宿主原话）
-→ ④ 片尾卡。
+## 11. 附录 · L0 卡片开发实测笔记（选读）
 
-成片：`build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒 / 1366 帧**，满足官方
-初赛"2–3 分钟演示"的要求）。说明：这是**桌面官方参考宿主**里的真实运行录制。
-**手机端也已跑通**——官方手机变体 `OctoSense/phone` 由本例自行交叉编译成 APK、
-装上安卓真机运行（见 §6.1 与 `docs/evidence/phone-live-20261008/`）。
+> 以下是我们把 L0 卡片在官方参考宿主上跑通时**踩过的坑与结论**，供其他参赛者参考。
 
-### 6.0 复赛主片（2026-10-08）· **真读 · 真判定 · 真回执**
+**三条契约必须同时满足**：
 
-上面那支初赛片是"五屏离线兜底 + 失败态"的讲法。复赛换成**一条过到底的真录屏**：
+1. **`page.card` 每个节点都必须是 Kit 节点**（`kit_pack::tree` 对非 Kit 节点直接拒绝）。
 
-**`build/_video/shiyi-live-rinx-real.mp4`（2 分 18 秒，带中文旁白）**
 
-| 段 | 画面里发生的事 | 为什么经得起问 |
-|---|---|---|
-| 片头 | 一句话交代场景 | —— |
-| ① 导入 → Review → Run | 填 bundle 路径 + **允许房间号**，Review 逐条列出服务 | `matrix.read_messages` / `matrix.profile` / `matrix.send_message` / `octos.session.history`，一条条可见 |
-| ② 读到消息 | 卡面「从聊天拾意 · 读到 6 条消息」 | **条数随房间变**（另一段是 3 条），内容与房间逐字一致，代码里无硬编码文本 |
-| ③ 点消息 → 造卡 | 「下周一付款给工长，水电改造那一笔」→ **采买**卡 · 周一 · 10月12日 | 类型/时间都标出来，并如实标注 `识别来源 · 本机规则` |
-| ④ 确认 → 回执 | 「✅ 已记下，记忆已更新」＋「已把结果发回群 —— 这件事真的办成了」 | 房间里**真多一条** `✅ 拾意已记下 · 周一 · 10月12日` |
-| ⑤ 换房间 | 同一份应用、只改房间号 → 读到**另外 3 条**完全不同的消息 | 证明读取不是写死的 |
-| ⑥ 回群里 | 镜头切回聊天，那条回执就在消息流里 | 视觉铁证 |
+1. **几何在 `page.data.json` 的 `$kit.placements`**，**外观在 `kit.json` 的 `components`**，两边 `component` 名必须一致。
+2. **文字节点必须给 `size` 和 `font_src`**，且 `font_src` 必须是 **`crate名:路径`**（冒号，不是斜杠）——写成斜杠会静默找不到字体、中文全变方块。
 
-证据在 [`rinx/证据/复赛_真读真发_20261008/`](rinx/证据/复赛_真读真发_20261008/)
-（三段原始录屏 + 回执截图）。
-**诚实标注（必读）**：[`docs/演示素材与诚实标注.md`](docs/演示素材与诚实标注.md) ——
-房间是我们自建的、消息是自己投放的（该 homeserver 关闭注册，拿不到第二个真人账号），
-**但"读消息 → 判定 → 回执"这条链全真、零 mock**；识别走本机规则，**没有假装用过外部大模型**。
+**另外几个坑**：组件名不能撞 L0 内置角色名（`Band` 是角色名）；`when x == false` 会被拒（多态用 enum）；
+  
+文本换行靠 `variant: "multiline"`。
 
-### 6.1 手机端真机（同一份拾意，安卓真机跑通）
+**两条结论**：① **Kit 节点不能声明事件** ⇒ 卡片自己跳不到下一屏，**"哪一屏"是 Agent 的判断**；
+  
+② **画布尺寸 = 宿主窗口尺寸**（`card-host` 硬编码 `412×892`；抓图 `515×1073` 是 125% DPI，`物理 = 逻辑 × 1.25 - 42`）。
 
-除桌面宿主外，**拾意还作为 OctoSense 系统 app 在安卓真机上跑通**（2026-10-06 首跑，
-2026-10-08 复录）：一句话 → 当场造卡 → 卡**钉进系统快览屏** → 点卡进对话、助手原地改卡。
-官方手机变体 `OctoSense/phone` 由本例**自行交叉编译为 APK**（`octo_sense.apk`，aarch64-linux-android），
-`su -c 'pm install -r -d -g'` 旁装到已 root 的真机。
+**端到端才踩到的三条**：`--allow-unsigned` 不能漏（漏了表现为"窗口空白"）；抓图必须**等稳定帧**
+  
+（首帧空白 5440 字节，判定 = ≥20 KB 且连续两次 sha 相同）；`MAKEPAD_HIDE_WINDOWS=1` 在该 Windows 后端下**不绘制**。
 
-- 本次录像（2026-10-08）：[`docs/evidence/phone-live-20261008/phone-input-card-glance.mp4`](docs/evidence/phone-live-20261008/phone-input-card-glance.mp4)
-  —— **连续录屏，带中文旁白（同目录另有无声原片 + 3 帧截图 + `picks.json`）**：
-  输入「周三下午两点去体育馆打球」→ 造卡 → 回桌面 → 滑到快览屏，**4 张拾意卡并排**。
-- 更早的完整链路（2026-10-06）：[`docs/evidence/repin/`](docs/evidence/repin/)（真机端到端：
-  造卡 → 快览屏 → 点卡 → 助手原地改卡，附内核工具审计）+ [`docs/evidence/glance/`](docs/evidence/glance/)。
-- **边界（勿混说）**：手机端这条是 **OctoSense 本体形态**（快览屏 + 改卡），
-  与复赛主片那条 **Rinx card-host（读 Matrix 房间消息 → 造卡 → 回执）不是同一条链路**；
-  后者手机版未编译。手机端识别走真模型（provider 已配），桌面 Rinx 那条走本机规则。
-
-## 6. 当前状态
-
-| 项 | 状态 |
-|---|---|
-| 选题与设计 | ✅ 已定（见 `docs/作品设计_拾意.md`） |
-| 仓库骨架 | ✅ 已搭 |
-| 卡片本体 | ✅ **五屏全部手写 L0，逐屏实跑渲染** |
-| kit 组件包 | ✅ 五屏共用 `bundle/kit/native/light/kit.json`（16 组件 + 12 token） |
-| 卡外动作 | ✅ 每屏 `service-actions.json`（**14 个控件 / 14 个事件**，与流程同源） |
-| 宿主运行 | ✅ `card-host` 逐屏跑通（五屏 `[SPLASH] … view=true`，零 lower 错误） |
-| 真实截图 | ✅ 五张 `515×1073`（实拍后裁掉宿主标题栏，入 bundle 与各屏目录） |
-| 门禁 | ✅ `hub check` **PASSED**（**v0.3.3 发布者签名版，无告警**；Linux 侧 `hub`） |
-| 审查包 | ✅ `build/review.json`（7 个审查问题，放 bundle 之外） |
-| 服务逻辑 | ✅ 五屏流程状态机（`src/shiyi_flow.py`）**已与官方参考宿主串成端到端** |
-| 端到端验证（A3） | ✅ `build/verify_flow.py`：五屏逐屏真渲染 + 每步真实点击命中控件 + 事件链推进 → `build/_evidence/` |
-| 失败态取证（B4） | ✅ 未签名 / 摘要不符 → 宿主拒绝准入、**我方卡片零渲染**（fail-closed）；宿主画**它自带的拒绝说明页**（含 refused 原文），`build/_evidence/neg_*.log` + `neg_*.png` 留证，演示片 ③ 段原样露出 |
-| 演示短片（A4） | ✅ `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒 / 1366 帧**：片头卡 + 五屏正流程 + **两个失败态** + 片尾卡；**真实宿主逐帧录制，非动画**） |
-| **本机记忆（真读写）** | ✅ `src/memory_store.py`：本机 JSON 文件，零权限零网络；点「记下」真写、点「这次别记」一个字节不写；三条断言进 `flow_run.json` |
-| **设备助手（AI · 已进提交物）** | ✅ `bundle/` 声明 `octos.session.open`+`octos.turn.start` + `bindings.json` 接线；首屏卡多一行助手答案，助手不在时 guard 兜底、**不报错**；实证 [`ai/证据/`](ai/证据/) |
-| **宿主执行 · 真发消息（已进提交物）** | ✅ `bundle/` 声明 `matrix.send_message` + 同一条 `bindings.json`：打开首屏把回执发进导入时选定的房间；**本机真跑通**（实证在 `rinx/证据/`） |
-| 签名 / 提交 | ✅ **已签名**（`sansanyixyz331`；`hub sign-manifest` + 公钥复检 `PASSED`）· `hub check` **PASSED**（`grants: capabilities {matrix.send_message, octos.session.open, octos.turn.start}`）· App Hub issue **#76**（提交物升到 `0.3.3` 后同步更新） |
-
-## 7. 实测记录（2026-09-26 跑通的关键契约）
-
-参考宿主 `card-host` 走的是**测量式设计**路径，不是自动布局。三条契约必须同时满足：
-
-1. **`page.card` 里每个节点都必须是 Kit 节点。** `octoscript_ui_l0::kit_pack::tree`
-   对非 Kit 节点直接拒绝（`native pack requires a Kit component, got …`）。
-   纯语义角色（`Surface`/`Col`/`TextTitle`…）的 L0 卡片由 `kit-host` 渲染，
-   **不是这个宿主** —— 这是本轮最大的一个坑。
-2. **几何在 `page.data.json` 的 `$kit.placements`**（每个 instance 一条
-   `{component, layout:{x,y,w,h}}`）；**外观在 `kit.json` 的 `components`**，
-   用 `{"$token": …}` 引 tokens。两边 `component` 名必须一致，
-   且 `Kit` 的 `props` 里声明的参数调用时必须全传。
-3. **文字节点必须给 `size` 和 `font_src`**，且 `font_src` 必须是
-   **`crate名:路径`**（冒号，不是斜杠）—— 写成斜杠会静默找不到字体、
-   中文全部渲染成豆腐块。本宿主是 `font_set: International`，自带中文
-   （霞鹜文楷）：`makepad_widgets:resources/LXGWWenKaiRegular.ttf`。
-   这条在 `v0.3.1` 上被踩过一次：为过门禁把字体换成**包内**子集，
-   门禁过了、运行时却读不到（`font_src` 走 `crate_resource(<font_src>)`，
-   只认编译进二进制的 crate 资源）⇒ 汉字全变方块。`v0.3.2` 的解法是把内置
-   字体写成 **token**、组件用 `{"$token": …}` 对象引用（门禁只把字符串当引用），
-   两条规则同时满足、**包里不带字体文件**。落点 `build/builtin_font.py`。
-
-另外三个已踩的坑：
-
-- **组件名不能撞 L0 内置角色名。** `Band` 是角色名，用它会报
-  `Band has no argument "instance"`。已改名 `Slab`。
-- **`when x == false` 会被拒**（l0.md：guard 只比较已声明的名字与值），
-  bool 只用于"只有真值需要渲染"的场合；多态一律用 enum + `when x == .value`。
-- **文本换行靠 `variant: "multiline"`**；`single_line` 不换行，超宽直接截断。
-
-### 两条 2026-09-26 才敢下的结论
-
-**① Kit 节点不能声明事件 —— 所以屏必须分开，由 Agent 推。**
-`kit_pack::visit` 只接受 `component` / `instance` / `part`，加已声明的 props、
-layout、style；多传一个 `on_tap` 会直接报 `xxx has no prop on_tap`。
-也就是说**卡片自己跳不到下一屏**。于是每屏按钮的含义写在它旁边的
-`service-actions.json`（`控件名 → 事件名`），由 Agent 读、由 Agent 决定下一屏 ——
-官方 `aircon` 的 12 屏正好是这个形状。**"哪一屏"是 Agent 的判断，不是卡内的状态机。**
-
-**② 画布尺寸 = 宿主窗口尺寸，不是猜的。**
-`card-host` 硬编码 `window.inner_size: vec2(412, 892)`，五屏的 `page` placement
-就是 `412×892`。抓到的图是 `515×1073`，那是 **125% DPI**（412×1.25=515），
-裁掉宿主自绘标题栏（42 物理像素）后与画布正好成 1.25 倍关系：
-`物理 = 逻辑 × 1.25 - 42`。按这个反推排版才准。
-
-### 三条 2026-09-27 做端到端验证时才踩到的坑
-
-- **`--allow-unsigned` 不能漏。** 宿主默认 `require_signature`，漏了就 `refused: … is unsigned`，
-  表现为"窗口起来了但一直是空白"——很容易误判成"隐藏窗口不绘制"。看宿主日志一眼就能认出来。
-- **抓图必须"等稳定帧"。** 宿主刚起时先给一帧空白（**5440 字节**，只有窗口底色+标题栏），
-  所以"抓到 PNG 就算数"或阈值取 5 KB 都会假成功。判定 = 字节数 ≥ 20 KB **且**连续两次 sha 相同
-  （真卡 49–77 KB）。
-- **`MAKEPAD_HIDE_WINDOWS=1` 在这个 Windows 后端下不绘制**（本机实测：始终只有那帧 5440 空白）。
-  自动化要抓图就用**可见窗口**；窗口只在脚本运行期间存在，跑完即退。
-
-## 8. 两条红线
-
-- **no-facts**：一切事实（时间、地点、天气、班次、金额）必须**来自真实数据源并标注来源**；
-  模型只负责**识别与组织**，不得编造状态或执行结果。
-- **不可只交创意**：最终交付 = **可运行的小程序 + Apache-2.0 开源仓库**。
-
-### 8.1 一次自我纠错（留档）
-
-第 5 屏原来印的是「行程已排 / 日历已加 / 提醒已设」—— **三件一件也没真做**：
-车次是演示样例，日历和提醒从没被写过。这违反上面第一条红线（把建议写成了完成），
-也在官方的「结果核验」轴上站不住。现在改成：
-
-```
-写了记忆 · 去深圳默认早班，从家里出发     ← 真写了（本机记忆文件，可核验）
-行程没动 · 周三那班只是方案里的样例        ← 明说没动
-日历与提醒没动 · 没碰系统                  ← 明说没动
-```
-
-同时把「长期记忆」从代码里的三个常量换成了**真实的本地文件读写** —— 于是
-"它记住了"这句话第一次有了可核验的落点。改法与理由见 `src/memory_store.py` 顶部。
-
-## 9. 长期记忆存在哪
-
-| 项 | 值 |
-|---|---|
-| 位置 | 仓库下 `.local-state/memory.json`（`.gitignore` 已排除，运行期生成） |
-| 内容 | 偏好（`prefs`）/ 各地点学到的默认（`places`）/ 每次写入的流水（`log`） |
-| 权限 | 三条 host service（`matrix.send_message` / `octos.session.open` / `octos.turn.start`）；**不声明 `net`，不联网**、不读系统日历、不碰任何其他应用；存储用默认配额 |
-| 首次运行 | 文件不存在 → 用内建初始值播种，并如实标注 `seeded_from: "builtin_initial"` |
-| 可核验 | 打开就是个 JSON；`python build/verify_flow.py` 会断言它被真写、且不会被误写 |
+**一次自我纠错（留档）**：第 5 屏原来印「行程已排 / 日历已加 / 提醒已设」——**三件一件也没真做**。
+  
+这违反了"no-facts"红线。现在改成如实三行（**写了记忆** / 行程没动 / 日历与提醒没动），
+  
+并把长期记忆从代码常量换成了**真实的本地文件读写**。
 
 ## 作者与支持
 
-| 项 | 值 |
-|---|---|
-| 作者 / 发布者 | **sansanyixyz331**（队伍 `三三Claw`） |
-| 支持 | <https://github.com/sansanyixyz331/shiyi/issues> |
-| 仓库 | <https://github.com/sansanyixyz331/shiyi> |
-| 版本 | **固定版本（初赛参赛版）= tag `gosim-initial-submission`**；卡片包内容版本 = `0.3.3`（tag `v0.3.3`，`bundle/` 自该 tag 起内容未变；`v0.3.2`/`v0.3.1` 为更早版本） |
-| 许可 | Apache-2.0 |
+| 项        | 值                                                             |
+| -------- | ------------------------------------------------------------- |
+| 作者 / 发布者 | **sansanyixyz331**（队伍 **三三Claw**）                             |
+| 支持       | <https://github.com/sansanyixyz331/shiyi/issues>              |
+| 仓库       | <https://github.com/sansanyixyz331/shiyi>                     |
+| 当前版本     | 主应用（根 `bundle/`）**0.8.6** · 卡片包 **0.3.3** · 系统 app **0.3.11** |
+| 固定版本锚点   | **tag 锚点**（见 [`SUBMISSION.md`](SUBMISSION.md) §A）             |
+| 许可       | Apache-2.0                                                    |
 
 ## License
 

@@ -104,7 +104,7 @@
          }
          log!("glance: {} notifies {}", note.app, note.key);
 +        // 拾意会说话：os.shiyi 的通知同时用系统 TTS 读出来 —— 输出侧、只说不听。
-+        // 用 Android 自带 TextToSpeech（与 33OS 无关，不碰任何 33OS 资产）；
++        // 用 Android 自带 TextToSpeech（不依赖任何自有语音资产）；
 +        // 其它平台 android_speak 是空操作。
 +        if note.app == "os.shiyi" && note.speak {
 +            let spoken = if note.summary.is_empty() { spoken_title } else { format!("{spoken_title}。{}", note.summary) };
@@ -221,7 +221,7 @@
      private void bridgeCommand(JSONObject command) throws Exception {
          long id=command.optLong("id",++commandId); Protocol.requireCommand(id);
 +        // 拾意的"嘴巴"：系统 TTS 直接在本进程读出来，不经 system-bridge，
-+        // 也不需要 bridge 已连接（用 Android 自带 TextToSpeech，与 33OS 无关）。
++        // 也不需要 bridge 已连接（用 Android 自带 TextToSpeech）。
 +        if("speak".equals(command.optString("operation"))) {
 +            speakText(command.optString("text",""));
 +            emit("bridge.result",json("id",id,"status",Protocol.COMPLETED,"reason","speak_queued"));

@@ -1,0 +1,2 @@
+2026-10-11T02:53:24.208718Z  INFO turn: calling LLM iteration=1 messages=4 tools=55 message_bytes=30152 session=_main:api:rinx#peerctx-rinx-275511df.6913ddbd-shiyi-live-g2 turn=43d22148-bce6-4cfb-8b86-8f1af24083d4
+2026-10-11T02:53:25.870963Z  INFO turn: LLM response received iteration=1 stop_reason=EndTurn tool_calls=0 tool_names= tool_ids= response_content_len=212 input_tokens=15243 output_tokens=211 cache_read_tokens=4864 cache_write_tokens=0 session=_main:api:rinx#peerctx-rinx-275511df.6913ddbd-shiyi-live-g2 turn=43d22148-bce6-4cfb-8b86-8f1af24083d4

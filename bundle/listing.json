@@ -1,28 +1,29 @@
 {
-  "schema": 1,
-  "subtitle": "一句话，现场造一张卡",
-  "description": "输入一句话，应用在本机识别出时间/地点/类型，现场长出一张按场景各不相同的卡，并把确认过的卡与偏好写进本机长期记忆（memory.json）。也可以在导入时绑定一个房间，直接读到那里的最近消息，挑一条就造卡；读到你的 Matrix 名字后，还会把聊天里「你自己发的」那几条标出来。确认一张卡时，会把这次的结论**真的发回你绑定的那个群** —— 从「记下了」变成「办成了」（发不出去会如实说明，退回只留本机）。不依赖任何服务也完整可用。",
-  "category": "utilities",
-  "keywords": [
-    "intent",
-    "card",
-    "generator",
-    "l0",
-    "live"
-  ],
-  "screenshots": [
-    "screenshots/01.png"
-  ],
-  "icon": "assets/icon.svg",
-  "platforms": [
-    "windows"
-  ],
-  "publisher": {
-    "name": "sansanyixyz331",
-    "support": "https://github.com/sansanyixyz331/shiyi",
-    "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
-  },
-  "release_notes": "0.8.0 - the assistant now works as the decision core. Besides telling what the sentence is about, it writes a human title, decides whether to remind and how far ahead, and drafts the line to say at reminder time - none of which a keyword table can produce. With no model available, the on-device rules still make the card (without the title/reminder lines) and the card says so honestly. Matrix read and send-back-on-confirm are unchanged.",
-  "age_rating": "all",
-  "license": "Apache-2.0"
+ "schema": 1,
+ "subtitle": "一句话，现场造一张卡",
+ "description": "输入一句话，应用在本机识别出时间/地点/类型，现场长出一张按场景各不相同的卡，并把确认过的卡与偏好写进本机长期记忆（memory.json）。也可以在导入时绑定一个房间，直接读到那里的最近消息，挑一条就造卡；读到你的 Matrix 名字后，还会把聊天里「你自己发的」那几条标出来。确认一张卡时，会把这次的结论**真的发回你绑定的那个群** —— 从「记下了」变成「办成了」（发不出去会如实说明，退回只留本机）。不依赖任何服务也完整可用。此外它会**自己读**绑定房间里的新消息（不用人点），确认后把结论真发回那个群并排好提醒。",
+ "category": "utilities",
+ "keywords": [
+  "intent",
+  "card",
+  "generator",
+  "l0",
+  "live"
+ ],
+ "screenshots": [
+  "screenshots/01.png"
+ ],
+ "icon": "assets/icon.svg",
+ "platforms": [
+  "windows",
+  "android"
+ ],
+ "publisher": {
+  "name": "sansanyixyz331",
+  "support": "https://github.com/sansanyixyz331/shiyi",
+  "privacy_policy_url": "https://github.com/sansanyixyz331/shiyi/blob/main/PRIVACY.md"
+ },
+ "release_notes": "0.8.6 - it now reads the group chat on its own. When a new message shows up in the room it is bound to, it picks it up by itself (no tapping), turns it into a card, and once you confirm, the result is really sent back to that room and a reminder is scheduled. First launch only records a baseline, so older messages do not turn into cards; its own sent-back notes do not either. 0.8.0 - the assistant works as the decision core (human title, whether to remind and how early, the words to say, and the reason).",
+ "age_rating": "all",
+ "license": "Apache-2.0"
 }

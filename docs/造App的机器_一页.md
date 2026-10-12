@@ -62,7 +62,7 @@ python build/demo_identify.py --samples                 # 同一句话：规则 
 | — | 底部列出**本会话造过的卡**（最新在前）；整页可滚动 |
 
 **Rinx 真机端到端跑通**：导入 bundle → Review → Run → 点例子 → 出卡 → 确认 → 再造一张。
-证据：`docs/evidence/live-app/*.png` + `docs/evidence/live-app/live-app.mp4`（宿主内逐帧）
+证据：`docs/evidence/live-app/*.png`（宿主内逐帧，9 张）
 + `docs/evidence/live-run/rinx-live-end-to-end.mp4`（Rinx 真机连续录屏，20.7s）
 + `docs/evidence/live-run/live-app-in-rinx.mp4`（Rinx 真机连续录屏·遥控口驱动，38.7s：导入 → Review → Run → 出「出行」卡）
 （`build/record_rinx_app.py` 直接抓 Rinx 窗口，每帧都是宿主真实绘制；主按钮位置是**按颜色现场找的**，
@@ -71,7 +71,7 @@ python build/demo_identify.py --samples                 # 同一句话：规则 
 
 **离线完整可用**：识别全在本机，**不依赖任何服务** —— 正是官方"服务不可用时应用也要可用"那条。
 （顺带实测：Rinx 这一版的导入页已经带「Assistant (this device)」，可配 provider / Base URL / Key，
-`primary: ready` —— 那就是把本机规则换成模型该走的通道，**我们还没接**。）
+`primary: ready` —— 那就是把本机规则换成模型该走的通道，**这条通道现已接上**。）
 
 ---
 
@@ -102,7 +102,7 @@ python build/demo_identify.py --samples                 # 同一句话：规则 
 
 ---
 
-## 二·八、接 AI：**代码已就位，默认关**（刘总 10-05 定："复赛肯定要接，不是现在接"）
+## 二·八、接 AI：**代码已就位**（2026-10-05 定："复赛肯定要接"；现主提交已**开**）
 
 按官方 `AI-SERVICES.md` 的 `model.complete` 契约写好了整条路，**两个开关都默认关**：
 
@@ -143,9 +143,8 @@ host.request("model.complete", {
 
 ## 三、两条识别路（都能出卡，卡片自己标注走的是哪条）
 
-官方现状：**没有 Shell 提供 `model` 服务**（Rinx 这一版导入页出现了「Assistant (this device)」并显示
-`primary: ready`，但我们的应用还没接它）⇒ 应用侧的模型路仍是关的。所以识别层
-按官方 `model.complete` 契约做成"有则用、无则退"：
+识别层按官方 `model.complete` 契约做成"**有则用、无则退**" —— **提交版已声明 `model`，
+在提供该服务的 OctoSense 宿主上双端真跑通**（见 [`AI接入方案.md`](AI接入方案.md) §4）：
 
 | | 走模型（助手可用） | 回退规则（助手不可用） |
 |---|---|---|
@@ -167,7 +166,7 @@ host.request("model.complete", {
 
 | 证据 | 位置 | 说明 |
 |---|---|---|
-| **真机跑（应用）** | `docs/evidence/live-app/live-app.mp4` | 宿主内**逐帧真渲染**：五场景样例自动轮换并确认，记忆条从 2 张长到 5 张（`record_live_app.py`） |
+| **真机跑（应用）** | `docs/evidence/live-app/*.png`（9 张） | 宿主内**逐帧真渲染**：五场景样例自动轮换并确认，记忆条从 2 张长到 5 张（`record_live_app.py`；该目录原 10 秒短片已去重移出） |
 | **真机连续录屏** | `docs/evidence/live-run/rinx-live-end-to-end.mp4` | **Rinx 真机**一段连续录屏（非帧拼，20.7s）：导入 → Review → Run → 清记忆 → 点房间消息 → 造卡 → 确认（记忆 0→1） |
 | **真机连续录屏（遥控口驱动）** | `docs/evidence/live-run/live-app-in-rinx.mp4` | **Rinx 真机**一段连续录屏（非帧拼，38.7s）：进 apps → 导入页 → 填路径 → Review（六能力）→ Run → 写入一句话 → 出「出行」卡。经 `MAKEPAD_REMOTE` 遥控口驱动、`ffmpeg -f gdigrab` 连续抓屏（`record_rinx_live.py` 一条命令重录） |
 | **真机截图** | `docs/evidence/live-app/0{1..9}-*.png` | 默认态 / 造好卡 / 确认后 / 记忆 3，均为 Rinx 窗口实拍 |
@@ -177,7 +176,7 @@ host.request("model.complete", {
 | **机器可读对照** | `docs/evidence/identify/identify_cmp.json` | 三条样例的 when/where/kind/open |
 | **对照可重跑** | `build/demo_identify.py` | 一条命令复现上面两个 |
 | **自评过程** | 每份产出旁的 `review.json` | 逐轮"发现什么问题、改了什么" |
-| **演示短片**（初赛提交物） | `build/_video/shiyi-walkthrough.mp4` | 真实宿主逐帧录制（非动画） |
+| **演示短片（两条场景正片）** | `docs/evidence/demo-desktop-mail-20261011/` · `docs/evidence/demo-phone-groupmsg-20261012/` | 合计 **2′33″**，一镜到底 + 旁白 + 硬字幕（真实宿主录制，非动画） |
 | **复现命令** | `python build/record_generator.py`｜`python build/record_rinx_app.py <out.mp4>` | 上面两条录屏都能一条命令重跑 |
 
 ---

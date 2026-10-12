@@ -19,9 +19,10 @@ record its revision; do not invent missing requirements:
   **不要手写 L0**，除非 app 拥有者明确要求。
 - 数据/状态/事件语义用 **L0 规范**（`a2app-l0/framework/l0.md`）。
 - 图标只维护**一份**，路径与 `listing.json` 中声明的一致；不要另建启动器/商店图副本。
-- **只申请已实现功能需要的能力**（capabilities）。当前 `bundle/` 声明 3 项
-  （`matrix.send_message` / `octos.session.open` / `octos.turn.start`），逐项用途与**不可用时的行为**见
-  [`docs/数据来源与限制.md`](docs/数据来源与限制.md) §2；早期骨架为零权限，**已随 0.3.3 更新**。
+- **只申请已实现功能需要的能力**（capabilities）。**主提交 = 根 `bundle/`（脚本应用 `shiyi-live`，0.8.6）声明 6 项**
+  （`storage` / `model` / `octos.session.history` / `matrix.read_messages` / `matrix.profile` / `matrix.send_message`）；
+  **L0 卡片包**（`apps/shiyi-card/bundle/`，0.3.3）声明 3 项（`matrix.send_message` / `octos.session.open` / `octos.turn.start`）。
+  逐项用途与**不可用时的行为**见 [`docs/数据来源与限制.md`](docs/数据来源与限制.md) §2。
 - 替换掉所有占位值（app id / 名称 / publisher / URL / 平台声明 / 许可）。
   商店截图必须来自**真实原生捕获**，不能用设计稿。
 - 原生行为与外观验证**独立于** bundle 门禁；如实报告测过哪些平台与流程。

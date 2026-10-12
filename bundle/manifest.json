@@ -14,10 +14,10 @@
   },
   "id": "shiyi-live",
   "integrity": {
-    "bundle_blake3": "c633cb04660303a3ff4c55f94792dc681949e397f5811c92e844cee74ef22f84",
+    "bundle_blake3": "50404a65871a4fbe50f9b7740b7932d6fdae855164962a7b6b20d76a0f5cb909",
     "signature": {
       "key_id": "sansanyixyz331",
-      "value": "05c80e43db728d9884d0da9a28186168df9f61134e1259aafe26ce9f290ade0ce98b47c3beb9139806a64cd410424d08a0afbf0d821cd671436a4094c585d90a"
+      "value": "ce0381f93aeb1ad994dbb91fb389f56d0111d0301d16e2ffbccd19fba7a4afe52cf12335c5a5092b67db989db1aa4d1584bcd1cd16b27eb10c6d52c73d776f0b"
     }
   },
   "name": "拾意 · 现场造卡",
@@ -28,5 +28,5 @@
   "storage": {
     "max_bytes": 262144
   },
-  "version": "0.8.0"
+  "version": "0.8.6"
 }

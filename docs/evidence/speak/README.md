@@ -28,7 +28,7 @@ TtsEngineProcessor: speak  sync  out                                    ← 播�
 
 1. **视频是无声的** —— Android `screenrecord` 不录内部音频（本机 Help 无 `--audio` 选项）。视频只录了**屏幕**：出卡、两条通知叠起来、app 里"到点提醒"那行字。**"出声"由上面的 TTS 引擎日志作证**，不是靠视频听出来的。
 2. **演示用了压缩计时** —— 真产品按卡里的 `when`（"明早八点"）到点；演示为了让评委当场看到，钉卡后 **~5 秒**就触发一次。（`main.splash` 里 `pending_left` 的初值就是压缩系数。）
-3. **TTS 是 Android 系统自带引擎**（本机 MIUI 的 `com.xiaomi.mibrain.speech`），**不是 33OS、也不依赖任何自有语音资产** ⇒ 不碰 33OS 红线、换机即用。
+3. **TTS 是 Android 系统自带引擎**（本机 MIUI 的 `com.xiaomi.mibrain.speech`），**不依赖任何自有语音资产** ⇒ 换机即用。
 4. **复赛期已并入公开仓**（2026-10-09）：D1 进 `octos/apps/shiyi/bundle/main.splash`（`os.shiyi` 0.2.0→**0.2.1**），D2 进 `octos/host-extension/speak_host_extension.patch`。※ 本目录即证据原件的仓内副本（原件首录于 2026-10-08，彼时按令未推仓）。
 
 ## 四、文件

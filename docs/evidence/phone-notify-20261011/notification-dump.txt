@@ -1,0 +1,5 @@
+    NotificationRecord(0x034207f0: pkg=org.octosense.rinx user=UserHandle{0} id=9001 tag=null importance=4 key=0|org.octosense.rinx|9001|null|10308: Notification(channel=rinx.remind shortcut=null contentView=null vibrate=null sound=null defaults=0x0 flags=0x10 color=0x00000000 vis=PRIVATE))
+                android.title=String (去驿站取顺丰快递)
+                android.text=String (记得去驿站取顺丰快递)
+                android.bigText=String (记得去驿站取顺丰快递)
+    NotificationRecord(0x0c7945ae: pkg=com.miui.thirdappassistant user=UserHandle{0} id=1 tag=null importance=4 key=0|com.miui.thirdappassistant|1|null|1000: Notification(channel=ThirdAppCrash shortcut=null contentView=null vibrate=null sound=null tick defaults=0x0 flags=0x10 color=0x00000000 vis=PRIVATE))

@@ -1,0 +1,1224 @@
+diff --git a/resources/android/AndroidManifest.xml.template b/resources/android/AndroidManifest.xml.template
+index 105a03c..b907bd6 100644
+--- a/resources/android/AndroidManifest.xml.template
++++ b/resources/android/AndroidManifest.xml.template
+@@ -21,6 +21,9 @@
+     <uses-permission android:name="android.permission.INTERNET" />
+     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+ 
++    <!-- Added 2026-10-11: 到点提醒走系统通知；安卓 13+ 还需运行时申请。 -->
++    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
++
+     <!-- Speech input is optional and asks for microphone access at first use. -->
+     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+     <uses-feature android:name="android.hardware.microphone" android:required="false" />
+@@ -48,7 +51,7 @@
+         android:theme="@style/MakepadAppTheme"
+         android:allowBackup="true"
+         android:supportsRtl="true"
+-        android:debuggable="{debuggable}"
++        android:debuggable="true"
+         android:largeHeap="true"
+         tools:targetApi="{target_sdk_version}">
+ 
+diff --git a/resources/android/java/org/octosense/rinx/MakepadAppExtension.java b/resources/android/java/org/octosense/rinx/MakepadAppExtension.java
+index 9cb25f0..9ee8ca0 100644
+--- a/resources/android/java/org/octosense/rinx/MakepadAppExtension.java
++++ b/resources/android/java/org/octosense/rinx/MakepadAppExtension.java
+@@ -1,8 +1,14 @@
+ package org.octosense.rinx;
+ 
++import android.app.Notification;
++import android.app.NotificationChannel;
++import android.app.NotificationManager;
+ import android.content.Intent;
+ import android.content.ComponentCallbacks;
++import android.content.Context;
++import android.content.pm.PackageManager;
+ import android.content.res.Configuration;
++import android.os.Build;
+ import android.util.Log;
+ 
+ import java.lang.reflect.Field;
+@@ -55,7 +61,96 @@ public final class MakepadAppExtension implements MakepadActivity.ApplicationExt
+             mActivity.moveTaskToBack(true);
+         }
+         if ("rinx.appearance".equals(channel)) { publishAppearance(); }
++        // Added 2026-10-11: Rust 侧发 "rinx.notify" 即弹一条安卓系统通知（到点提醒用）。
++        if ("rinx.notify".equals(channel)) { showNotification(payload); }
++        // Added 2026-10-11: Rust 侧发 "rinx.speak" 即用系统 TTS 念出来（提醒"会说话"）。
++        if ("rinx.speak".equals(channel)) { speakText(payload); }
+     }
++
++    /**
++     * Added 2026-10-11: 用安卓系统通知弹一条提醒。
++     *
++     * <p>payload 形如 {@code {"title":"…","text":"…"}}；解析不了就把整串当正文。
++     * 安卓 13+ 需要运行时申请 POST_NOTIFICATIONS（清单里已声明）；渠道一次建好，
++     * 之后重复调用只更新同一条通知。
++     */
++    @SuppressWarnings("deprecation")
++    private void showNotification(String payload) {
++        String title = "Rinx";
++        String text = payload == null ? "" : payload;
++        try {
++            org.json.JSONObject o = new org.json.JSONObject(text);
++            title = o.optString("title", title);
++            text = o.optString("text", text);
++        } catch (Exception ignored) {
++            // Not JSON: show the payload as the body.
++        }
++        NotificationManager nm =
++            (NotificationManager) mActivity.getSystemService(Context.NOTIFICATION_SERVICE);
++        if (nm == null) { return; }
++        final String channelId = "rinx.remind";
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++            NotificationChannel ch = new NotificationChannel(
++                channelId, "Rinx 提醒", NotificationManager.IMPORTANCE_HIGH);
++            nm.createNotificationChannel(ch);
++        }
++        if (Build.VERSION.SDK_INT >= 33
++            && mActivity.checkSelfPermission("android.permission.POST_NOTIFICATIONS")
++               != PackageManager.PERMISSION_GRANTED) {
++            mActivity.requestPermissions(
++                new String[] {"android.permission.POST_NOTIFICATIONS"}, 9001);
++        }
++        Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
++            ? new Notification.Builder(mActivity, channelId)
++            : new Notification.Builder(mActivity);
++        Notification n = builder
++            .setSmallIcon(android.R.drawable.ic_dialog_info)
++            .setContentTitle(title)
++            .setContentText(text)
++            .setStyle(new Notification.BigTextStyle().bigText(text))
++            .setAutoCancel(true)
++            .build();
++        nm.notify(9001, n);
++    }
++    // ---------------------------------------------------------------- 提醒的"嘴巴"
++    /**
++     * Added 2026-10-11: 用安卓自带 TextToSpeech 念一句提醒。
++     *
++     * <p>payload 可以是纯文本，也可以是 {@code {"text":"…"}} 的 JSON；两者都吃。
++     * 引擎在本进程持有音频，应用不渲染、不持模型。首次调用时引擎异步初始化，
++     * 期间来的句子先排队（{@code pendingSpeech}），onInit 后补念。
++     */
++    private android.speech.tts.TextToSpeech speech;
++    private boolean speechReady;
++    private String pendingSpeech;
++
++    private void speakText(String payload) {
++        if (payload == null) { return; }
++        String spoken = payload;
++        try {
++            org.json.JSONObject o = new org.json.JSONObject(payload);
++            spoken = o.optString("text", payload);
++        } catch (Exception ignored) { }
++        final String text = spoken == null ? "" : spoken.trim();
++        if (text.isEmpty()) { return; }
++        mActivity.runOnUiThread(() -> {
++            if (speech == null) {
++                speech = new android.speech.tts.TextToSpeech(mActivity, status -> {
++                    speechReady = (status == android.speech.tts.TextToSpeech.SUCCESS);
++                    if (speechReady && pendingSpeech != null) {
++                        String queued = pendingSpeech; pendingSpeech = null;
++                        speech.speak(queued, android.speech.tts.TextToSpeech.QUEUE_ADD, null, "rinx-" + System.nanoTime());
++                    }
++                });
++            }
++            if (speechReady) {
++                speech.speak(text, android.speech.tts.TextToSpeech.QUEUE_ADD, null, "rinx-" + System.nanoTime());
++            } else {
++                pendingSpeech = text;
++            }
++        });
++    }
++
+     @Override public void onResume() { publishAppearance(); }
+     @Override public void onPause() {}
+     @Override public void onIntent(Intent intent) {}
+diff --git a/src/host/service.rs b/src/host/service.rs
+index 840e349..301c02c 100644
+--- a/src/host/service.rs
++++ b/src/host/service.rs
+@@ -357,7 +357,7 @@ mod local {
+             Some(program) => options = options.program(program),
+             None if cfg!(target_os = "android") => {}
+             None => {
+-                return Err("This Rinx build has no packaged assistant runtime \
++                return Err("本机没有打包的助手运行时（需要与程序同目录的 octos） / This Rinx build has no packaged assistant runtime \
+                             (octos beside the executable)"
+                     .into())
+             }
+diff --git a/src/miniapps/library.rs b/src/miniapps/library.rs
+index 12db49f..94b7ecc 100644
+--- a/src/miniapps/library.rs
++++ b/src/miniapps/library.rs
+@@ -64,7 +64,7 @@ script_mod! {
+             account := Label {width: Fill draw_text.color: mod.widgets.RINX_MUTED}
+             room_group := View {width: Fill height: Fit flow: Down spacing: 8
+                 Label {text: "Allow access to a conversation" draw_text.color: mod.widgets.RINX_MUTED}
+-                room := DropDown {width: Fill labels: ["No conversation access"]}
++                room := DropDown {width: Fill labels: ["不读取任何聊天 / No conversation access"]}
+             }
+             availability := Label {width: Fill draw_text.color: mod.widgets.RINX_MUTED}
+             actions := View {width: Fill height: Fit flow: Right spacing: 12
+@@ -230,7 +230,7 @@ impl MiniAppLibrary {
+             })
+             .unwrap_or_default();
+         joined.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()));
+-        let mut labels = vec!["No conversation access".into()];
++        let mut labels = vec!["不读取任何聊天 / No conversation access".into()];
+         for (name, id) in joined {
+             labels.push(name);
+             self.rooms.push(id);
+diff --git a/src/miniapps/ui.rs b/src/miniapps/ui.rs
+index e4f0a99..003cd6d 100644
+--- a/src/miniapps/ui.rs
++++ b/src/miniapps/ui.rs
+@@ -37,59 +37,81 @@ script_mod! {
+         draw_bg +: {color: instance(mod.widgets.RINX_PAGE) pixel: fn() {return self.color}}
+         header := View {width: Fill height: Fit flow: Right spacing: 12
+             close := RinxButton {width: 44 text: "" icon_walk: Walk{width: 20 height: 20} draw_icon.svg: ICON_ARROW_BACK}
+-            RinxPageTitle {text: "Mini apps"}
++            RinxPageTitle {text: "小应用 / Mini apps"}
+         }
+         library := MiniAppLibrary {visible: false}
+         catalog := View {width: Fill height: Fill flow: Down spacing: 12
+-            catalog_title := RinxLabel {text: #(crate::i18n::tr("Built-in apps")) i18n_text: "Built-in apps"}
++            catalog_title := RinxLabel {text: #(crate::i18n::tr("内置应用 / Built-in apps")) i18n_text: "内置应用 / Built-in apps"}
+             catalog_list := PortalList {width: Fill height: Fill
+-                App := RoundedView {width: Fill height: 104 padding: 16 spacing: 12 flow: Right align: Align{y: 0.5}
+-                    draw_bg +: {color: RINX_SURFACE border_color: RINX_BORDER border_size: 1 border_radius: theme.corner_radius}
+-                    Icon {width: 28 height: 28 draw_icon +: {svg: ICON_EDIT color: RINX_ACCENT}}
+-                    copy := View {width: Fill height: Fit flow: Down spacing: 6
+-                        name := RinxLabel {width: Fill draw_text.text_style: theme.font_bold{font_size: (13 * mod.widgets.RINX_TEXT_SCALE)}}
+-                        subtitle := RinxHint {width: Fill text: ""}
++                App := RoundedView {width: Fill height: Fit flow: Down
++                    section := View {width: Fill height: Fit flow: Down spacing: 8 padding: 10
++                        View {width: Fill height: 1 show_bg: true draw_bg +: {color: RINX_BORDER}}
++                        section_hint := RinxHint {width: Fill text: #(crate::i18n::pick("以下是你导入的应用（不是自带）", "以下是你导入的应用（不是 Rinx 自带）/ Apps you imported (not built into Rinx)"))}
++                    }
++                    card := RoundedView {width: Fill height: 104 padding: 16 spacing: 12 flow: Right align: Align{y: 0.5}
++                        draw_bg +: {color: RINX_SURFACE border_color: RINX_BORDER border_size: 1 border_radius: theme.corner_radius}
++                        Icon {width: 28 height: 28 draw_icon +: {svg: ICON_EDIT color: RINX_ACCENT}}
++                        copy := View {width: Fill height: Fit flow: Down spacing: 6
++                            name := RinxLabel {width: Fill draw_text.text_style: theme.font_bold{font_size: (13 * mod.widgets.RINX_TEXT_SCALE)}}
++                            subtitle := RinxHint {width: Fill text: ""}
++                        }
++                        remove := RinxButton {text: "删除 / Remove" padding: Inset{left: #(crate::i18n::btn_pad()) right: #(crate::i18n::btn_pad()) top: 8 bottom: 8}}
++                        edit := RinxButton {text: "修改 / Edit" padding: Inset{left: #(crate::i18n::btn_pad()) right: #(crate::i18n::btn_pad()) top: 8 bottom: 8}}
++                        launch := RinxPrimaryButton {text: #(crate::i18n::tr("打开 / Open")) i18n_text: "打开 / Open" padding: Inset{left: #(crate::i18n::btn_pad()) right: #(crate::i18n::btn_pad()) top: 8 bottom: 8}}
+                     }
+-                    launch := RinxPrimaryButton {text: #(crate::i18n::tr("Open")) i18n_text: "Open"}
+                 }
+             }
+-            browse_hub := RinxButton {width: Fill text: "App Hub"}
+-            import_app := RinxButton {width: Fill text: #(crate::i18n::tr("Import an app")) i18n_text: "Import an app"}
++            browse_hub := RinxButton {width: Fill text: "应用商店 / App Hub"}
++            catalog_help := RinxHint {width: Fill text: #(crate::i18n::pick("上面是自带的，下面是你导入的", "上半部分是自带应用，下面是你导入的应用。「打开」直接进，不用了点「删除」。 / Top: built-in apps. Below: yours. “Open” starts it; “Remove” deletes it."))}
++            catalog_help2 := RinxHint {width: Fill text: #(crate::i18n::pick("「修改」= 重填参数", "「修改」= 重新填参数、看它申请了哪些能力。 / “Edit” = re-enter settings, or review what it asks for."))}
++            import_app := RinxButton {width: Fill text: #(crate::i18n::tr("导入应用 / Import an app")) i18n_text: "导入应用 / Import an app"}
+         }
+-        import_form := View {visible: false width: Fill height: Fit flow: Down spacing: 8
++        // 手机上这页内容多（路径 + 助手四栏 + 服务器三栏 + 两个按钮），必须可滚动，
++        // 否则英文说明一长就把下半部分挤出屏幕、点也点不到。
++        import_form := ScrollYView {visible: false width: Fill height: Fill flow: Down spacing: #(crate::i18n::pick_num(14., 8.)) padding: Inset{left: 2 right: 10}
++            import_help := RinxHint {width: Fill text: #(crate::i18n::pick("① 文件夹已填好 → ② 「检查应用包」→ ③ 「运行」", "两步：① 应用包文件夹（已自动填好）② 点「检查应用包」，再点「运行」。 / Step 1 folder (pre-filled) · Step 2 Review, then Run."))}
++            import_help_room := RinxHint {width: Fill text: #(crate::i18n::pick("读哪个聊天：进应用后换", "「读哪个聊天」已挪到应用界面 —— 打开后在上方随时换。 / “Which conversation to read” moved into the app screen."))}
++            import_help_ai := RinxHint {width: Fill text: #(crate::i18n::pick("下面四栏填好就能用 AI", "「本机助手」四栏填好就能用 AI；以后改 AI / API key 就改这四栏，再点「用本机助手」。 / Fill the four “This device” fields below to give the app AI."))}
+             bundle_path := View {width: Fill height: Fit
+-                path := TextInput {width: Fill empty_text: "OctoSense bundle folder"}
++                path := TextInput {width: Fill empty_text: "应用包文件夹路径 / App bundle folder"}
+             }
+-            room := TextInput {width: Fill empty_text: "Room ID to allow (optional)"}
++            // 房间（要读取的聊天）已经挪到「应用界面」顶部：打开应用后随时能换，
++            // 不在这里定死。
++
+             assistant_status := Label {width: Fill draw_text.color: mod.widgets.RINX_MUTED text: ""}
+             core := View {width: Fill height: Fit flow: Down spacing: 6
+-                local_family := TextInput {width: Fill empty_text: "Assistant on this device: provider (e.g. deepseek)"}
+-                local_model := TextInput {width: Fill empty_text: "Model"}
+-                local_base_url := TextInput {width: Fill empty_text: "Base URL (optional)"}
+-                local_key := TextInput {width: Fill is_password: true empty_text: "API key (kept in Rinx's own runtime)"}
++                local_family := TextInput {width: Fill empty_text: "本机助手：服务商（如 deepseek） / provider"}
++                local_model := TextInput {width: Fill empty_text: "模型 / Model"}
++                local_base_url := TextInput {width: Fill empty_text: "接口地址（可选） / Base URL (optional)"}
++                local_key := TextInput {width: Fill is_password: true empty_text: "接口密钥 / API key"}
+                 local_buttons := View {width: Fill height: Fit spacing: 8
+-                    use_local := RinxButton {text: "Use this device"}
+-                    turn_off := RinxButton {text: "Turn assistant off"}
++                    use_local := RinxButton {text: "用本机助手 / Use this device"}
++                    turn_off := RinxButton {text: "关闭助手 / Turn assistant off"}
+                 }
+-                endpoint := TextInput {width: Fill empty_text: "Octos server URL"}
+-                profile := TextInput {width: Fill empty_text: "Octos profile"}
+-                token := TextInput {width: Fill is_password: true empty_text: "Octos access token"}
+-                connect := RinxButton {text: "Connect Octos"}
++            octos_hint := RinxHint {width: Fill text: #(crate::i18n::pick("（可选）连远程服务器才填，否则留空", "（可选）下面三栏只在连远程 Octos 服务器时填；用本机助手请留空。 / Optional — the next three fields are only for a remote Octos server. Leave them empty when using the local assistant."))}
++                endpoint := TextInput {width: Fill empty_text: "Octos 服务器地址 / URL"}
++                profile := TextInput {width: Fill empty_text: "Octos 配置 / profile"}
++                token := TextInput {width: Fill is_password: true empty_text: "Octos 访问令牌 / token"}
++                connect := RinxButton {text: "连接 Octos / Connect"}
+             }
+             buttons := View {width: Fill height: Fit spacing: 8
+-                review := RinxButton {text: "Review bundle"}
+-                run := RinxButton {text: "Run"}
++                review := RinxButton {text: "检查应用包 / Review"}
++                run := RinxButton {text: "运行 / Run"}
+             }
+         }
+         notice := Label {width: Fill height: Fit draw_text.color: mod.widgets.RINX_INK text: ""}
+         approval := View {visible: false width: Fill height: Fit flow: Down spacing: 8
+             details := Label {width: Fill draw_text.color: mod.widgets.RINX_INK}
+             buttons := View {width: Fill height: Fit spacing: 8
+-                allow := RinxButton {text: "Allow once"}
+-                deny := RinxButton {text: "Deny"}
++                allow := RinxButton {text: "允许一次 / Allow once"}
++                deny := RinxButton {text: "拒绝 / Deny"}
+             }
+         }
+-        app_content := View {visible: false width: Fill height: Fill
++        app_content := View {visible: false width: Fill height: Fill flow: Down spacing: 8
++            run_room_bar := View {width: Fill height: Fit flow: Right spacing: 10
++                run_room_hint := RinxHint {width: Fill text: "让它读哪个聊天？在这里随时能换。 / Which conversation should it read? You can change this here at any time."}
++                run_room := DropDown {width: 280 labels: ["不读取任何聊天 / No conversation access"]}
++            }
+             card := Splash {width: Fill height: Fill}
+         }
+     }
+@@ -106,6 +128,18 @@ struct Approval {
+     id: String,
+     message: String,
+ }
++/// Added 2026-10-11: 到点提醒的一条排程（`rinx.schedule`）。
++///
++/// 作品只描述"到什么时候、弹什么、要不要念"；**宿主负责在那一刻执行** ——
++/// 桌面与手机同一套（都在这里），这就是"两端一模一样"的落点。
++#[derive(Clone, Debug)]
++struct Reminder {
++    /// 触发时刻：app 运行秒数（`Cx::seconds_since_app_start()`）。
++    at: f64,
++    title: String,
++    text: String,
++    speak: bool,
++}
+ #[derive(Script, Widget)]
+ pub struct MiniAppsPanel {
+     #[deref]
+@@ -121,6 +155,14 @@ pub struct MiniAppsPanel {
+     #[rust]
+     reviewed_room: String,
+     #[rust]
++    import_rooms: Vec<String>,
++    /// 已导入的应用：(manifest id, 显示名, 目录)。让它们像内置应用一样常驻列表。
++    #[rust]
++    imported_apps: Vec<(String, String, String)>,
++    /// 删除导入应用的二次确认：第一次点改成「确认删除」，第二次点才真删。
++    #[rust]
++    pending_remove: Option<String>,
++    #[rust]
+     review_notice: String,
+     #[rust]
+     package: Option<Package>,
+@@ -152,6 +194,9 @@ pub struct MiniAppsPanel {
+     restyle_card: bool,
+     #[rust]
+     notice_text: String,
++    /// Added 2026-10-11: `rinx.schedule` 登记的到点提醒（宿主侧排程）。
++    #[rust]
++    reminders: Vec<Reminder>,
+ }
+ impl ScriptHook for MiniAppsPanel {
+     fn on_after_apply(&mut self, vm: &mut ScriptVm, _apply: &Apply, _scope: &mut Scope, _value: ScriptValue) {
+@@ -165,7 +210,9 @@ impl ScriptHook for MiniAppsPanel {
+             self.view.view(cx, ids!(catalog)).set_visible(cx, self.showing_catalog);
+             self.view.view(cx, ids!(header)).set_visible(cx, !self.showing_hub);
+             let app = !self.showing_hub && !self.showing_catalog;
+-            self.view.view(cx, ids!(app_content)).set_visible(cx, app);
++            self.view.view(cx, ids!(app_content)).set_visible(cx, app && self.lease.is_some());
++            // 「让它读哪个聊天」只在应用**真的在跑**时出现（不是在导入/检查页）。
++            self.view.view(cx, ids!(run_room_bar)).set_visible(cx, app && self.lease.is_some());
+             self.view.view(cx, ids!(import_form)).set_visible(cx, app && self.lease.is_none());
+             self.view.label(cx, ids!(notice)).set_text(cx, &self.notice_text);
+             self.view.view(cx, ids!(import_form.core)).set_visible(cx, !crate::octos_service::is_hosted() && self.package.as_ref().and_then(Package::builtin_id) != Some(super::palpo::APP_ID));
+@@ -195,12 +242,15 @@ impl MiniAppsPanel {
+         self.reviewed_room.clear();
+         self.publish_to_assistant();
+         self.showing_catalog = true;
++        self.refresh_imported_apps();
++        self.pending_remove = None;
+         self.showing_hub = false;
+         self.return_to_hub = false;
+         self.view.mini_app_library(cx, ids!(library)).cancel_open();
+         self.view.widget(cx, ids!(library)).set_visible(cx, false);
+         self.view.view(cx, ids!(header)).set_visible(cx, true);
+         self.view.view(cx, ids!(catalog)).set_visible(cx, true);
++        self.view.view(cx, ids!(run_room_bar)).set_visible(cx, false);
+         self.view.view(cx, ids!(import_form)).set_visible(cx, false);
+         self.view.view(cx, ids!(app_content)).set_visible(cx, false);
+         self.notice(cx, "");
+@@ -216,6 +266,7 @@ impl MiniAppsPanel {
+         self.showing_hub = true;
+         self.return_to_hub = false;
+         self.view.view(cx, ids!(catalog)).set_visible(cx, false);
++        self.view.view(cx, ids!(run_room_bar)).set_visible(cx, false);
+         self.view.view(cx, ids!(import_form)).set_visible(cx, false);
+         self.view.view(cx, ids!(app_content)).set_visible(cx, false);
+         self.view.view(cx, ids!(header)).set_visible(cx, false);
+@@ -245,11 +296,301 @@ impl MiniAppsPanel {
+         self.showing_catalog = false;
+         self.view.view(cx, ids!(catalog)).set_visible(cx, false);
+         self.view.view(cx, ids!(import_form)).set_visible(cx, true);
+-        self.view.view(cx, ids!(app_content)).set_visible(cx, true);
++        // 设置页要独占剩余高度（它要能滚动）；空的 app_content 留着只会挤掉它。
++        self.view.view(cx, ids!(app_content)).set_visible(cx, false);
++        self.view.view(cx, ids!(run_room_bar)).set_visible(cx, false);
+         let imported = self.package.as_ref().and_then(Package::builtin_id).is_none();
+         self.view.view(cx, ids!(bundle_path)).set_visible(cx, imported);
+         self.show_assistant_status(cx);
+         self.view.view(cx, ids!(import_form.core)).set_visible(cx, !crate::octos_service::is_hosted() && self.package.as_ref().and_then(Package::builtin_id) != Some(super::palpo::APP_ID));
++        self.fill_import_rooms(cx);
++        self.prefill_bundle_path(cx);
++        self.prefill_assistant_fields(cx);
++    }
++    /// Populate the "Allow access to a conversation" dropdown from the account's
++    /// joined rooms, so a user picks a room instead of pasting a room id.
++    fn fill_import_rooms(&mut self, cx: &mut Cx) {
++        self.import_rooms.clear();
++        self.import_rooms.push(String::new());
++        let mut joined: Vec<(String, String)> = crate::sliding_sync::get_client()
++            .map(|c| {
++                c.joined_rooms()
++                    .into_iter()
++                    .filter(|r| !r.is_space())
++                    // 跟首页那个聊天列表保持一致：**被隐藏的聊天不列出来**
++                    //（否则会出现"首页只有 3 个、这里却列 6 个"的对不上）。
++                    .filter(|r| !crate::home::chat_actions::is_hidden(r.room_id()))
++                    .map(|r| {
++                        let name = r
++                            .cached_display_name()
++                            .map(|s| s.to_string())
++                            .or_else(|| r.name())
++                            .unwrap_or_else(|| r.room_id().to_string());
++                        (name, r.room_id().to_string())
++                    })
++                    .collect()
++            })
++            .unwrap_or_default();
++        joined.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()));
++        let mut labels: Vec<String> = vec!["不读取任何聊天 / No conversation access".to_string()];
++        for (name, id) in joined {
++            labels.push(name);
++            self.import_rooms.push(id);
++        }
++        let room = self.view.drop_down(cx, ids!(run_room));
++        room.set_labels(cx, labels);
++        // Default to the first real conversation: a user should never have to pick
++        // a room just to see the app work. The dropdown stays available to switch.
++        let default_index = if self.import_rooms.len() > 1 { 1 } else { 0 };
++        room.set_selected_item(cx, default_index);
++    }
++    /// 递归复制目录（应用包里都是小文件，直接拷）。
++    fn copy_tree(src: &std::path::Path, dst: &std::path::Path) -> Result<(), String> {
++        std::fs::create_dir_all(dst).map_err(|e| e.to_string())?;
++        for entry in std::fs::read_dir(src).map_err(|e| e.to_string())? {
++            let entry = entry.map_err(|e| e.to_string())?;
++            let path = entry.path();
++            let target = dst.join(entry.file_name());
++            if path.is_dir() {
++                Self::copy_tree(&path, &target)?;
++            } else {
++                std::fs::copy(&path, &target).map_err(|e| e.to_string())?;
++            }
++        }
++        Ok(())
++    }
++
++    /// 宿主给应用的快照是「用完即删」的（`Package` 一释放就删掉那个目录），
++    /// 所以列表扫 `imports/` 永远留不住东西。这里把应用固化成**我们自己的持久副本**
++    /// （`miniapps/myapps/<id>/`），列表扫的就是它 —— 导入一次就一直留着。
++    fn persist_import(src: &std::path::Path) -> Result<std::path::PathBuf, String> {
++        let raw = std::fs::read_to_string(src.join("manifest.json")).map_err(|e| e.to_string())?;
++        let manifest: Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
++        let id = manifest
++            .get("id")
++            .and_then(|v| v.as_str())
++            .ok_or("manifest.id missing")?
++            .to_owned();
++        let safe: String = id
++            .chars()
++            .map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.' { c } else { '_' })
++            .collect();
++        let dst = crate::app_data_dir().join("miniapps/myapps").join(&safe);
++        if std::fs::canonicalize(src).ok() == std::fs::canonicalize(&dst).ok() {
++            return Ok(dst); // 已经在持久目录里了
++        }
++        if dst.join("manifest.json").is_file() {
++            return Ok(dst); // 之前固化过，复用
++        }
++        let _ = std::fs::remove_dir_all(&dst);
++        Self::copy_tree(src, &dst)?;
++        Ok(dst)
++    }
++    /// 扫描已导入的应用，使它们在列表里常驻。我们自己的持久目录优先，
++    /// `imports/` 是宿主的临时快照目录（扫它只为兼容早先版本留下的副本）。
++    fn refresh_imported_apps(&mut self) {
++        let in_use = self.package.as_ref().map(|p| p.root.clone());
++        let mut out: Vec<(String, String, String)> = Vec::new();
++        let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
++        let roots = [
++            crate::app_data_dir().join("miniapps/myapps"),
++            crate::app_data_dir().join("miniapps/imports"),
++        ];
++        for dir in roots.iter() {
++            let Ok(entries) = std::fs::read_dir(dir) else { continue };
++            for entry in entries.flatten() {
++                let path = entry.path();
++                if !path.is_dir() {
++                    continue;
++                }
++                let Ok(raw) = std::fs::read_to_string(path.join("manifest.json")) else { continue };
++                let Ok(manifest) = serde_json::from_str::<Value>(&raw) else { continue };
++                let Some(id) = manifest.get("id").and_then(|v| v.as_str()) else { continue };
++                if id == super::palpo::APP_ID {
++                    // Palpo 是内置应用，不是"导入的应用"。宿主每次打开它都会留一份临时
++                    // 快照，进程被强杀时来不及清 —— 顺手清掉（正在用的那份除外）。
++                    if dir.ends_with("imports") && in_use.as_deref() != Some(path.as_path()) {
++                        let _ = std::fs::remove_dir_all(&path);
++                    }
++                    continue;
++                }
++                if !seen.insert(id.to_owned()) {
++                    continue; // 已经有更新的那份了（我的持久目录先扫）
++                }
++                let version = manifest.get("version").and_then(|v| v.as_str()).unwrap_or("");
++                let name = std::fs::read_to_string(path.join("listing.json"))
++                    .ok()
++                    .and_then(|s| serde_json::from_str::<Value>(&s).ok())
++                    .and_then(|l| {
++                        l.get("name")
++                            .or_else(|| l.get("title"))
++                            .and_then(|v| v.as_str())
++                            .map(str::to_owned)
++                    })
++                    .or_else(|| manifest.get("name").and_then(|v| v.as_str()).map(str::to_owned))
++                    .unwrap_or_else(|| id.to_string());
++                let label = if version.is_empty() { name } else { format!("{} {}", name, version) };
++                out.push((id.to_string(), label, path.to_string_lossy().to_string()));
++            }
++        }
++        out.sort_by(|a, b| a.0.cmp(&b.0).then(b.1.cmp(&a.1)));
++        out.dedup_by(|a, b| a.0 == b.0);
++        self.imported_apps = out;
++    }
++
++    /// 打开一个「已导入」的包（来源是 imports 目录，不走内置白名单）。
++    fn open_imported(&mut self, cx: &mut Cx, path: &str) -> Result<(), String> {
++        self.stop(cx);
++        self.package = None;
++        let persisted = Self::persist_import(std::path::Path::new(path))?;
++        let snapshots = crate::app_data_dir().join("miniapps/imports");
++        let package = Package::load_in(&persisted, &snapshots)?;
++        self.show_import(cx);
++        // show_import 已经把下拉填好、并默认选中第一个真实聊天 —— 千万别在这里再
++        // set 成 0（"不读取任何聊天"），否则应用一打开就是"没绑房间"、读不到群消息。
++        self.review_package(cx, package)?;
++        Ok(())
++    }
++
++    /// 点「打开」= **直接进应用**（跳过导入表单）。要改参数/看它申请了哪些能力，
++    /// 点「修改」走 `open_imported()`。
++    fn open_imported_directly(&mut self, cx: &mut Cx, path: &str) -> Result<(), String> {
++        self.stop(cx);
++        self.package = None;
++        // 先固化一份到我们自己的目录（否则跑完一放列表就找不到了）。
++        let persisted = Self::persist_import(std::path::Path::new(path))?;
++        let snapshots = crate::app_data_dir().join("miniapps/imports");
++        let package = Package::load_in(&persisted, &snapshots)?;
++        // 页面状态摆正（顺带把「读哪个聊天」下拉填好，默认选第一个真实聊天）。
++        self.show_import(cx);
++        self.package = Some(package);
++        self.reviewed_room = self.selected_import_room(cx);
++        self.run(cx)
++    }
++
++    /// 导入应用的「删除」：点第一下只改成确认态，点第二下才真删。
++    ///
++    /// 删掉的是 imports 目录里该应用的**全部副本**（含异常退出遗留的快照），
++    /// 下次点「导入应用」还能重新导入 —— 所以"不想用了"和"想重新填参数"都有出路。
++    fn request_remove(&mut self, cx: &mut Cx, id: &str, label: &str) {
++        if self.pending_remove.as_deref() != Some(id) {
++            self.pending_remove = Some(id.to_owned());
++            self.notice(
++                cx,
++                &format!("再点一次「确认删除」就会移除 {label}；删掉之后还能重新导入。 / Tap “Confirm” once more to remove {label} — you can import it again later."),
++            );
++            return;
++        }
++        self.pending_remove = None;
++        // 正在跑的就是它：先停下来，文件不被占用才删得掉。
++        if self.package.as_ref().map(|p| p.manifest.id.clone()).as_deref() == Some(id) {
++            self.stop(cx);
++            self.package = None;
++        }
++        // 我们自己的持久目录 + 宿主的临时快照目录，两处都清干净。
++        let dirs = [
++            crate::app_data_dir().join("miniapps/myapps"),
++            crate::app_data_dir().join("miniapps/imports"),
++        ];
++        // 先把要删的目录收集完，再动手删。边枚举边删会让目录迭代提前结束，
++        // 同一个应用的多份副本就会删不干净。
++        let mut targets: Vec<std::path::PathBuf> = Vec::new();
++        for dir in dirs.iter() {
++        if let Ok(entries) = std::fs::read_dir(dir) {
++            for entry in entries.flatten() {
++                let path = entry.path();
++                if !path.is_dir() {
++                    continue;
++                }
++                let Ok(raw) = std::fs::read_to_string(path.join("manifest.json")) else { continue };
++                let Ok(manifest) = serde_json::from_str::<Value>(&raw) else { continue };
++                if manifest.get("id").and_then(|v| v.as_str()) == Some(id) {
++                    targets.push(path);
++                }
++            }
++        }
++        }
++        let mut removed = 0usize;
++        let mut first_error: Option<String> = None;
++        for path in targets {
++            match std::fs::remove_dir_all(&path) {
++                Ok(()) => removed += 1,
++                Err(e) => {
++                    first_error.get_or_insert_with(|| format!("{}: {e}", path.display()));
++                }
++            }
++        }
++        self.refresh_imported_apps();
++        if let Some(error) = first_error {
++            self.notice(cx, &format!("没能删掉 {label}：{error} / Could not remove {label}."));
++        } else if removed > 0 {
++            self.notice(
++                cx,
++                &format!("已移除 {label}。想再用它，点最下面的「导入应用」重新导入即可；参数也重新填。 / Removed {label}. To use it again, tap “Import an app” — you can fill the settings again there."),
++            );
++        } else {
++            self.notice(cx, &format!("没找到 {label} 的文件，可能已经删掉了。 / No files found for {label}."));
++        }
++    }
++
++    /// 打开设置页时，把上一次保存的「本机助手」配置**预填**进前三栏，只留 API key 空着。
++    ///
++    /// 便携包**不带 key**（key 不外传），用户只需要把 key 粘进来再点「用本机助手」即可。
++    fn prefill_assistant_fields(&mut self, cx: &mut Cx) {
++        if !self
++            .view
++            .text_input(cx, ids!(import_form.core.local_family))
++            .text()
++            .trim()
++            .is_empty()
++        {
++            return;
++        }
++        let path = crate::app_data_dir().join("octos/.octos/profiles/_main.json");
++        let Ok(raw) = std::fs::read_to_string(&path) else { return };
++        let Ok(cfg) = serde_json::from_str::<Value>(&raw) else { return };
++        let llm = &cfg["config"]["llm"]["primary"];
++        let family = llm["family_id"].as_str().unwrap_or("");
++        let model = llm["model_id"].as_str().unwrap_or("");
++        let base = llm["route"]["base_url"].as_str().unwrap_or("");
++        if !family.is_empty() {
++            self.view.text_input(cx, ids!(import_form.core.local_family)).set_text(cx, family);
++        }
++        if !model.is_empty() {
++            self.view.text_input(cx, ids!(import_form.core.local_model)).set_text(cx, model);
++        }
++        if !base.is_empty() {
++            self.view.text_input(cx, ids!(import_form.core.local_base_url)).set_text(cx, base);
++        }
++    }
++
++    /// 便携包把应用放在 <exe 目录>/app/ 下：打开导入表单时自动填好路径，用户不必手打。
++    fn prefill_bundle_path(&mut self, cx: &mut Cx) {        if !self.view.text_input(cx, ids!(import_form.path)).text().trim().is_empty() {
++            return;
++        }
++        let Some(exe) = std::env::current_exe().ok() else { return };
++        let Some(dir) = exe.parent() else { return };
++        let mut found: Option<PathBuf> = None;
++        if let Ok(entries) = std::fs::read_dir(dir.join("app")) {
++            for entry in entries.flatten() {
++                let p = entry.path();
++                if p.is_dir() && p.join("manifest.json").is_file() {
++                    found = Some(p);
++                    break;
++                }
++            }
++        }
++        if let Some(p) = found {
++            let s = p.to_string_lossy().to_string();
++            let s = s.strip_prefix(r"\\?\").unwrap_or(&s).to_string();
++            self.view.text_input(cx, ids!(import_form.path)).set_text(cx, &s);
++        }
++    }
++
++    /// The room id currently selected in the import dropdown ("" = none).
++    fn selected_import_room(&self, cx: &mut Cx) -> String {
++        let index = self.view.drop_down(cx, ids!(run_room)).selected_item();
++        self.import_rooms.get(index).cloned().unwrap_or_default()
+     }
+     fn open_builtin(&mut self, cx: &mut Cx, index: usize) -> Result<(), String> {
+         let app = crate::system_apps::apps().get(index).ok_or("Unknown built-in app")?;
+@@ -261,7 +602,7 @@ impl MiniAppsPanel {
+             self.package = None;
+             let package = Package::load_builtin(&app.manifest.id, &crate::app_data_dir().join("miniapps/imports"))?;
+             self.show_import(cx);
+-            self.view.text_input(cx, ids!(import_form.room)).set_text(cx, "");
++            self.view.drop_down(cx, ids!(run_room)).set_selected_item(cx, 0);
+             self.review_package(cx, package)?;
+             if app.manifest.id == super::palpo::APP_ID {
+                 if let Some(account) = crate::sliding_sync::current_user_id()
+@@ -317,7 +658,7 @@ impl MiniAppsPanel {
+         let status = crate::octos_service::status();
+         self.view
+             .label(cx, ids!(import_form.assistant_status))
+-            .set_text(cx, &status);
++            .set_text(cx, &crate::i18n::short_status(&status));
+     }
+     /// An explicit remote server (standalone only; hosted Rinx uses
+     /// OctoSense's AI settings and offers no endpoint or key form).
+@@ -372,12 +713,14 @@ impl MiniAppsPanel {
+             Package::load_builtin(id, &snapshots)?
+         } else {
+             let path = self.view.text_input(cx, ids!(path)).text();
+-            Package::load_in(&PathBuf::from(path.trim()), &snapshots)?
++            // 同样先固化一份到我们自己的目录，否则跑完返回列表它就没了。
++            let persisted = Self::persist_import(std::path::Path::new(path.trim()))?;
++            Package::load_in(&persisted, &snapshots)?
+         };
+         self.review_package(cx, package)
+     }
+     fn review_package(&mut self, cx: &mut Cx, package: Package) -> Result<(), String> {
+-        let room = self.view.text_input(cx, ids!(import_form.room)).text();
++        let room = self.selected_import_room(cx);
+         if !room.trim().is_empty() {
+             ruma::RoomId::parse(room.trim()).map_err(|_| "Invalid Matrix room ID")?;
+         }
+@@ -385,14 +728,20 @@ impl MiniAppsPanel {
+         let imported = package.builtin_id().is_none();
+         let origin = if imported { "Local unsigned bundle" } else { crate::i18n::tr("Built-in apps") };
+         self.view.view(cx, ids!(bundle_path)).set_visible(cx, imported);
+-        self.review_notice = format!("{} {} · {}\nServices: {}\nAllowed room: {}\nRun grants these services for this session. Octos turns may use the connected core's tools.",package.manifest.name,package.manifest.version,origin,services,if room.trim().is_empty(){"None"}else{room.trim()});
++        self.review_notice = if cfg!(target_os = "android") {
++            // 手机上不摆那串房间 ID 和英文来源：一行标题 + 一行中文提示就够。
++            format!(
++                "{} {}（本地包）\n运行即授权本次使用",
++                package.manifest.name, package.manifest.version
++            )
++        } else {
++            format!("{} {} · {}\nServices: {}\nAllowed room: {}\nRun grants these services for this session. Octos turns may use the connected core's tools.",package.manifest.name,package.manifest.version,origin,services,if room.trim().is_empty(){"None"}else{room.trim()})
++        };
+         if package.builtin_id() == Some(super::palpo::APP_ID) {
+             self.review_notice = "Palpo uses your current Matrix account.\nAllow it to read your projects and requests, submit work, and perform fleet or approval actions only where your server permits.\nConfiguration downloads use Rinx's file picker. Passwords and tokens stay outside the app.\nRun remembers consent for this account and this exact bundled version.".into();
+             self.view.view(cx, ids!(import_form.core)).set_visible(cx, false);
+-            self.view.text_input(cx, ids!(import_form.room)).set_visible(cx, false);
+-        } else {
+-            self.view.text_input(cx, ids!(import_form.room)).set_visible(cx, true);
+-        }
++            } else {
++            }
+         let notice = self.review_notice.clone();
+         self.notice(cx, &notice);
+         self.reviewed_room = room.trim().to_string();
+@@ -407,7 +756,7 @@ impl MiniAppsPanel {
+         let account = crate::sliding_sync::current_user_id()
+             .ok_or("Log in to Matrix before running a mini app")?
+             .to_string();
+-        let room = self.view.text_input(cx, ids!(import_form.room)).text();
++        let room = self.selected_import_room(cx);
+         if room.trim() != self.reviewed_room {
+             return Err("Room access changed. Review the bundle again".into());
+         }
+@@ -480,6 +829,7 @@ impl MiniAppsPanel {
+         self.lease = Some(lease);
+         self.publish_to_assistant();
+         self.render(cx)?;
++        self.view.view(cx, ids!(run_room_bar)).set_visible(cx, true);
+         let calls = self.package.as_ref().unwrap().bindings.on_open.clone();
+         for call in calls {
+             self.binding(cx, call, "root", &Value::Null)?;
+@@ -636,7 +986,132 @@ impl MiniAppsPanel {
+         }
+         Ok(())
+     }
++    /// Added 2026-10-11: `rinx.notify` —— 请宿主弹一条安卓系统通知（到点提醒）。
++    ///
++    /// app 只给标题与正文，不给跳转/路由；安卓上由 `MakepadAppExtension`
++    /// 转成系统通知。非安卓平台是安全的空操作。授权与 `matrix.*` 一样，
++    /// 走同一张租约（manifest 里声明 `rinx.notify` 才能过）。
++    fn notify(&mut self, cx: &mut Cx, args: Value) -> Result<(), String> {
++        if let Some(lease) = self.lease.clone() {
++            let account = crate::sliding_sync::current_user_id()
++                .map(|u| u.to_string())
++                .unwrap_or_default();
++            lease.authorize(&account, "rinx.notify", None)?;
++        }
++        let title = args["title"].as_str().unwrap_or("Rinx").to_owned();
++        let text = args["text"].as_str().unwrap_or("").to_owned();
++        Self::emit_notify(cx, &title, &text);
++        Ok(())
++    }
++
++    /// Added 2026-10-11: 把「弹一条提醒」这件事真正发出去。
++    ///
++    /// 手机 → 安卓系统通知（`MakepadAppExtension.showNotification`）；
++    /// 桌面 → Makepad 平台的通知操作（后端未实现时无害，桌面另走界面提示 + 语音）。
++    fn emit_notify(cx: &mut Cx, title: &str, text: &str) {
++        let payload = serde_json::json!({ "title": title, "text": text }).to_string();
++        #[cfg(target_os = "android")]
++        cx.android_integration("rinx.notify", &payload);
++        #[cfg(not(target_os = "android"))]
++        {
++            let _ = &payload;
++            cx.show_notification(title, text);
++        }
++    }
++    /// Added 2026-10-11: `rinx.speak` —— 请宿主用系统 TTS 把一句话念出来（提醒"会说话"）。
++    ///
++    /// app 只给文本；安卓上由 `MakepadAppExtension` 交给系统 TextToSpeech，
++    /// 非安卓平台是安全的空操作。授权与 `matrix.*` 一样，走同一张租约
++    /// （manifest 里声明 `rinx.speak` 才能过）。
++    fn speak(&mut self, cx: &mut Cx, args: Value) -> Result<(), String> {
++        if let Some(lease) = self.lease.clone() {
++            let account = crate::sliding_sync::current_user_id()
++                .map(|u| u.to_string())
++                .unwrap_or_default();
++            lease.authorize(&account, "rinx.speak", None)?;
++        }
++        let text = args["text"].as_str().unwrap_or("").to_owned();
++        if text.trim().is_empty() {
++            return Ok(());
++        }
++        Self::emit_speak(cx, &text);
++        Ok(())
++    }
++
++    /// Added 2026-10-11: 把「念一句话」发出去。手机 → 安卓 `TextToSpeech`；
++    /// 桌面（Windows）→ 系统自带 `System.Speech`（worker 线程，不占 UI）。
++    fn emit_speak(cx: &mut Cx, text: &str) {
++        let payload = serde_json::json!({ "text": text }).to_string();
++        #[cfg(target_os = "android")]
++        cx.android_integration("rinx.speak", &payload);
++        #[cfg(not(target_os = "android"))]
++        {
++            let _ = &payload;
++            desktop_speak(text);
++        }
++    }
++
++    /// Added 2026-10-11: `rinx.schedule` —— 把「到点提醒」交给宿主排程。
++    ///
++    /// 作品只描述「什么时候、弹什么、要不要念」，**宿主在那一刻执行**；
++    /// 桌面与手机走的是同一段代码（本函数 + `pump()` 里的检查）。
++    ///
++    /// 参数：`{ at?: <app 运行秒数>, seconds?: <多少秒后>, title, text?, speak? }`。
++    /// 立刻返回，作品据此在卡上写「已排到 X 提醒」，而不是自己假装弹过了。
++    fn schedule(&mut self, cx: &mut Cx, args: Value) -> Result<(), String> {
++        if let Some(lease) = self.lease.clone() {
++            let account = crate::sliding_sync::current_user_id()
++                .map(|u| u.to_string())
++                .unwrap_or_default();
++            lease.authorize(&account, "rinx.schedule", None)?;
++        }
++        let now = cx.seconds_since_app_start() as f64;
++        let at = if let Some(a) = args["at"].as_f64() {
++            a
++        } else if let Some(secs) = args["seconds"].as_f64() {
++            now + secs
++        } else {
++            return Err("rinx.schedule 需要 at 或 seconds".to_owned());
++        };
++        if at <= now {
++            return Err("rinx.schedule 的到点时刻已经过去了".to_owned());
++        }
++        let title = args["title"].as_str().unwrap_or("拾意").to_owned();
++        let text = args["text"].as_str().unwrap_or("").to_owned();
++        let speak = args["speak"].as_bool().unwrap_or(true);
++        log!("rinx.schedule: 排到 {:.0}s 后（at={at:.1}s）· {title}", at - now);
++        self.reminders.push(Reminder { at, title, text, speak });
++        Ok(())
++    }
++
+     fn pump(&mut self, cx: &mut Cx) {
++        // Added 2026-10-11: 到点提醒（宿主侧排程）。放最前面 —— 到点就该响，
++        // 与租约是否在续无关。桌面与手机同一段逻辑。
++        if !self.reminders.is_empty() {
++            let now = cx.seconds_since_app_start() as f64;
++            let mut due: Vec<Reminder> = Vec::new();
++            self.reminders.retain(|r| {
++                if now >= r.at {
++                    due.push(r.clone());
++                    false
++                } else {
++                    true
++                }
++            });
++            for r in due {
++                Self::emit_notify(cx, &r.title, &r.text);
++                if r.speak {
++                    let line = if r.text.is_empty() {
++                        r.title.clone()
++                    } else {
++                        format!("{}。{}", r.title, r.text)
++                    };
++                    Self::emit_speak(cx, &line);
++                }
++                log!("rinx.schedule: 到点 → {}", r.title);
++                self.notice(cx, &format!("到点提醒：{}", r.title));
++            }
++        }
+         let Some(lease) = self.lease.clone() else {
+             return;
+         };
+@@ -658,11 +1133,25 @@ impl MiniAppsPanel {
+             let result = rinx_miniapp_core::parse_arguments(&req.args_json).and_then(|args| {
+                 if req.service == "rinx.event" {
+                     self.event(cx, args)
++                } else if req.service == "rinx.notify" {
++                    // Added 2026-10-11: 到点提醒 → 宿主弹系统通知。
++                    self.notify(cx, args)
++                } else if req.service == "rinx.speak" {
++                    // Added 2026-10-11: 到点提醒 → 宿主用系统 TTS 念出来。
++                    self.speak(cx, args)
++                } else if req.service == "rinx.schedule" {
++                    // Added 2026-10-11: 到点提醒 → 交给宿主排到那一刻。
++                    self.schedule(cx, args)
+                 } else {
+                     self.dispatch(&req.service, args, Some((req.heap_key, req.req_id)), None)
+                 }
+             });
+-            if req.service == "rinx.event" || result.is_err() {
++            if req.service == "rinx.event"
++                || req.service == "rinx.notify"
++                || req.service == "rinx.speak"
++                || req.service == "rinx.schedule"
++                || result.is_err()
++            {
+                 splash_host_respond(
+                     cx,
+                     req.heap_key,
+@@ -806,7 +1295,13 @@ impl Widget for MiniAppsPanel {
+                             if crate::sliding_sync::current_user_id().is_none_or(|user| user.as_str() != account) { continue; }
+                             self.return_to_hub = true;
+                             self.reviewed_room = room.clone().unwrap_or_default();
+-                            self.view.text_input(cx, ids!(import_form.room)).set_text(cx, &self.reviewed_room);
++                            self.fill_import_rooms(cx);
++                            let room_index = self
++                                .import_rooms
++                                .iter()
++                                .position(|candidate| candidate == &self.reviewed_room)
++                                .unwrap_or(0);
++                            self.view.drop_down(cx, ids!(run_room)).set_selected_item(cx, room_index);
+                             let result = Package::load_verified(bundle.clone(), &crate::app_data_dir().join("miniapps/imports"))
+                                 .and_then(|package| { self.package = Some(package); self.run(cx) });
+                             if let Err(error) = result {
+@@ -821,15 +1316,67 @@ impl Widget for MiniAppsPanel {
+             }
+             if self.view.button(cx, ids!(import_app)).clicked(actions) {
+                 self.show_import(cx);
+-                self.notice(cx, "Import an OctoSense bundle to review its services.");
++                self.notice(cx, "导入一个 OctoSense 应用包，即可查看它申请的能力。 / Import an OctoSense bundle to review its services.");
+             }
+             let list = self.view.portal_list(cx, ids!(catalog_list));
++            let builtin_len = crate::system_apps::apps().len();
++            let mut launch_request: Option<usize> = None;
++            let mut edit_request: Option<usize> = None;
++            let mut remove_request: Option<(String, String)> = None;
+             for (index, item) in list.items_with_actions(actions) {
+-                if !list.was_scrolling() && item.button(cx, ids!(launch)).clicked(actions) {
+-                    if let Err(e) = self.open_builtin(cx, index) { self.notice(cx, &e); }
+-                    return;
++                if list.was_scrolling() {
++                    break;
++                }
++                if item.button(cx, ids!(card.launch)).clicked(actions) {
++                    launch_request = Some(index);
++                    break;
++                }
++                if index >= builtin_len && item.button(cx, ids!(card.edit)).clicked(actions) {
++                    edit_request = Some(index);
++                    break;
++                }
++                if index >= builtin_len
++                    && item.button(cx, ids!(card.remove)).clicked(actions)
++                    && let Some((id, label, _)) = self.imported_apps.get(index - builtin_len)
++                {
++                    remove_request = Some((id.clone(), label.clone()));
++                    break;
+                 }
+             }
++            if let Some(index) = launch_request {
++                let imported_path = if index >= builtin_len {
++                    self.imported_apps.get(index - builtin_len).map(|(_, _, p)| p.clone())
++                } else {
++                    None
++                };
++                let result = if index < builtin_len {
++                    self.open_builtin(cx, index)
++                } else if let Some(path) = imported_path {
++                    // 「打开」= 直接进应用（不再停在导入表单）
++                    self.open_imported_directly(cx, &path)
++                } else {
++                    Err("Unknown app".into())
++                };
++                if let Err(e) = result {
++                    self.notice(cx, &e);
++                }
++                return;
++            }
++            if let Some(index) = edit_request {
++                let imported_path = self.imported_apps.get(index - builtin_len).map(|(_, _, p)| p.clone());
++                let result = match imported_path {
++                    Some(path) => self.open_imported(cx, &path),
++                    None => Err("Unknown app".into()),
++                };
++                if let Err(e) = result {
++                    self.notice(cx, &e);
++                }
++                return;
++            }
++            if let Some((id, label)) = remove_request {
++                self.request_remove(cx, &id, &label);
++                return;
++            }
+             let approve = self
+                 .view
+                 .button(cx, ids!(approval.buttons.allow))
+@@ -886,20 +1433,72 @@ impl Widget for MiniAppsPanel {
+             handled.set(true);
+             if self.navigate_back(cx) { cx.action(MiniAppsAction::Close); }
+         }
++        // 应用正在跑时，顶部「让它读哪个聊天」下拉可以随时换：换了就重载应用。
++        if self.lease.is_some() {
++            let want = self.selected_import_room(cx);
++            if want != self.reviewed_room {
++                self.reviewed_room = want;
++                let result = self.run(cx);
++                if let Err(error) = result {
++                    self.notice(cx, &error);
++                }
++            }
++        }
+         self.pump(cx);
+     }
+     fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
+         while let Some(item) = self.view.draw_walk(cx, scope, walk).step() {
+             if let Some(mut list) = item.borrow_mut::<PortalList>() {
+                 let apps = crate::system_apps::apps();
+-                list.set_item_range(cx, 0, apps.len());
++                let builtin_len = apps.len();
++                let imported = self.imported_apps.clone();
++                let pending = self.pending_remove.clone();
++                let total = builtin_len + imported.len();
++                list.set_item_range(cx, 0, total);
+                 while let Some(index) = list.next_visible_item(cx) {
+-                    if let Some(app) = apps.get(index) {
+-                        let row = list.item(cx, index, id!(App));
+-                        row.label(cx, ids!(copy.name)).set_text(cx, crate::i18n::tr(&app.manifest.name));
+-                        row.label(cx, ids!(copy.subtitle)).set_text(cx, if app.manifest.id == super::palpo::APP_ID {"Projects, resources and pending actions."} else {crate::i18n::tr("Your article, your style.")});
++                    let row = list.item(cx, index, id!(App));
++                    // 列表内容不足一屏时，PortalList 会把视口用越界索引填满；那些行
++                    // 没有任何内容却会画出空卡片 —— 直接隐藏，名单里就不会多出空行。
++                    if index >= total {
++                        row.set_visible(cx, false);
+                         row.draw_all(cx, &mut Scope::empty());
++                        continue;
++                    }
++                    row.set_visible(cx, true);
++                    if index < builtin_len {
++                        // 内置应用：不显示分界线，也没有删除/修改按钮（那是 Rinx 自带的）。
++                        row.view(cx, ids!(section)).set_visible(cx, false);
++                        row.button(cx, ids!(card.remove)).set_visible(cx, false);
++                        row.button(cx, ids!(card.edit)).set_visible(cx, false);
++                        if let Some(app) = apps.get(index) {
++                            row.label(cx, ids!(card.copy.name)).set_text(cx, crate::i18n::tr(&app.manifest.name));
++                            row.label(cx, ids!(card.copy.subtitle)).set_text(cx, if app.manifest.id == super::palpo::APP_ID {"Projects, resources and pending actions."} else {crate::i18n::tr("Your article, your style.")});
++                        }
++                    } else if let Some((id, label, _)) = imported.get(index - builtin_len) {
++                        // 导入段第一行前面画一条分界线并注明来源，让人一眼看出这不是内置应用。
++                        row.view(cx, ids!(section)).set_visible(cx, index == builtin_len);
++                        row.button(cx, ids!(card.remove)).set_visible(cx, true);
++                        row.button(cx, ids!(card.edit)).set_visible(cx, true);
++                        let rm = if pending.as_deref() == Some(id.as_str()) {
++                            crate::i18n::pick("确认", "确认删除 / Confirm")
++                        } else {
++                            crate::i18n::btn_one("删除 / Remove")
++                        };
++                        row.button(cx, ids!(card.remove)).set_text(cx, rm);
++                        row.button(cx, ids!(card.edit)).set_text(cx, crate::i18n::btn_one("修改 / Edit"));
++                        row.button(cx, ids!(card.launch)).set_text(cx, crate::i18n::btn_one("打开 / Open"));
++                        // 手机窄屏：只留名称主干（「拾意 · 现场造卡 0.8.6」→「拾意」）；桌面保持全名。
++                        let label = crate::i18n::short_app_name(&label);
++                        let maxc = if cfg!(target_os = "android") { 8 } else { 14 };
++                        let shown_name = if label.chars().count() > maxc {
++                            format!("{}…", label.chars().take(maxc - 1).collect::<String>())
++                        } else {
++                            label.clone()
++                        };
++                        row.label(cx, ids!(card.copy.name)).set_text(cx, &shown_name);
++                        row.label(cx, ids!(card.copy.subtitle)).set_text(cx, crate::i18n::pick("已导入", "已导入 · 点「打开」直接运行 / Imported · tap Open to run"));
+                     }
++                    row.draw_all(cx, &mut Scope::empty());
+                 }
+             }
+         }
+@@ -984,7 +1583,7 @@ mod tests {
+         // The hidden Hub also has a `room` DropDown. Generic ids!(room)
+         // resolves it first, losing a developer-import room grant.
+         let room = "!import-room:example.org";
+-        panel.view.text_input(&cx, ids!(import_form.room)).set_text(&mut cx, room);
++        panel.view.text_input(&cx, ids!(run_room)).set_text(&mut cx, room);
+         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/miniapps/matrix-octos-script");
+         let snapshots = tempfile_path_for_room_test();
+         let package = Package::load_in(&path, &snapshots).expect("example bundle");
+@@ -1010,3 +1609,71 @@ mod tests {
+         assert!(panel.showing_catalog, "Catalog import returns to the catalog");
+     }
+ }
++
++/// Added 2026-10-11: 桌面发声 —— 用操作系统自己的 TTS 念一句话。
++///
++/// 与手机一致：**作品只说文本、宿主用系统语音**。手机走安卓 `TextToSpeech`，
++/// 桌面（Windows）走系统自带 `System.Speech`。念的过程在 worker 线程里，
++/// 绝不占 UI 线程（官方语音库同样要求 "never the UI thread"）。
++///
++/// 文本用 `-EncodedCommand`（UTF-16LE + base64）整段托给 PowerShell：
++/// 绕开 Windows 命令行的编码问题，中文不会变成问号。
++#[cfg(target_os = "windows")]
++fn desktop_speak(text: &str) {
++    use std::os::windows::process::CommandExt;
++    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
++    let safe = text.replace('\'', "''");
++    let script = format!(
++        "Add-Type -AssemblyName System.Speech; \
++         $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; \
++         $s.Speak('{safe}')"
++    );
++    let encoded = ps_utf16_base64(&script);
++    std::thread::spawn(move || {
++        let mut cmd = std::process::Command::new("powershell");
++        cmd.args(["-NoProfile", "-NonInteractive", "-EncodedCommand", &encoded])
++            .stdin(std::process::Stdio::null())
++            .stdout(std::process::Stdio::piped())
++            .stderr(std::process::Stdio::piped())
++            .creation_flags(CREATE_NO_WINDOW);
++        // 诊断（worker 线程，不动 UI）：把退出码与 stderr 记下来 ——
++        // "进程起来了"不等于"真出声"，这条日志才是"桌面到底说没说"的判据。
++        match cmd.output() {
++            Ok(out) if out.status.success() => {
++                log!("desktop_speak: 系统 TTS 已念完（退出码 0）");
++            }
++            Ok(out) => {
++                let err = String::from_utf8_lossy(&out.stderr);
++                let brief: String = err.chars().take(300).collect();
++                log!("desktop_speak: 系统 TTS 退出码 {:?} · stderr={brief}", out.status.code());
++            }
++            Err(e) => log!("desktop_speak: 起 powershell 失败：{e}"),
++        }
++    });
++}
++
++/// 非 Windows 的桌面平台先安全空操作（Linux 可接 espeak-ng、macOS 走 `say`，
++/// 需要时再接）。
++#[cfg(not(target_os = "windows"))]
++fn desktop_speak(text: &str) {
++    let _ = text;
++}
++
++/// PowerShell `-EncodedCommand` 需要的编码：UTF-16LE 字节流 → base64。
++#[cfg(target_os = "windows")]
++fn ps_utf16_base64(script: &str) -> String {
++    let bytes: Vec<u8> = script.encode_utf16().flat_map(|u| u.to_le_bytes()).collect();
++    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
++    let mut out = String::with_capacity((bytes.len() + 2) / 3 * 4);
++    for chunk in bytes.chunks(3) {
++        let b0 = chunk[0] as u32;
++        let b1 = *chunk.get(1).unwrap_or(&0) as u32;
++        let b2 = *chunk.get(2).unwrap_or(&0) as u32;
++        let n = (b0 << 16) | (b1 << 8) | b2;
++        out.push(T[(n >> 18) as usize & 63] as char);
++        out.push(T[(n >> 12) as usize & 63] as char);
++        out.push(if chunk.len() > 1 { T[(n >> 6) as usize & 63] as char } else { '=' });
++        out.push(if chunk.len() > 2 { T[n as usize & 63] as char } else { '=' });
++    }
++    out
++}
+diff --git a/src/theme.rs b/src/theme.rs
+index 6d0c517..2a4b1bd 100644
+--- a/src/theme.rs
++++ b/src/theme.rs
+@@ -143,7 +143,13 @@ pub fn init_standalone(vm: &mut ScriptVm) {
+     }
+     let family = platform_family(vm);
+     system::start();
+-    let stored = vm.with_cx_mut(|cx| packages::load(cx, &crate::app_data_dir(), family));
++    let mut stored = vm.with_cx_mut(|cx| packages::load(cx, &crate::app_data_dir(), family));
++    // ShiYi portable demo build: force DARK appearance.
++    // Reason: under light appearance the left nav rail renders white while the
++    // Packaged builds keep every crate's assets under resources/<crate>/..., and
++    // load_packaged_resource now looks there too, so the rail icons render in either
++    // theme. Stay on Light to match the host's normal look (Liu, 2026-10-13).
++    stored.current.selection.appearance = Appearance::Light;
+     let selection = stored.current.selection;
+     if desktop_style::current(vm).is_none() {
+         let sheet = vm.with_cx_mut(|cx| packages::stylesheet(cx, &stored.current, family))
+diff --git a/vendor/octosense-app-contract/src/bundle.rs b/vendor/octosense-app-contract/src/bundle.rs
+index d4c10ab..1d93268 100644
+--- a/vendor/octosense-app-contract/src/bundle.rs
++++ b/vendor/octosense-app-contract/src/bundle.rs
+@@ -26,7 +26,14 @@ pub fn digest_dir(root: &Path) -> Result<String, String> {
+         // Path, then length, then content: without the length a file ending
+         // where the next path begins could be shuffled without changing the
+         // digest.
+-        hasher.update(relative.to_string_lossy().as_bytes());
++        // Fixed 2026-10-11: 路径分隔符统一成 `/` 再入摘要。
++        // Windows 上 `PathBuf::to_string_lossy()` 给 `\`、Android 给 `/`，
++        // ⇒ 同一份 bundle 在桌面与手机上算出**两个不同摘要**，而 manifest 里
++        // `integrity.bundle_blake3` 只能写一个 ⇒ 换个平台导入必被拒
++        // （10-11 实证：桌面报 `…691298c3` ≠ manifest 里的 `…d26ee179`，差的
++        // 就是分隔符）。统一成 `/` 后，两端对同一份 bundle 得到同一个摘要。
++        let relative = relative.to_string_lossy().replace('\\', "/");
++        hasher.update(relative.as_bytes());
+         hasher.update(&[0]);
+         hasher.update(&(bytes.len() as u64).to_le_bytes());
+         hasher.update(&bytes);
+diff --git a/vendor/octosense-app-contract/src/manifest.rs b/vendor/octosense-app-contract/src/manifest.rs
+index ce6dd80..f55c3eb 100644
+--- a/vendor/octosense-app-contract/src/manifest.rs
++++ b/vendor/octosense-app-contract/src/manifest.rs
+@@ -79,6 +79,25 @@ pub const KNOWN_CAPABILITIES: &[&str] = &[
+     // L0 cards the shell checks, caps, rate-limits and expires, keyed to the
+     // app itself. The app sees only its own cards and a card opens only it.
+     "glance",
++    // Ask Rinx's host to post one system notification (a due reminder): the
++    // Android notification shade on the phone, whatever the platform backend
++    // offers on the desktop. The app supplies a title and a body, nothing
++    // else: no intent, no route back into the app. Pressing it only dismisses
++    // it.
++    // 增（拾意复赛手机线）。
++    "rinx.notify",
++    // Read one line aloud through the host's own text-to-speech (a due
++    // reminder that speaks). The app supplies text only; the phone's TTS
++    // engine owns the audio, the app renders nothing and holds no model.
++    // 增（拾意复赛手机线）。
++    "rinx.speak",
++    // Ask Rinx's host to fire a reminder AT A GIVEN TIME. The app hands over
++    // "when, what title, what body, read it aloud or not"; the host holds it
++    // and acts at that moment — the same code on the phone and on the
++    // desktop. An app that wants the host to act right now uses
++    // `rinx.notify` instead.
++    // 增（拾意复赛手机线）。
++    "rinx.schedule",
+     // Make bounded one-shot model calls through the host's model service
+     // (`model.complete`): the app names a model class ("fast" or "strong")
+     // and a JSON Schema; the host picks the model from the person's own

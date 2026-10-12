@@ -1,171 +1,151 @@
 ﻿# 提交材料对照表 · 拾意 Pickup
 
-> GOSIM **Agentic App 黑客松 2026「意图即应用」** · 赛道一（OctoSense / AppCard）
-> 本文件把官方要求的每一件材料，逐条对应到本仓库里的**具体文件、链接与复现命令**，
-> 供评委核查、也供提交前收口。**每一项都能当场点开看。**
-
-> ### ⚠️ 复赛结构变更（2026-10-10，按官方建议③）
-> **根 `bundle/` = 带 AI 的脚本应用（复赛主提交）**；**L0 卡片包 → `apps/shiyi-card/bundle/`**。
-> 本文**下半部分（§A–§F）记录的是初赛提交档案**（当时根 `bundle/` = 卡片包，对应 tag），**保留原样**；
-> **复赛版路径以 [`docs/复赛结构变更说明_20261010.md`](docs/复赛结构变更说明_20261010.md) 为准**。
+> GOSIM **Agentic App 黑客松 2026「意图即应用」** · 赛道一（OctoSense / AppCard）· **复赛版（2026-10-11）**  
+> 本文件把官方要求的每一件材料，逐条对应到本仓库里的**具体文件、链接与复现命令**，供提交前收口。
 >
-> 🔢 **版本对账（2026-10-10 22:0x）**：本文中出现的 **`0.7.1 / 0.7.2 / 0.7.3 / 0.2.x` 等版本号，是各次取证的
-> 历史快照**（对应当次录屏 / 那次 issue 提交），**属事实、不改**。**当前版本**请以根
-> [`STRUCTURE.md`](STRUCTURE.md) 为准 —— 主应用（根 `bundle/`）**0.8.0**、卡片包 **0.3.3**、系统 app（`octos/`）**0.3.9**。
+> 另：按类别列出的**全部提交材料**见 [`MATERIALS.md`](MATERIALS.md)。
+>
+> **当前版本**：主应用 = **根 `bundle/`**（脚本应用）**0.8.6** ｜ L0 卡片包 = `apps/shiyi-card/bundle/` **0.3.3** ｜ 系统 app = `octos/` **0.3.11**；路径以 [`STRUCTURE.md`](STRUCTURE.md) 为准。文中更早的版本号（如 `0.7.x`）皆为**当时那一次取证/录屏的快照**（属事实，见 §E 证据索引）。
 
 ---
 
-## ✅ 提交前 checklist（照官方要求逐项打勾 · 10/6 23:59 前）
+## ✅ 提交前 checklist（照官方要求逐项打勾 · 复赛收口）
 
-| # | 官方要求 | 状态 | 位置 |
-|---|---|---|---|
-| 1 | **只收 OctoScript 应用** | ✅ | `bundle/page.card`（`# level: L0`） |
-| 2 | 代码仓库（**公开 + Apache-2.0**） | ✅ | <https://github.com/sansanyixyz331/shiyi> · `LICENSE` |
-| 3 | **必须有 README** | ✅ | `README.md`（含顶部 30 秒版）+ `评审速览.md` |
-| 4 | 简短需求 | ✅ | `README.md` §1–§2 |
-| 5 | 可运行最小原型 + **启动说明** | ✅ | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5。**提交材料即到此为止**（便携演示包系我方内部跨机验证工具，**非提交物**，见 `docs/回归清单.md` 四·补3） |
-| 6 | **固定版本源码或包** | ✅ | **固定版本 = tag `gosim-initial-submission`**（初赛参赛版，钉死）· 卡片包 = `bundle/`（内容版本 tag `v0.3.3` · `manifest.json` 内容寻址摘要） |
-| 7 | **2–3 分钟演示** | ✅ | `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒，带中文旁白**，五屏正流程 + 两个失败态；旁白稿 [`docs/演示旁白稿.md`](docs/演示旁白稿.md)） |
-| 8 | **两张关键截图** | ✅ | `bundle/screenshots/01-read.png`、`03-plan.png`（另附 5 张） |
-| 9 | 数据来源与限制 | ✅ | `docs/数据来源与限制.md` |
-| 10 | 已报名成员名单 | ✅ | 官方 issue #5 报名评论（队伍 `三三Claw`） |
-| 11 | 至少一次**可核对的操作** | ✅ | `build/verify_flow.py` 宿主内真点击 → `build/_evidence/flow_run.json` |
-| 12 | 一个**失败或空状态** | ✅ | 未签名被拒 / 摘要不符被拒（视频 ③ 段 + `build/_evidence/neg_*.log` 宿主拒绝日志）· **六类失败逐条留证见 [`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)** |
-| 13 | **App Hub 提交** | ✅ **已提** | `OctoSense-App-Hub` issue **#76**（**Submit shiyi 0.7.3**；**一个 issue 覆盖可上架的两形态**：主 = L0 卡片包 `bundle/` 0.3.3〔Linux 章〕，附 = 脚本应用 `apps/shiyi-live/` 0.7.3〔Windows 宿主〕；形态三 `os.shiyi` 系系统 app，**不走 App Hub**，另述于下）· `hub check` PASSED（逐字输出见 issue） |
-| 14 | 官方评分口径**逐条对齐**（加分） | ✅ | [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（12 场景 / 三硬点 / AI 总线 / 三形态） |
-| 15 | **技术深度：造 App 的机器**（申报项） | ✅ | 除"一张卡"外，仓库含**把意图变卡片的机器**：`build/pipeline.py` 一条命令 → 过官方门禁的 L0 bundle + 渲染出图 + 自评修订；识别**两条路**（`model.complete` 优先 / 规则兜底，卡上自标来源）。说明 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，对照证据 [`docs/evidence/identify/`](docs/evidence/identify/)（规则 vs 模型）、[`docs/evidence/model-path/`](docs/evidence/model-path/) |
+| #  | 官方要求                      | 状态          | 位置                                                                                                                                                                                                                                                                                                         |
+| -- | ------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **只收 OctoScript 应用**      | ✅           | 根 `bundle/main.splash`（脚本应用，复赛主提交，含 `model`）                                                                                                                                                                                                                                                               |
+| 2  | 代码仓库（**公开 + Apache-2.0**） | ✅           | <https://github.com/sansanyixyz331/shiyi> · `LICENSE`                                                                                                                                                                                                                                                      |
+| 3  | **必须有 README**            | ✅           | `README.md`（含顶部 30 秒版）+ `评审速览.md`                                                                                                                                                                                                                                                                          |
+| 4  | 简短需求                      | ✅           | `README.md` §1–§2                                                                                                                                                                                                                                                                                          |
+| 5  | 可运行最小原型 + **启动说明**        | ✅           | 原型 = 根 `bundle/`（脚本应用）+ `apps/shiyi-card/bundle/`（卡片包）+ `src/`（流程）；启动说明 = `README.md` §8。**提交材料即到此为止**                                                                                                                                                                                                     |
+| 6  | **固定版本源码或包**              | ✅           | **固定版本 = tag `gosim-semifinal-submission`**（复赛参赛版）· 内容版本另见 tag `v0.3.3`（卡片包）· `manifest.json` 内容寻址摘要                                                                                                                                                                                                       |
+| 7  | **2–3 分钟演示**              | ✅           | **两条场景正片（一镜到底 · 旁白 + 硬字幕，合计 2′33″）**：① 桌面「工作 · 邮件」**40.8s** ② 手机「日常 · 群消息」**111.9s**（`docs/evidence/demo-*/`，见 §G）· 失败态另有截图 + 日志（`build/_evidence/neg_*.png` / `neg_*.log`） |
+| 8  | **两张关键截图**                | ✅           | `apps/shiyi-card/bundle/screenshots/01-read.png`、`03-plan.png`（另附 4 张，共 5 屏）                                                                                                                                                                                                                               |
+| 9  | 数据来源与限制                   | ✅           | `docs/数据来源与限制.md`                                                                                                                                                                                                                                                                                          |
+| 10 | 已报名成员名单                   | ✅           | 官方 issue #5 报名评论（队伍 `三三Claw`）                                                                                                                                                                                                                                                                              |
+| 11 | 至少一次**可核对的操作**            | ✅           | `build/verify_flow.py` 宿主内真点击 → `build/_evidence/flow_run.json`                                                                                                                                                                                                                                            |
+| 12 | 一个**失败或空状态**              | ✅           | 未签名被拒 / 摘要不符被拒（视频 ③ 段 + `build/_evidence/neg_*.log` 宿主拒绝日志）· **六类失败逐条留证见 [`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)**                                                                                                                                                                                  |
+| 13 | **App Hub 提交**            | ⏳ **复赛版待提** | 早先版本已提 `OctoSense-App-Hub` issue **#76**（`Submit shiyi 0.7.3`）；**复赛版 0.8.6 将在复赛收口时另开新 issue**（一个 issue 覆盖可上架两形态；形态三 `os.shiyi` 系系统 app，不走 App Hub，另述于下）· `hub check` PASSED                                                                                                                                |
+| 14 | 官方评分口径**逐条对齐**（加分）        | ✅           | [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（12 场景 / 三硬点 / AI 总线 / 三形态）                                                                                                                                                                                                                                    |
+| 15 | **技术深度：造 App 的机器**（申报项）   | ✅           | 除"一张卡"外，仓库含**把意图变卡片的机器**：`build/pipeline.py` 一条命令 → 过官方门禁的 L0 bundle + 渲染出图 + 自评修订；识别**两条路**（`model.complete` 优先 / 规则兜底，卡上自标来源）。说明 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，对照证据 [`docs/evidence/identify/`](docs/evidence/identify/)（规则 vs 模型）、[`docs/evidence/model-path/`](docs/evidence/model-path/) |
 
-**⇒ 结论：初赛材料已齐，可提交。**
+| 16 | **队外用户试用记录**（复赛 8 项第 6 项） | ⏳ **待补**（工具已备） | 官方出处：`competition-schedule.md` 复赛条「…**队外用户试用记录**…」。**要收 7 样**：身份（可匿名"队外用户A"）/ 日期 / 环境 + 版本 / 操作步骤 / **本人操作截图（或手机拍屏视频）** / **原话反馈** / 遇到的问题。试用工具 = 便携演示包（Rinx 桌面版，**含登录态、解压即跑**，附《试用交代：要拍什么、要回什么》一页）；演示数据如实标注为示例。**收到后归档** `docs/evidence/user-trial-<日期>/` |
+**⇒ 结论：复赛材料以本表收口（⏳ 项 = 发布前必须完成）。**
 
 ---
 
 ## 🔬 三种交付面（同一件作品，三副面孔）
 
-官方赛道一承认**两种交付形态**（进程应用 / App Card）。「拾意」把两种都做了，并在
-**OctoSense 本体（系统 app）**上把能力做到最深 —— 覆盖官方问答里"不要静态概念稿"的正面回答：
+官方赛道一承认**两种交付形态**（进程应用 / App Card）。「拾意」把两种都做了，并在 **OctoSense 本体（系统 app）** 上把能力做到最深 —— 覆盖官方问答里"不要静态概念稿"的正面回答：
 
-| 形态 | 位置 | 能力 | 实证 |
-|---|---|---|---|
-| **① L0 卡片包**（主提交） | `bundle/`（`page.card` + `bindings.json`） | 打开即渲染五屏 + 三条**总线调用**（`octos.session.history` 读助手记忆 · `octos.turn.start` 问助手 · `matrix.send_message` 真发消息） | `hub check PASSED`（Linux） · [`rinx/证据/`](rinx/证据/) |
-| **② 脚本应用 · 现场造卡** | `apps/shiyi-live/bundle/`（`main.splash`，**0.7.3**） | **六个能力**（两个"读"开、模型关）：`matrix.read_messages` 读**绑定房间**的消息 → 点一条 → 当场造卡；**`matrix.send_message` 确认后把结论真发回群**（"记下了"→"办成了"）；`matrix.profile` 读你的名字 → 标出「（你）」；`octos.session.history` 读助手会话；`storage` 长期记忆；`model`（服务名 `model.complete`）代码就位、出厂关 | **Rinx 真机全链路**：导入（绑房间）→Review 列出 **6 个服务**→Run→读到 4 条真消息→点一条→造卡→**确认 → 群里真多一条回执**（记忆 0→1）（[`docs/evidence/act/`](docs/evidence/act/) + `chat-read/` + `profile/`） |
-| **③ OctoSense 系统 app · 原地改卡 + 会说话** | `octos/`（系统 app 源码 + 宿主扩展） | 拾意做成 OctoSense **原生 system app**（`os.shiyi`）：①卡钉在**快览屏（glance）**；②挂官方预留扩展点工具 **`shiyi.repin`**（`tools.json` 声明 `implemented_by:"host-service"` + 宿主注册同名服务）⇒ 助手在**卡的对话**里调它 → 同 `card_id` 重发 = **原地改卡**；③ **「会说话」（`os.shiyi` 0.2.1）**：钉卡/到点时用**系统 TTS 把卡念出来**（D2·输出侧只说不听）+ 到点**自己再弹一次提醒**（D1）。**未碰 octos 内核一行** | **桌面（Windows）+ 小米13 双端已跑通**：模型自己发 `shiyi_repin` tool_call → 工具真返回 `{"replaced":true}` → 卡标题真的变了；工具审计 `risk:"act" / outcome:"ok"`（[`docs/evidence/repin/`](docs/evidence/repin/)）。**「会说话」真机证据 + 可应用宿主补丁**见 [`docs/evidence/speak/`](docs/evidence/speak/)、[`octos/README.md`](octos/README.md) |
-| **④ 真机连续录屏 · 端到端** | [`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/rinx-live-end-to-end.mp4)（**20.7 秒 / 1316×1436 / H.264**，**一段连续真实录屏，非帧拼**）：导入 → Review（5 服务）→ Run → 读房间消息 → 点一条 → 造卡 → **确认行程** → 长期记忆 **0→1**。全程由宿主自带的 `MAKEPAD_REMOTE` 遥控口驱动，无人手介入；复现见 [`docs/evidence/live-run/README.md`](docs/evidence/live-run/README.md) |
-| **⑤ 真机连续录屏 · 「确认 = 办事」（0.7.3）** | [`docs/evidence/act/rinx-act-end-to-end.mp4`](docs/evidence/act/rinx-act-end-to-end.mp4)（**27 秒 / 2200×1440 / H.264**，一段连续真实录屏、非帧拼）：导入（绑房间）→ Review 列出 **6 个服务** → Run → 读到房间 **4 条真消息** → 点一条 → 造卡 → **确认 → 群里真多一条回执**（长期记忆 0→1）。逐步 5 帧截图见 [`docs/evidence/act/`](docs/evidence/act/)，复现见其 `README.md` |
+| 形态                                  | 位置                                                                                                                                                                                                                                                                                                                                         | 能力                                                                                                                                                                                                                                                                                    | 实证                                                                                                                                                                                                                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **① 脚本应用 · 现场造卡**（复赛主提交）            | 根 `bundle/`（`main.splash`，**0.8.6**）                                                                                                                                                                                                                                                                                                       | **六个能力全开**（含 `model`）：`matrix.read_messages` 读**绑定房间**的消息 → 点一条 → 当场造卡；`matrix.send_message` 确认后把结论真发回群（"记下了"→"办成了"）；`matrix.profile` 读你的名字 → 标出「（你）」；`octos.session.history` 读助手会话；`storage` 长期记忆；`model`（服务名 `model.complete`）助手当决策核心（出人话标题 / 判该不该提醒 / 定提醒时机 / 写提醒话术 / 给依据）         | **桌面（Windows）+ 手机（小米13 / Rinx）双端跑通**：读群 → 点一条 → **AI 出卡**（标「识别来源 · 设备助手」）→ 确认 → **真发回群**（[`docs/evidence/phone-live-20261011/`](docs/evidence/phone-live-20261011/) + [`docs/evidence/act/`](docs/evidence/act/) + `chat-read/` + `profile/`）                                                 |
+| **② L0 卡片包**（副位）                    | `apps/shiyi-card/bundle/`（`page.card` + `bindings.json`，**0.3.3**）                                                                                                                                                                                                                                                                         | 打开即渲染五屏 + 三条**总线调用**（`octos.session.history` 读助手记忆 · `octos.turn.start` 问助手 · `matrix.send_message` 真发消息）                                                                                                                                                                             | `hub check PASSED`（Linux） · [`rinx/证据/`](rinx/证据/)                                                                                                                                                                                                                                            |
+| **③ OctoSense 系统 app · 原地改卡 + 会说话** | `octos/`（系统 app 源码 + 宿主扩展，**0.3.11**）                                                                                                                                                                                                                                                                                                      | 拾意做成 OctoSense **原生 system app**（`os.shiyi`）：①卡钉在**快览屏（glance）**；②挂官方预留扩展点工具 **`shiyi.repin`**（`tools.json` 声明 `implemented_by:"host-service"` + 宿主注册同名服务）⇒ 助手在**卡的对话**里调它 → 同 `card_id` 重发 = **原地改卡**；③ **「会说话」**：钉卡/到点时用**系统 TTS 把卡念出来**（输出侧只说不听）+ 到点**自己再弹一次提醒**。**未碰 octos 内核一行** | **桌面（Windows）+ 小米13 双端已跑通**：模型自己发 `shiyi_repin` tool_call → 工具真返回 `{"replaced":true}` → 卡标题真的变了；工具审计 `risk:"act" / outcome:"ok"`（[`docs/evidence/repin/`](docs/evidence/repin/)）。**「会说话」真机证据 + 可应用宿主补丁**见 [`docs/evidence/speak/`](docs/evidence/speak/)、[`octos/README.md`](octos/README.md) |
+| **④ 真机连续录屏 · 端到端**                  | [`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/rinx-live-end-to-end.mp4)（**20.7 秒 / 1316×1436 / H.264**，**一段连续真实录屏，非帧拼**）：导入 → Review（5 服务）→ Run → 读房间消息 → 点一条 → 造卡 → **确认行程** → 长期记忆 **0→1**。全程由宿主自带的 `MAKEPAD_REMOTE` 遥控口驱动，无人手介入；复现见 [`docs/evidence/live-run/README.md`](docs/evidence/live-run/README.md) |                                                                                                                                                                                                                                                                                       |                                                                                                                                                                                                                                                                                               |
+| **⑤ 真机连续录屏 · 「确认 = 办事」**            | [`docs/evidence/act/rinx-act-end-to-end.mp4`](docs/evidence/act/rinx-act-end-to-end.mp4)（**27 秒 / 2200×1440 / H.264**，一段连续真实录屏、非帧拼；该次录屏时为 `0.7.3`）：导入（绑房间）→ Review 列出 **6 个服务** → Run → 读到房间 **4 条真消息** → 点一条 → 造卡 → **确认 → 群里真多一条回执**（长期记忆 0→1）。逐步 5 帧截图见 [`docs/evidence/act/`](docs/evidence/act/)，复现见其 `README.md`                     |                                                                                                                                                                                                                                                                                       |                                                                                                                                                                                                                                                                                               |
 
-> **摘要分平台**：形态一交 **Linux 评测** ⇒ 留 Linux digest；形态二跑在 **Windows 宿主（Rinx）**
-> ⇒ 留 Windows digest（**谁运行它，就用谁那一侧的 hub 盖章**）。形态三跑在 **OctoSense 本体**，
-> 系统 app 的 bundle 摘要由构建期 `pack_system_app` **自动盖章**（无需手动签名）。
-> **【定性】形态三不走 App Hub 提交** —— 官方 App Hub 只收进程应用 / App Card 两类，`os.*` 系统应用
-> 提交即被拒（赛制如此，非我方缺项）。故形态三只作**「技术深度证据」**、与官方两大交付形态**并列陈述**，
-> **不作「上架作品」计**；也不占本仓 App Hub 提交位。本仓真正"上架"的是形态一与形态二。
+> **摘要分平台**：卡片包交 **Linux 评测** ⇒ 留 Linux digest；脚本应用跑在 **Windows 宿主（Rinx）** ⇒ 留 Windows digest（**谁运行它，就用谁那一侧的 hub 盖章**）。系统 app 跑在 **OctoSense 本体**，其 bundle 摘要由构建期 `pack_system_app` **自动盖章**（无需手动签名）。
+>
+> **【定性】形态三不走 App Hub 提交** —— 它是**原生宿主扩展**形态（随宿主源码构建），与官方两大交付形态**并列陈述**，只&#x4F5C;**「技术深度证据」**、**不作「上架作品」计**；也不占本仓 App Hub 提交位。本仓真正"上架"的是形态一与形态二。
+>
 > 逐条对官方评分口径见 [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)。
 
-### ⚠️ 形态归类（主动讲清，勿混）
+### ⚠️ 形态归类
 
 官方按形态收三桶：**Hub 卡片包 / 网页小程序 / 原生宿主扩展**（"网页小程序与原生宿主扩展按各自形态提交"）。本作品三形态对应关系：
 
-| 本作品形态 | 官方桶 | 运行方式 | 交付 |
-|---|---|---|---|
-| ① L0 卡片包（`bundle/`） | **Hub 卡片包** | 导入 Shell 渲染 | 遵循官方包规范 + 本地预检 |
-| ② Rinx 迷你应用（`apps/shiyi-live/`） | **Rinx 迷你应用**（线 B 主基线） | **在 Rinx 里「导入 + 绑房间 ID」** | 源码 + 可复现宿主版本 + 启动说明 |
-| ③ OctoSense 系统 app（`octos/`） | **原生宿主扩展** | 随宿主源码构建 | 可构建版本 + 复现说明 |
+| 本作品形态                                   | 官方桶         | 运行方式                   | 交付                 |
+| --------------------------------------- | ----------- | ---------------------- | ------------------ |
+| ① **脚本应用**（**根 `bundle/`**，复赛主提交）       | **进程应用**    | 官方宿主直接开（`main.splash`） | 源码 + 复现命令 + tag 锚点 |
+| ② **L0 卡片包**（`apps/shiyi-card/bundle/`） | **Hub 卡片包** | 导入 Shell 渲染            | 遵循官方包规范 + 本地预检     |
+| ③ OctoSense 系统 app（`octos/`）            | **原生宿主扩展**  | 随宿主源码构建                | 可构建版本 + 复现说明       |
 
-> **形态二是「Rinx 迷你应用」，不是「网页小程序」**——它**靠导入运行、没有 URL**。官方"网页小程序"是**另一类**（可分享为 **URL 卡片**），本作品**不属该类**，**无 URL 卡片不是缺项**。特此声明，免评委按"网页小程序"口径来挑。
+> **本作品没有"网页小程序"那一类**：**脚本应用**靠**导入 / 宿主加载**运行（`main.splash`），**没有 URL**；**L0 卡片包**由 Shell 渲染。官方"网页小程序"是**另一类**（可分享为 **URL 卡片**）⇒ **本作品不属该类，无 URL 卡片不是缺项**。特此声明，免评委按"网页小程序"口径来挑。
 
 ### 🎯 阶梯认领（呼应官方三级阶梯）
 
 官方三级阶梯（鹦鹉螺 L0 / 帝王蟹 能力层 / 大章鱼 平台层）**是加分维度、不是资格线**。本作品**同时踩到**：
 
-- **STEP 1（鹦鹉螺 · L0）**：`bundle/` 是一张组合既有能力、可运行的 L0 卡片应用；
+- **STEP 1（鹦鹉螺 · L0）**：`apps/shiyi-card/bundle/` 是一张组合既有能力、可运行的 **L0 卡片应用**；
 - **STEP 3（大章鱼 · 平台层）**：`octos/` 给 OctoSense 宿主**新增扩展点**（`shiyi.repin` host-service + **宿主语音扩展**），属平台层贡献。
 
 > **我队认领 STEP 3**（平台层）——以 `octos/` 的宿主扩展为据；同时保留 STEP 1 的 L0 卡片作品。**技术突破奖**另按官方"项目反哺 + 效果证据"申报（见 §H）。
 
 ---
 
-| 作品标识 | 值 |
-|---|---|
-| app id | `shiyi` |
-| 名称 | 拾意 Pickup |
-| 版本 | `0.3.3`（`manifest.json`） |
-| 发布版本 | **tag `v0.3.3`**（`bundle/` 卡片包的内容版本，自该 tag 起未变；`v0.3.2` / `v0.3.1` 为更早版本） |
-| **固定版本**（初赛参赛版） | **tag `gosim-initial-submission`** —— 评委按此 tag 拉取即为**参赛版**（含形态①②③全量）<br>※ 本仓经 API 推送，`main` 分支的 commit SHA 由内容寻址、会随每次推送重建 ⇒ **主线 SHA 不写死**；**要锚定版本请用 tag**。提交入口 = 官方 issue #13（已提交仓库地址）<br>※ 卡片包另有**内容版本锚点** tag `v0.3.3`（`bundle/` 自该 tag 起内容未变） |
-| 许可证 | **Apache-2.0**（`LICENSE`） |
-| 公开仓库 | <https://github.com/sansanyixyz331/shiyi> |
-| 作品形态 | **三形态**：① Hub 卡片包（`bundle/`）② 脚本应用（`apps/shiyi-live/bundle/`）③ OctoSense 系统 app（`octos/`，助手原地改卡） |
-| **宿主版本**（复现用） | ① `card-host` 修订 `e014fa9`（10-04）｜② **Rinx `v1.1.0`**（本地修订 `7d66b14`，10-05）｜③ OctoSense 本体（随源码构建）；详见 §D |
-| 支持方式 | <https://github.com/sansanyixyz331/shiyi/issues> |
+| 作品标识            | 值                                                                                                                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| app id          | `shiyi`（卡片包）；主应用根 `bundle/` 为 `shiyi-live`                                                                                                                                                                             |
+| 名称              | 拾意 Pickup                                                                                                                                                                                                              |
+| 版本              | 主应用 **0.8.6**（根 `bundle/`）· 卡片包 **0.3.3** · 系统 app **0.3.11**                                                                                                                                                          |
+| **固定版本**（复赛参赛版） | **tag `gosim-semifinal-submission`** —— 评委按此 tag 拉取即为**参赛版**（含形态①②③全量）<br />※ 本仓经 API 推送，`main` 分支的 commit SHA 由内容寻址、会随每次推送重建 ⇒ **主线 SHA 不写死**；**要锚定版本请用 tag**。提交入口 = 官方 issue #13<br />※ 卡片包另有**内容版本锚点** tag `v0.3.3` |
+| 许可证             | **Apache-2.0**（`LICENSE`）                                                                                                                                                                                              |
+| 公开仓库            | <https://github.com/sansanyixyz331/shiyi>                                                                                                                                                                              |
+| 作品形态            | **三形态**：① **脚本应用 = 根 `bundle/`**（0.8.6，主提交）② **L0 卡片包 = `apps/shiyi-card/bundle/`**（0.3.3）③ OctoSense 系统 app = `octos/`（0.3.11，助手原地改卡 + 会说话）                                                                           |
+| **宿主版本**（复现用）   | ① Rinx（脚本应用）｜② `card-host` 修订 `e014fa9`（10-04）｜③ OctoSense 本体（随源码构建）；详见 §D                                                                                                                                             |
+| 支持方式            | <https://github.com/sansanyixyz331/shiyi/issues>                                                                                                                                                                       |
 
 ---
 
-## A. 初赛提交物（官方赛程「初赛：需求成立、作品能跑」，**截止 10/6 23:59**〔原定 10/4，官方群公告顺延两天〕）
+## A. 提交材料对照（官方要求 ↔ 我们对应）
 
-> 官方原话：*10/4 23:59 前提交**简短需求、可运行最小原型及启动说明、固定版本源码或包、
-> 2–3 分钟演示、两张关键截图、数据来源与限制、已报名成员名单**。至少展示一次操作及可核对的
-> 结果，以及一个失败或空状态。静态概念稿本身不满足原型要求。*
-
-| # | 官方要求 | 我方对应 | 状态 |
-|---|---|---|---|
-| 1 | **简短需求** | `README.md` §1–§2（一句话 + 赛题对应，≤300 字） | ✅ |
-| 2 | **可运行最小原型及启动说明** | 原型 = `bundle/`（卡片包）+ `cards/`（五屏）+ `src/`（流程）；启动说明 = `README.md` §5 | ✅ |
-| 3 | **固定版本源码或包** | **固定版本 = tag `gosim-initial-submission`**（初赛参赛版，钉死）；卡片包 = `bundle/`（`manifest.bundle_blake3` 内容寻址，内容版本 tag `v0.3.3`） | ✅ |
-| 4 | **2–3 分钟演示** | `build/_video/shiyi-walkthrough.mp4`（**2 分 17 秒，带中文旁白**，含五屏正流程 + 两个失败态；原无声版留档 `…-silent.mp4`） | ✅ |
-| 5 | **两张关键截图** | ① `bundle/screenshots/01-read.png`（识别：从消息读出时间/地点/类型 + 来源）② `bundle/screenshots/03-plan.png`（记忆命中"坐高铁不坐飞机"→ 只给高铁方案） | ✅ |
-| 6 | **数据来源与限制** | `docs/数据来源与限制.md`（逐字段来源 + **限制：车次为演示样例**） | ✅ |
-| 7 | **已报名成员名单** | 官方 issue 报名凭证：<https://github.com/gosimfoundation/hackathon-agenticapp26/issues/5#issuecomment-5852150142>（队伍 `三三Claw` / 成员 id `三三Claw-ljh`） | ✅ |
-| — | **至少一次可核对的操作** | `build/verify_flow.py` 在宿主内五屏真点击（证据 `build/_evidence/flow_run.json`） | ✅ |
-| — | **可核验的长期记忆（真读写）** | 点「记下」→ `.local-state/memory.json` 真被写；再跑一遍读得到；点「这次别记」sha 不变 —— 三条断言进 `flow_run.json` 的 `memory` 段 | ✅ |
-| — | **一个失败或空状态** | 两个失败态：未签名被拒 / 摘要不符被拒（`build/_evidence/neg_*.log` 宿主拒绝日志 + 演示片 ③ 段空窗画面）· **系统留证见 [`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)**（六类：准入未授 2 / 服务缺失 2 / 能力被拒 2，含源码行号与日志原文） | ✅ |
+| # | 官方要求              | 我们对应                                                                                                                                                                     | 状态 |
+| - | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -- |
+| 1 | **简短需求**          | `README.md` §1–§2（一句话 + 赛题对应）                                                                                                                                            | ✅  |
+| 2 | **可运行最小原型及启动说明**  | 原型 = 根 `bundle/`（脚本应用，`main.splash`）+ `apps/shiyi-card/bundle/`（卡片包）+ `src/`（流程）；启动说明 = `README.md` §8                                                                   | ✅  |
+| 3 | **固定版本源码或包**      | **固定版本 = tag `gosim-semifinal-submission`**（复赛参赛版）；内容版本另见 tag `v0.3.3`（卡片包）；`manifest.bundle_blake3` 内容寻址                                                                | ✅  |
+| 4 | **2–3 分钟演示**      | **两条场景正片（合计 2′33″，一镜到底 · 旁白 + 硬字幕）**：桌面「工作 · 邮件」**40.8s** + 手机「日常 · 群消息」**111.9s**（`docs/evidence/demo-*/`，见 §G） | ✅  |
+| 5 | **两张关键截图**        | ① `apps/shiyi-card/bundle/screenshots/01-read.png`（识别：从消息读出时间/地点/类型 + 来源）② `apps/shiyi-card/bundle/screenshots/03-plan.png`（记忆命中"坐高铁不坐飞机"→ 只给高铁方案）                       | ✅  |
+| 6 | **数据来源与限制**       | `docs/数据来源与限制.md`（逐字段来源 + **限制：车次为演示样例**）                                                                                                                                | ✅  |
+| 7 | **已报名成员名单**       | 官方 issue 报名凭证（队伍 `三三Claw`）                                                                                                                                               | ✅  |
+| — | **至少一次可核对的操作**    | `build/verify_flow.py` 在宿主内五屏真点击（证据 `build/_evidence/flow_run.json`）                                                                                                     | ✅  |
+| — | **可核验的长期记忆（真读写）** | 点「记下」→ `.local-state/memory.json` 真被写；再跑一遍读得到；点「这次别记」sha 不变 —— 三条断言进 `flow_run.json` 的 `memory` 段                                                                        | ✅  |
+| — | **一个失败或空状态**      | 两个失败态：未签名被拒 / 摘要不符被拒（`build/_evidence/neg_*.log` 宿主拒绝日志 + 演示片 ③ 段空窗画面）· **系统留证见 [`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)**（六类：准入未授 2 / 服务缺失 2 / 能力被拒 2，含源码行号与日志原文） | ✅  |
 
 ## B. 通用材料（官方《作品提交与 App Hub》「所有作品需要的材料」6 项）
 
-| # | 官方要求 | 我方对应 | 状态 |
-|---|---|---|---|
-| 1 | 公开源码仓库、**固定提交号或发布版本**、**Apache-2.0** | 仓库公开；**固定版本 = tag `gosim-initial-submission`**；`LICENSE` = Apache-2.0 | ✅ |
-| 2 | 应用**目标、适用场景、图标、运行截图、作者与支持方式** | 目标/场景 = `README.md` §1–2；图标 = `bundle/assets/icon.svg`；截图 = `bundle/screenshots/`×5；作者/支持 = `listing.json` publisher + 本文件顶部 | ✅ |
-| 3 | **宿主版本、支持平台、依赖与启动说明**（让评审复现同一版本） | 见下方 §C「复现」——含宿主修订、平台、依赖、逐步命令 | ✅ |
-| 4 | **数据来源、申请权限、隐私处理，以及用户授权、拒绝和失败时的行为** | `docs/数据来源与限制.md`（来源+限制+**权限=3 项，逐项列用途与不可用时行为**）+ `PRIVACY.md`（隐私）+ 该文件的「授权 / 拒绝 / 失败」三表 + §5.4 长期记忆的存储位置与写入行为 | ✅ |
-| 5 | **Agent 任务演示**：输入是什么、Agent 实际完成哪些步骤、如何核验结果、哪些环节需人工确认 | `docs/Agent任务演示.md`（四问逐条）+ `src/shiyi_flow.py`（步骤真源） | ✅ |
-| 6 | 运行截图、日志或视频**及对应复现步骤** | 见下方 §C 与 §D：每条证据都配一条可执行命令 | ✅ |
+| # | 官方要求                                                 | 我们对应                                                                                                                                                             | 状态 |
+| - | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -- |
+| 1 | 公开源码仓库、**固定提交号或发布版本**、**Apache-2.0**                 | 仓库公开；**固定版本 = tag `gosim-semifinal-submission`**；`LICENSE` = Apache-2.0                                                                                          | ✅  |
+| 2 | 应用**目标、适用场景、图标、运行截图、作者与支持方式**                        | 目标/场景 = `README.md` §1–2；图标 = `bundle/assets/icon.svg`；截图 = `bundle/screenshots/`、`apps/shiyi-card/bundle/screenshots/`；作者/支持 = `listing.json` publisher + 本文件顶部 | ✅  |
+| 3 | **宿主版本、支持平台、依赖与启动说明**（让评审复现同一版本）                     | 见下方 §D「复现」——含宿主修订、平台、依赖、逐步命令                                                                                                                                     | ✅  |
+| 4 | **数据来源、申请权限、隐私处理，以及用户授权、拒绝和失败时的行为**                  | `docs/数据来源与限制.md`（来源+限制+**权限=3 项，逐项列用途与不可用时行为**）+ `PRIVACY.md`（隐私）+ 该文件的「授权 / 拒绝 / 失败」三表 + §5.4 长期记忆的存储位置与写入行为                                                   | ✅  |
+| 5 | **Agent 任务演示**：输入是什么、Agent 实际完成哪些步骤、如何核验结果、哪些环节需人工确认 | `docs/Agent任务演示.md`（四问逐条）+ `src/shiyi_flow.py`（步骤真源）                                                                                                             | ✅  |
+| 6 | 运行截图、日志或视频**及对应复现步骤**                                | 见下方 §D 与 §E：每条证据都配一条可执行命令                                                                                                                                        | ✅  |
 
 ## C. Hub 卡片包形态交付（官方「按作品形态交付」）
 
-| 官方要的 | 我方位置 | 状态 |
-|---|---|---|
-| `manifest.json` | `bundle/manifest.json` | ✅ |
-| `listing.json` | `bundle/listing.json` | ✅ |
-| `page.card` | `bundle/page.card`（首屏） | ✅ |
-| `kit/` | `bundle/kit/native/light/kit.json`（16 组件 / 12 token） | ✅ |
-| 图标 `assets/` | `bundle/assets/icon.svg` | ✅ |
-| 截图 `screenshots/`（≥1 张 PNG） | `bundle/screenshots/01..05-*.png`（5 张） | ✅ |
-| **预检结果** | `build/review.json`（`hub scan` 产物）+ `hub check` **PASSED**（v0.3.3 **签名版、无告警**；`grants: capabilities {matrix.send_message, octos.session.open, octos.turn.start}`） | ✅ |
-| **实际运行证据** | `build/_evidence/`（`flow_run.json`〔含 `memory` 记忆取证段〕+ 5 张宿主内截图 + 宿主日志） | ✅ |
+| 官方要的                        | 我们位置                                                                                                                                                              | 状态 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -- |
+| `manifest.json`             | `apps/shiyi-card/bundle/manifest.json`                                                                                                                            | ✅  |
+| `listing.json`              | `apps/shiyi-card/bundle/listing.json`                                                                                                                             | ✅  |
+| `page.card`                 | `apps/shiyi-card/bundle/page.card`（首屏）                                                                                                                            | ✅  |
+| `kit/`                      | `apps/shiyi-card/bundle/kit/native/light/kit.json`（16 组件 / 12 token）                                                                                              | ✅  |
+| 图标 `assets/`                | `apps/shiyi-card/bundle/assets/icon.svg`                                                                                                                          | ✅  |
+| 截图 `screenshots/`（≥1 张 PNG） | `apps/shiyi-card/bundle/screenshots/01..05-*.png`（5 张）                                                                                                            | ✅  |
+| **预检结果**                    | `build/review.json`（`hub scan` 产物）+ `hub check` **PASSED**（v0.3.3 **签名版、无告警**；`grants: capabilities {matrix.send_message, octos.session.open, octos.turn.start}`） | ✅  |
+| **实际运行证据**                  | `build/_evidence/`（`flow_run.json`〔含 `memory` 记忆取证段〕+ 5 张宿主内截图 + 宿主日志）                                                                                            | ✅  |
 
 ## D. 复现（评审照这个走，能拿到同一版本）
 
 **宿主版本**：
 
-| 形态 | 宿主 | 版本/修订 |
-|---|---|---|
-| **① L0 卡片包**（主提交） | 官方 OctoSense App Hub 参考实现 `card-host` | 本地 checkout 修订 `e014fa9`（**2026-10-04**，含结构化准入门禁）；早期端到端验证在 `e86d43f5`（09-23）上完成。**该修订比官方文档页脚钉定的核查依据 `97c2a1fd`（2026-09-20）更新**，故不与官方核查版本冲突 |
-| **② Rinx 迷你应用**（`apps/shiyi-live/`） | **Rinx**（`hagency-org/Rinx`） | **`v1.1.0`**，本地 checkout 修订 **`7d66b14`（2026-10-05）** —— 即本队已合并的 Windows 构建/运行文档 PR（仅文档，不改代码）；`rinx.exe` 构建于 10-04 |
-| **③ OctoSense 系统 app**（`octos/`） | **OctoSense 本体**（`OctoSense-org/OctoSense`） | 随宿主源码构建（`os.shiyi` 系统 app 随内核一起编）；复现见 [`octos/README.md`](octos/README.md) §5 |
+| 形态                               | 宿主                                          | 版本/修订                                                                                                                                      |
+| -------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **① 脚本应用**（主提交）                  | **Rinx**（`hagency-org/Rinx`）                | **`v1.1.0`**，本地 checkout 修订 **`7d66b14`（2026-10-05）** —— 即本队已合并的 Windows 构建/运行文档 PR（仅文档，不改代码）；`rinx.exe` 构建于 10-04                         |
+| **② L0 卡片包**                     | 官方 OctoSense App Hub 参考实现 `card-host`       | 本地 checkout 修订 `e014fa9`（**2026-10-04**，含结构化准入门禁）；早期端到端验证在 `e86d43f5`（09-23）上完成。**该修订比官方文档页脚钉定的核查依据 `97c2a1fd`（2026-09-20）更新**，故不与官方核查版本冲突 |
+| **③ OctoSense 系统 app**（`octos/`） | **OctoSense 本体**（`OctoSense-org/OctoSense`） | 随宿主源码构建（`os.shiyi` 系统 app 随内核一起编）；复现见 [`octos/README.md`](octos/README.md) §5                                                              |
 
 `hub` 与 `card-host` 自 2026-09-26 起在本地从源码构建（释放前另于 WSL/Linux 重建同版本复核门禁）。
 
-**支持平台**：卡片包**与平台无关**（纯 manifest + card + kit 数据）。
-本作品在 **Windows 桌面官方参考宿主 `card-host`** 上完成端到端验证，发布前门禁在 **Linux** 复核通过；
-**目标设备平台尚未验证**（官方"支持设备/运行包"未公布），故 `listing.platforms` 只如实声明 `["windows"]`。
 
-**端到端环境（Windows）**：本作品把设备助手 `octos.*` **真接线、真跑通**，整条链（宿主 → 内核 →
-模型 → 回复上卡）在 **Windows** 上走完。为在 Windows 跑通，我们遇到并填掉了两个坑：① Rinx 用
-`packaging/octos.lock.json` 把 octos 钉在精确 commit `fe08d8e6…`（官方预编译按 release tag 出，
-对不上）⇒ 只能从源码编；② 官方 `hub` 门禁在 Windows 上有 `walk()` 反斜杠 bug（已报 **#75**）⇒ 在
-WSL/Linux 另编同版本 `hub` 跑门禁。实测：Rinx（Windows）+ 自编 octos + DeepSeek，首屏助手行 **4 轮
-回复各不相同**；确认消息真发进 `matrix.rinx.chat`。详见 `README.md §4d`。
+**支持平台**：卡片包**与平台无关**（纯 manifest + card + kit 数据）。**桌面端**在 **Windows 官方参考宿主**完成端到端验证，发布前门禁在 **Linux** 复核通过；**手机端**在**安卓真机（小米13 / Rinx）**已跑通整链（读群 → AI 出卡 → 确认 → 真发回群）。`listing.platforms` 如实声明 `["windows","android"]`（**两个都是实测过的平台**：Windows = 桌面官方参考宿主；Android = 小米13 真机 + Rinx 宿主本地导入，即官方 Rinx 赛道的运行方式）。
 
-**依赖**：Rust 工具链 + 官方共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`）。
-在一套**与作品仓库分开**的工作区里（我们示例用 `~/gosim_build`）编译 `hub` 与 `card-host`；下面的 `$WORK` 就是你的工作区，换成自己的路径即可。
+**端到端环境（Windows）**：本作品把设备助手 `octos.*` **真接线、真跑通**，整条链（宿主 → 内核 → 模型 → 回复上卡）在 **Windows** 上走完。为在 Windows 跑通，我们遇到并填掉了两个坑：① Rinx 用 `packaging/octos.lock.json` 把 octos 钉在精确 commit `fe08d8e6…`（官方预编译按 release tag 出，对不上）⇒ 只能从源码编；② 官方 `hub` 门禁在 Windows 上有 `walk()` 反斜杠 bug（已报 **#75**）⇒ 在 WSL/Linux 另编同版本 `hub` 跑门禁。实测：Rinx（Windows）+ 自编 octos + DeepSeek，首屏助手行 **4 轮回复各不相同**；确认消息真发进 `matrix.rinx.chat`。详见 [`README.md`](README.md) §4、§7。
+
+**依赖**：Rust 工具链 + 官方共享 Makepad/Octoscript checkout（见官方 `NATIVE-WORKSPACE.md`）。在一套**与作品仓库分开**的工作区里（我们示例用 `~/octosense-work`）编译 `hub` 与 `card-host`；下面的 `$WORK` 就是你的工作区，换成自己的路径即可。
 
 **一键复现（端到端 + 失败态）**：
 
@@ -183,54 +163,57 @@ python src/memory_store.py
 python build/record_demo.py                                  # → build/_video/*.mp4
 ```
 
-逐步命令（手工路径）见 `README.md` §5。
+逐步命令（手工路径）见 `README.md` §8。
 
 ## E. 证据索引
 
-| 证据 | 文件 | 说明 |
-|---|---|---|
-| 五屏真实截图 | `bundle/screenshots/01-read.png` … `05-done.png` | 515×1073，裁掉宿主标题栏 |
-| 端到端全步骤 | `build/_evidence/flow_run.json` | 每屏：控件是否在/可点/点得中 + 宿主应答 + 事件 |
-| 宿主内逐屏抓图 | `build/_evidence/shots/*.png` | 五个末帧，字节各不相同（非同一张） |
-| 宿主运行日志 | `build/_evidence/host_*.log` | 含 `admitted` / `[SPLASH] eval` |
-| 失败态证据（宿主拒绝日志） | `build/_evidence/neg_unsigned.log`、`neg_tampered.log` | 含 `refused:` 原文；**我方卡片零渲染**（fail-closed）；宿主在窗口里画**它自带的拒绝说明页**（截图 `neg_unsigned.png`/`neg_tampered.png`，演示片 ③ 段 ≈95–135s 画面） |
-| 演示短片 | `build/_video/shiyi-walkthrough.mp4` | 2 分 17 秒，四段 |
-| **长期记忆文件** | `.local-state/memory.json` | 运行期生成（`.gitignore` 排除）；`flow_run.json` 的 `memory` 段有三条断言的实测值 |
-| 门禁 / 审查包 | `build/review.json` | `hub scan` 7 问 |
-| **「确认 = 办事」真机取证（0.7.3）** | `docs/evidence/act/` | Review 列出 6 服务 / 造卡 / 确认已发回群 / 群里新回执 + **27s 连续录屏** + 复现 README |
-| **助手「原地改卡」双端取证（OctoSense 本体）** | `docs/evidence/repin/` + `octos/` | 桌面 + 小米13：模型自发 `shiyi_repin` tool_call / 工具真返回 `{"replaced":true}` / 工具审计 `outcome:"ok"` / 改卡前后截图 / **两端各一段端到端录屏**（`desktop_repin_end_to_end.mp4` 52s、`phone_repin_end_to_end.mp4` 150s）；宿主扩展源码（`tools.json` + `shiyi.rs` + 两处注册）/ 复现 README |
-| **快览屏（glance）底层实证** | `docs/evidence/glance/` | 拾意作为**官方同级 system app**（`os.shiyi`）把卡钉进系统**快览屏**：注册日志 / 3 卡常驻 / 落盘 `picks.json` / 重启后读回 / **同 id 重钉 = 原地替换**（宿主回执 `replaced`）/ **桌面录屏 53s + 手机录屏 26s** / 3 帧 + 手机 3 帧 / 诚实边界 |
-| **便携演示包（内部工具 · 非提交物）** | 仓库外（Release 附发） | `shiyi-portable-demo-v0.3.3.zip`（约 52 MB）—— **我方自用的跨机验证工具**：拷去别的电脑、由队外朋友跑一遍录视频（备"队外用户试用记录"用）。内含官方宿主 `card-host.exe` + 内嵌 Python，双击 `一键运行.cmd` 即跑出五屏 + 两失败态 + 记忆取证。**不是提交材料**，此行列此备查 |
+| 证据                                     | 文件                                                               | 说明                                                                                                                                                                                                                                           |
+| -------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 五屏真实截图                                 | `apps/shiyi-card/bundle/screenshots/01-read.png` … `05-done.png` | 515×1073，裁掉宿主标题栏                                                                                                                                                                                                                             |
+| 端到端全步骤                                 | `build/_evidence/flow_run.json`                                  | 每屏：控件是否在/可点/点得中 + 宿主应答 + 事件                                                                                                                                                                                                                  |
+| 宿主内逐屏抓图                                | `build/_evidence/shots/*.png`                                    | 五个末帧，字节各不相同（非同一张）                                                                                                                                                                                                                            |
+| 宿主运行日志                                 | `build/_evidence/host_*.log`                                     | 含 `admitted` / `[SPLASH] eval`                                                                                                                                                                                                               |
+| 失败态证据（宿主拒绝日志）                          | `build/_evidence/neg_unsigned.log`、`neg_tampered.log`            | 含 `refused:` 原文；**我们卡片零渲染**（fail-closed）；宿主在窗口里画**它自带的拒绝说明页**（截图 `neg_unsigned.png`/`neg_tampered.png`，演示片 ③ 段 ≈95–135s 画面）                                                                                                                  |
+| **★ 交付演示片（两条）**                       | `docs/evidence/demo-desktop-mail-20261011/` · `docs/evidence/demo-phone-groupmsg-20261012/` | 桌面 40.8s + 手机 111.9s（**合计 2′33″**），均**一镜到底 + 旁白 + 硬字幕** |
+| **长期记忆文件**                             | `.local-state/memory.json`                                       | 运行期生成（`.gitignore` 排除）；`flow_run.json` 的 `memory` 段有三条断言的实测值                                                                                                                                                                                 |
+| 门禁 / 审查包                               | `build/review.json`                                              | `hub scan` 7 问                                                                                                                                                                                                                               |
+| **「确认 = 办事」真机取证**                      | `docs/evidence/act/`                                             | Review 列出 6 服务 / 造卡 / 确认已发回群 / 群里新回执 + **27s 连续录屏** + 复现 README（该次录屏时为 `0.7.3`）                                                                                                                                                              |
+| **手机真机 · 整链闭环（10-11 最新）**              | `docs/evidence/phone-live-20261011/`                             | 读到群消息 → 点一条 → **AI 出卡**（标「识别来源 · 设备助手」）→ 确认 → 「**已把结果发回群**」；内核日志 `calling LLM` → `LLM response received`                                                                                                                                     |
+| **★ 冻结版正片 · 桌面「工作场景」** | `docs/evidence/demo-desktop-mail-20261011/` | 一镜到底 **40.8s**（旁白 + 硬字幕）：**外部 SMTP 真投一封信** → 它自己读到（不点不打字）→ 抽时间地点钉成常驻卡 → 到点主动来找你并**念出来** |
+| **★ 冻结版正片 · 手机「日常场景」** | `docs/evidence/demo-phone-groupmsg-20261012/` | 一镜到底 **111.9s**（旁白 + 硬字幕）：**往绑定房间真投一条消息** → 它自己读到出卡 → 确认 → **真发回群 + 排到点提醒** → 到点弹通知（截图 + 字幕 + 复现说明同目录） |
+| **助手「原地改卡」双端取证（OctoSense 本体）**         | `docs/evidence/repin/` + `octos/`                                | 桌面 + 小米13：模型自发 `shiyi_repin` tool_call / 工具真返回 `{"replaced":true}` / 工具审计 `outcome:"ok"` / 改卡前后截图 / **两端各一段端到端录屏**（`desktop_repin_end_to_end.mp4` 52s、`phone_repin_end_to_end.mp4` 150s）；宿主扩展源码（`tools.json` + `shiyi.rs` + 两处注册）/ 复现 README |
+| **快览屏（glance）底层实证**                    | `docs/evidence/glance/`                                          | 拾意作为**官方同级 system app**（`os.shiyi`）把卡钉进系统**快览屏**：注册日志 / 3 卡常驻 / 落盘 `picks.json` / 重启后读回 / **同 id 重钉 = 原地替换**（宿主回执 `replaced`）/ **桌面录屏 53s + 手机录屏 26s** / 3 帧 + 手机 3 帧 / 诚实边界                                                                 |
+| 其余证据分组（识别 / 模型路径 / 会话记忆 / 群更新 / 生成器 …） | `docs/evidence/` 目录                                              | 共 14 组                                                                                                                                                                                                                                       |
 
 ## F. 已知限制（诚实声明）
 
-- **车次数据为演示样例**（`source: sample`）：`src/shiyi_flow.py` 的 S3 三个班次
-  是**示例**，接真实票务服务前**不当作事实**（见 `docs/数据来源与限制.md`）。
-- **长期记忆存在本机文件里**：`.local-state/memory.json`（纯本地文件、不联网）；**首次运行用内建初始值播种**并如实标注来源。点「记下」真写、点「这次别记」不写 —— 三条断言见 `flow_run.json` 的 `memory` 段。**注意：记忆不改变“车次为演示样例”这条限制**。
-- **签名**：`bundle/` **已做发布者签名**（`key_id: sansanyixyz331`，见 `bundle/manifest.json`
-  的 `integrity.signature`）；`hub check` 带公钥复检 **PASSED、无告警**。未签名包仅用于开发期本地预检
-  （`--allow-unsigned`）。
-- **演示在桌面参考宿主**：手机端官方运行包未公布，故演示记录自桌面官方参考宿主。
+- **车次数据为演示样例**（`source: sample`）：`src/shiyi_flow.py` 的 S3 三个班次是**示例**，接真实票务服务前**不当作事实**（见 `docs/数据来源与限制.md`）。
+- **长期记忆存在本机文件里**：`.local-state/memory.json`（纯本地文件、不联网）；**首次运行用内建初始值播种**并如实标注来源。点「记下」真写、点「这次别记」不写 —— 三条断言见 `flow_run.json` 的 `memory` 段。**注意：记忆不改变"车次为演示样例"这条限制**。
+- **签名**：`bundle/` 当前带**发布者签名**（`key_id: sansanyixyz331`，见 `bundle/manifest.json` 的 `integrity.signature`），用于**本地准入验证** —— `hub check` 带公钥复检 **PASSED、无告警**。**正式发布按官方流程以「未签名」包提交**（新发布流程的 `publisher-prepare` 会拒绝已签名 / 已封存的包）。开发期未签名包本地预检需加 `--allow-unsigned`。
+- **桌面与手机两端均已跑通**：桌面（Windows 官方参考宿主）与手机（小米13 / Rinx，内置 OctoSense 内核）两端均已完成端到端验证；证据见 §E。
+- **🔴 `matrix.*` 由 Rinx 提供，官方 OctoSense 宿主不提供（评委须知）**：主提交声明的 3 项聊天能力（`matrix.read_messages` / `matrix.profile` / `matrix.send_message`）—— **官方文档白纸黑字**：`PUBLISHING.md`「Exact service names」表 `Served today` 列写着 **"No OctoSense host service serves them. Unverified: Rinx … serves them to bundles imported into it."** ⇒ **在官方 OctoSense 宿主上，这三项拿不到服务**，应用**如实降级**（界面写「宿主没提供读消息这项服务」之类），**不假装成功**。**但主线不受影响**：AI 出卡靠 `model` + `octos.*`，这两类**官方宿主正式提供**。到点排程 / 发声（`rinx.schedule`）同为 Rinx 专有。**应用对每一处外部调用都做了 `host.has()` + `r.is_ok` 双重兜底**（源码 `main.splash` 538 / 680 / 1139 / 1186 行），谁在就找谁、都不在如实降级。逐条回答见 [`review/ANSWERS.md`](review/ANSWERS.md) 第 3、7 问。
 
 ## G. 复赛演示材料（官方：3 分钟真机 demo + 2 分钟陈述）
 
-| 官方要的 | 我方对应 | 位置 |
-|---|---|---|
-| **3 分钟真机 demo** | Rinx 真机端到端连续录屏（读房间消息 → 造卡 → 确认 → 群里真多一条回执） | `docs/evidence/act/rinx-act-end-to-end.mp4`（27s）· `docs/evidence/live-run/`（20.7s）· 复赛主片 `build/_video/shiyi-live-rinx-real.mp4`（2′18″带旁白） |
-| **2 分钟讲清「我的作品让项目多了什么」** | **陈述稿（可照读）** | [`docs/作品让项目多了什么_2分钟陈述.md`](docs/作品让项目多了什么_2分钟陈述.md) |
+| 官方要的                                    | 我们对应                                       | 位置                                                                                                                                         |
+| --------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **3 分钟真机 demo** | **两条场景正片（一镜到底 · 旁白 + 硬字幕，合计 2′33″）**：① 桌面「工作 · 邮件」**40.8s** ② 手机「日常 · 群消息」**111.9s** | **交付片**：`docs/evidence/demo-desktop-mail-20261011/`（40.8s）· `docs/evidence/demo-phone-groupmsg-20261012/`（111.9s）｜**补充取证**：`docs/evidence/act/rinx-act-end-to-end.mp4`（27s）· `docs/evidence/live-run/`（20.7s） |
+| **2 分钟讲清「我的作品让项目多了什么」**                 | **陈述稿（可照读，2026-10-11 重写）**                 | [`docs/作品让项目多了什么_2分钟陈述.md`](docs/作品让项目多了什么_2分钟陈述.md)                                                                                       |
+| **8 分钟答辩结构**（3′演示 + 2′贡献 + 2′问答 + 1′切换） | 分场：**桌面＝邮件 / 手机＝家庭日常**                     | 见 [`README.md` §4](README.md)                                                                                                              |
+| **答辩幻灯片（final slides）**                 | **13 页 pptx**（官方两处点名要）                     | [`docs/拾意_复赛答辩幻灯片.pptx`](docs/拾意_复赛答辩幻灯片.pptx)                                                                                             |
 
 ## H. 技术突破奖 · 项目反哺（按官方"项目反哺 + 效果证据"申报）
 
-官方：**"项目反哺：应用接入、数据能力、组件、协议或测试工具带来可复用的改进"**；**"效果证据：版本、补丁、复现步骤与前后对照"**，**"不以 PR 数量直接判定"**。我方 **4 条已被官方 merged + 2 条 open + 1 条平台扩展**，每条带前后对照：
+官方：**"项目反哺：应用接入、数据能力、组件、协议或测试工具带来可复用的改进"**；**"效果证据：版本、补丁、复现步骤与前后对照"**，**"不以 PR 数量直接判定"**。我们 **4 条已被官方 merged + 2 条 open + 1 条平台扩展**，每条带前后对照：
 
-| 编号 | 贡献 | 状态 | 前后对照（摘要） |
-|---|---|---|---|
-| C1 | #79 bundle 路径（Windows 反斜杠） | ✅ merged | 官方接力补 `557b080`、进 contract 1.5.0 |
-| C2 | #80 stamp/check 不一致 | ✅ merged | 杜绝"签了必被拒" |
-| C3 | #83 拒绝态只有白窗 | ✅ merged | 5440→**21971 字节**（画出被拒原因）；官方接力 `681712e05` |
-| C4 | #64 Rinx Windows 构建/运行文档 | ✅ merged | Windows 上可跑有据 |
-| C5 | #343 脚本 VM 时区（`local_time()` 恒 UTC） | 🟡 open | +72−0 |
-| C6 | #151 L0 卡↔宿主契约 + 检查器 | 🟡 open | **+933−0**；检查器与官方 hub **6/6 一致** |
-| C7 | 宿主语音扩展（让 app 说话） | 已并入作品 | 补丁 91 行、基线官方源、`git apply --check` 通过 |
+| 编号 | 贡献                                  | 状态       | 前后对照（摘要）                                   |
+| -- | ----------------------------------- | -------- | ------------------------------------------ |
+| C1 | #79 bundle 路径（Windows 反斜杠）          | ✅ merged | 官方接力补 `557b080`、进 contract 1.5.0           |
+| C2 | #80 stamp/check 不一致                 | ✅ merged | 杜绝"签了必被拒"                                  |
+| C3 | #83 拒绝态只有白窗                         | ✅ merged | 5440→**21971 字节**（画出被拒原因）；官方接力 `681712e05` |
+| C4 | #64 Rinx Windows 构建/运行文档            | ✅ merged | Windows 上可跑有据                              |
+| C5 | #343 脚本 VM 时区（`local_time()` 恒 UTC） | 🟡 open  | +72−0                                      |
+| C6 | #151 L0 卡↔宿主契约 + 检查器                | 🟡 open  | **+933−0**；检查器与官方 hub **6/6 一致**           |
+| C7 | 宿主语音扩展（让 app 说话）                    | 已并入作品    | 补丁 91 行、基线官方源、`git apply --check` 通过       |
 
-> **详细版**在仓库外：`00_docs\技术突破奖_申报材料_本地整理_20261009.md` + `00_docs\技术突破奖_贡献复核页_20261009.md`（一键复核命令 `gh pr view 79/80/83/64/343/151`）。
+> 逐条复核直接看上面的 PR 编号即可（一键命令：`gh pr view 79/80/83/64/343/151`）；本表即仓库内的完整版。

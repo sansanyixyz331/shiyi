@@ -8,7 +8,7 @@
 
 | 时间 | 画面 |
 |---|---|
-| 0–2s | 导入表单：`path` 指向本仓库 `apps/shiyi-live/bundle`，`room` 绑定测试房 |
+| 0–2s | 导入表单：`path` 指向本仓库 `bundle/`（初赛结构下为 `apps/shiyi-live/bundle`），`room` 绑定测试房 |
 | 2–6s | 点 **Review bundle** —— 宿主列出本应用声明的**五个服务**并接受 |
 | 6–11s | 点 **Run** —— 应用在真机跑起来 |
 | 11–13s | 点 **忘掉** —— 把长期记忆清零（准备演示 0→1） |
@@ -35,7 +35,7 @@ Rinx 支持 `MAKEPAD_REMOTE=<port>` 环境变量，启动后开一个**本地 HT
 ## 复现步骤
 
 1. 起宿主：`MAKEPAD_REMOTE=8799 rinx.exe`
-2. 遥控导航到导入表单，填 `path`（本仓库 `apps/shiyi-live/bundle`）与 `room`
+2. 遥控导航到导入表单，填 `path`（本仓库 `bundle/`）与 `room`
 3. 驱动脚本：按遥控口 `/snap`（取坐标）→ `/m`（点击）逐步驱动（Review → Run → 清记忆 → 点消息 → 造卡 → 确认）；录制用的驱动脚本为开发期工具，未随仓发布
 4. 录屏：`ffmpeg -f gdigrab -framerate 15 -offset_x <win.x> -offset_y <win.y> -video_size 1316x1436 -i desktop out.mp4`
    —— 宽高必须是偶数（`yuv420p` 要求），故高度取 1436 而非 1377。

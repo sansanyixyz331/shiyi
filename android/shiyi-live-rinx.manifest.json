@@ -1,0 +1,32 @@
+{
+  "agent": null,
+  "capabilities": [
+    "storage",
+    "model",
+    "octos.turn.start",
+    "octos.session.history",
+    "matrix.read_messages",
+    "matrix.profile",
+    "matrix.send_message",
+    "rinx.notify",
+    "rinx.speak",
+    "rinx.schedule"
+  ],
+  "compute": {
+    "instruction_budget": null,
+    "memory_bytes": null
+  },
+  "id": "shiyi-live",
+  "integrity": {
+    "bundle_blake3": "50404a65871a4fbe50f9b7740b7932d6fdae855164962a7b6b20d76a0f5cb909"
+  },
+  "name": "拾意 · 现场造卡",
+  "network": {
+    "hosts": []
+  },
+  "schema": 1,
+  "storage": {
+    "max_bytes": 262144
+  },
+  "version": "0.8.6"
+}

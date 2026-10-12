@@ -1,0 +1,10 @@
+# 门禁报告 · shiyi-live 0.8.6（发布者公钥复检）
+# 生成: 2026-10-12 02:44:57
+# 命令: hub check bundle --publisher-key sansanyixyz331=<pubkey>
+
+shiyi-live 0.8.6 — PASSED
+  grants: capabilities {"matrix.profile", "matrix.read_messages", "matrix.send_message", "model", "octos.session.history", "storage"}, hosts {}, storage 262144 bytes, agent none
+
+# bundle 摘要: 50404a65871a4fbe50f9b7740b7932d6fdae855164962a7b6b20d76a0f5cb909
+# 说明：带发布者签名（key_id=sansanyixyz331），本地准入验证用。
+# 正式发布按官方主推的 GitHub 溯源（publisher-github-v1，未签名包）。

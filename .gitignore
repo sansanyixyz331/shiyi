@@ -11,7 +11,7 @@ target/
 __pycache__/
 *.pyc
 
-# 录制产物：只留成片（build/_video/shiyi-walkthrough.mp4），原始帧/字体/校验帧不进仓库
+# 录制中间产物（原始帧/字体/校验帧不进仓库）；成片另存 docs/evidence/ 下进仓
 build/_run_verify/
 build/_video/frames/
 build/_video/check/
@@ -20,8 +20,10 @@ build/_video/marks.json
 build/_video/_intro.png
 build/_video/_outro.png
 
-# 临时证据（issue 素材，不进仓）
-build/_evidence/
+# 注意：build/_evidence/ 是【要提交的】失败态证据（flow_run.json + 五屏日志 + neg_*）。
+#       它已被 git 跟踪 ⇒ 即便写排除规则也无效，故这里刻意不写，免得误以为它不进仓。
+# 临时 scan 包（正式的那份在 review/scan-packet.json）
+build/_review/
 
 # 生成器产物（build/gen_l0.py 的产出，样例可随时重跑；源码进仓）
 build/_gen/
@@ -32,3 +34,9 @@ build/_gen_video/
 build/_live_video/
 
 build/_probe/
+
+# 编辑器 / 系统临时文件（Office 锁文件、缩略图缓存等）
+~$*
+Thumbs.db
+desktop.ini
+*.swp

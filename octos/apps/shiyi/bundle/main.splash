@@ -1,4 +1,4 @@
-// 拾意 · 一句话，一张常驻卡（shiyi / OctoSense 版）0.3.10
+// 拾意 · 一句话，一张常驻卡（shiyi / OctoSense 版）0.3.11
 // 一句话进去，一张卡钉到「快览屏」（glance）—— 卡会留着、能复用。
 // 官方「意图即应用」：不装 App、说完就有一个正好干这件事的东西，还能留下来。
 //
@@ -48,7 +48,8 @@
 //   手机宿主（glance_notify → 系统 TTS）会把 os.shiyi 的卡**读出来**；半夜/安静场所嫌吵时，
 //   界面上多一个开关：**开（默认）= 会念出来；关 = 只留卡、不出声**（通知仍在，只是不念）。
 //   关掉只掐「念」这一步，不改卡、不改提醒是否弹出。开关状态落盘，重开还记得。
-//   桌面宿主本就不发声（android_speak 是空操作）⇒ 这个开关对桌面无感，只对手机有效。
+//   桌面宿主（2026-10-11 接上后）同样会念 —— 用 Windows 自带的 TTS（System.Speech）；
+//   手机用 Android 自带的 TTS。两端同构：都用"系统自己的说话能力"。
 //
 // 0.3.6（本地试验 · 未推 2026-10-10）把「到点提醒」从**演示**做成**真排程**（助手性质）：
 //   老版是假的 —— 钉卡后固定 10 秒 fire 一次，只为当场看效果。
@@ -107,6 +108,15 @@
 //   正文同步改成新时间、留痕（pw/pp）齐全；**切后台后仍继续盯群并改卡**。
 //   验证：D_治本_群消息改卡 增量 13 条口令用例，全过。
 //
+// 0.3.11（本地 2026-10-11）桌面**真收邮件**：桌面这条线的信息源是邮件 —— 它**自己读**。
+//   加 `mail` 能力（宿主在 app 装/跑时授予）；开机 + 每 10 秒看一眼收件箱
+//   （**先 sync 再 list**，只 list 是缓存、新信看不到）；**新来的信**自己读正文
+//   （mail.message）→ AI 抽出时间/地点 → 钉一张**常驻卡** → 念出来；到点再提醒 + 再念一遍。
+//   首次开机只**登记基线**（收件箱里原有的信不刷成卡，免得一开屏就是卡）。
+//   开机另把记着的卡**静默重钉**回快览屏（宿主重启后快览屏会空；补回去才叫"常驻"）。
+//   验证：真投一封邮件 ⇒ 12 秒内自动出卡、提醒时刻算对（本周五 15:00 → 提前1小时 = 14:00）；
+//   到点（演示加速 8 秒）⇒ 界面「到点提醒（已置顶）」+ 桌面**念出来**（日志 desktop_speak 退出码 0）。
+//
 // 机制：host.request("glance.publish", {source: <L0 卡>, data: <值>})
 //   卡按 (app, card_id) 键控：同一个 card_id 再发 = 替换，不是又建一张。
 //   桌面按 F9 看快览屏；点卡会打开拾意。
@@ -135,6 +145,19 @@ let picks  = []     // 已钉的卡：[{id, text, when, where, at, key, pw, pp}]
                     //   pw / pp = 上一版的 时间 / 地点（留痕用；改卡时把旧值记下来）
 let seq    = 0      // 发号器（id 只能 [A-Za-z0-9]，所以是 shiyi-p1、shiyi-p2…）
 let board  = ""     // glance.list 的如实回执
+let mail_probe = false   // 【本地实验 2026-10-11】探针：宿主到底给不给「邮件」能力（只跑一次；已转正，留着不碍事）
+// 「从邮件拾意」（本地 2026-10-11 加）：桌面的信息源是**邮件** —— 由它**自己**读，不靠手输、也不等人点。
+// 自动：每 10 秒自己看一次收件箱；有新信就读它的**正文**、抽出时间地点，**自己钉一张常驻卡**。
+let MAIL_ON = true
+let MAIL_AUTO = true     // 【关键】自动读邮件：不等人点 —— 新信自己读、自己钉常驻卡
+let mail_ok = false
+let mail_state = ""      // 如实状态（没绑邮箱 / 读到 N 封 / 出错都写清楚）
+let mail_account = ""    // 账号 id（凭证由宿主保管，这里只要 id）
+let mail_ids = []        // 每封的 message id
+let mail_subs = []       // 每封的主题
+let mail_rows = []       // 界面上那一行（谁发的 + 主题）
+let mail_seen = []       // 已处理过的邮件 id（去重；落盘，重开不重复造卡）
+let mail_booted = false  // 首次列信只登记基线：收件箱里原有的信不造卡（免得一开机就一屏卡）
 let MAX_CARDS = 4   // glance 服务每 app 上限；满了先撤最旧的一张
 let DATA = "/picks.json"
 let speak_on = true // 0.3.5 语音播报：开(默认)=钉卡/到点时宿主用系统 TTS 念出来；关=只留卡、不出声
@@ -605,6 +628,9 @@ fn load(){
     if has_key(v, "speak") { speak_on = v.speak }
     if has_key(v, "fast") { fast = v.fast }
     if has_key(v, "seen") { watch_seen = v.seen }
+    // 自动读邮件的记忆：处理过哪些信（mseen）、是否已打过基线（mboot）。
+    if has_key(v, "mseen") { if v.mseen != nil { mail_seen = v.mseen } }
+    if has_key(v, "mboot") { mail_booted = v.mboot }
     if v.picks != nil {
         // 归一化：老数据没有 pw/pp（留痕用的旧值）与 rt/rd/rn（提醒），补默认 —— 免得后面点缺失的键报错。
         let np = []
@@ -624,7 +650,7 @@ fn load(){
         picks = np
     }
 }
-fn save(){ fs.write(DATA, {seq: seq picks: picks seen: watch_seen speak: speak_on fast: fast}.to_json()) }
+fn save(){ fs.write(DATA, {seq: seq picks: picks seen: watch_seen speak: speak_on fast: fast mseen: mail_seen mboot: mail_booted}.to_json()) }
 
 // ---------------------------------------------------------------- 发卡
 // 把一张卡发到快览屏（同一个 id 再发 = 原地更新）。
@@ -662,6 +688,178 @@ fn withdraw(e, done_msg, drop){
     })
 }
 
+// ---------------------------------------------------------------- 从邮件拾意（本地 2026-10-11 加）
+// 先问有几个账号，再列最近几封来信。宿主保管凭证，这里只拿 id 和元数据。
+// 这个 id 之前处理过没有（去重，免得同一封信反复造卡）。
+fn mail_seen_has(id){
+    let yes = false
+    for s in mail_seen { if s == id { yes = true } }
+    return yes
+}
+
+// 自动读邮件（本地 2026-10-11）：**照群消息那套**（watch_poll 每 3 秒自己读），
+// 桌面这边每 10 秒自己看一眼收件箱 —— 有新信就**自己读正文、自己钉常驻卡**，不等人点。
+// 去重靠 mail_seen（邮件 id），落盘；首次开机只登记基线，避免把历史邮件全刷成卡。
+fn mail_poll(){
+    if !MAIL_ON { return }
+    if !MAIL_AUTO { return }
+    host.request("mail.accounts", {}, fn(a){
+        if !a.is_ok {
+            mail_state = "宿主没给读信这项服务"
+            ui.mailbox.render()
+            return
+        }
+        let n = 0
+        if a.data != nil { n = a.data.len() }
+        if n == 0 {
+            mail_state = "自动读邮件：开 · 还没绑邮箱 —— 点下面「绑定邮箱」"
+            ui.mailbox.render()
+            return
+        }
+        mail_account = ""
+        for ac in a.data {
+            if has_key(ac, "id") {
+                if mail_account == "" { mail_account = "" + ac.id }
+            }
+        }
+        if mail_account == "" {
+            mail_state = "邮件服务没给出账号 id"
+            ui.mailbox.render()
+            return
+        }
+        // 先同步（只 list 是缓存，新信看不到），再列最近几封。
+        host.request("mail.sync", {account: mail_account}, fn(sy){
+            let sync_note = ""
+            if !sy.is_ok { sync_note = "（同步没成：" + sy.error + "）" }
+            host.request("mail.list", {account: mail_account limit: 8}, fn(l){
+                if !l.is_ok {
+                    mail_state = "这次没读到邮件：" + l.error + sync_note
+                    ui.mailbox.render()
+                    return
+                }
+                let ids = []
+                let subs = []
+                let rows = []
+                let fresh_ids = []
+                let fresh_subs = []
+                if l.data != nil {
+                    if has_key(l.data, "messages") {
+                        for m in l.data.messages {
+                            let mid = ""
+                            let sub = ""
+                            let who = ""
+                            for fk fv in m {
+                                if fk == "id" { mid = "" + fv }
+                                if fk == "subject" { sub = "" + fv }
+                                if fk == "sender" { who = "" + fv }
+                            }
+                            if mid != "" {
+                                if sub == "" { sub = "(无主题)" }
+                                ids.push(mid)
+                                subs.push(sub)
+                                let tag = who
+                                if tag == "" { tag = "有人" }
+                                rows.push(tag + "：" + sub)
+                                if !mail_seen_has(mid) {
+                                    mail_seen.push(mid)
+                                    if mail_booted { fresh_ids.push(mid) fresh_subs.push(sub) }
+                                }
+                            }
+                        }
+                    }
+                }
+                mail_ids = ids
+                mail_subs = subs
+                mail_rows = rows
+                mail_ok = ids.len() > 0
+                let head = "自动读邮件：开 · 收件箱 " + ("" + ids.len()) + " 封"
+                if !mail_booted {
+                    // 第一次：只登记，不造卡 —— 收件箱里原有的信不算"新来的"。
+                    mail_booted = true
+                    mail_state = head + "（刚开机，已有的先不造卡）"
+                    save()
+                    ui.mailbox.render()
+                    return
+                }
+                if fresh_ids.len() > 0 {
+                    mail_state = head + " · 自动读到新邮件 " + ("" + fresh_ids.len()) + " 封，正在出卡…"
+                    ui.mailbox.render()
+                    for i in fresh_ids.len() { mail_read(fresh_ids[i], fresh_subs[i], true) }
+                } else {
+                    mail_state = head + sync_note
+                    ui.mailbox.render()
+                }
+            })
+        })
+    })
+}
+
+// 绑定邮箱：抬出宿主自己的登录表单（凭证由宿主保管，**应用看不到密码**）。
+// 官方规矩：「谁加的账号谁能用」（lib.rs: an account is granted to the apps that
+// added it），所以拾意要读信，就得**自己**绑一份。
+fn mail_bind(){
+    show("正在抬出邮箱登录表单…")
+    host.request("mail.add_account", {}, fn(r){
+        if r.is_ok {
+            // 刚绑上：把此刻收件箱当基线（已有的信不刷成卡），之后的**新信**才自动出卡。
+            mail_booted = false
+            show("邮箱绑好了，马上开始自动读信…")
+            mail_poll()
+        } else {
+            show("没能绑定：" + r.error)
+        }
+    })
+}
+
+// 读一封信：读**正文**（mail.message），交给 AI 抽出时间/地点，以**主题**为题造卡。
+// auto=true：这是自动轮询发现的新信（不等人点）；false：人在界面上点的。
+fn mail_read(mid, sub, auto){
+    let via = "AI 读邮件"
+    if auto { via = "AI 自动读邮件" }
+    if auto { show("收到新邮件，正在读：" + clip(sub)) } else { show("正在读这封邮件…") }
+    host.request("mail.message", {account: mail_account message: mid}, fn(r){
+        if !r.is_ok {
+            show("读不到这封邮件：" + r.error)
+            return
+        }
+        let body = ""
+        if r.data != nil {
+            if has_key(r.data, "body") { body = "" + r.data.body }
+        }
+        if body == "" {
+            show("这封邮件没有正文")
+            return
+        }
+        // 正文可能很长：截前 1200 字（要说的事一定在前面），再给模型读。
+        let t = sub + "。" + grab(body, "^.{0,1200}")
+        if host.has("model") {
+            if !auto { show("AI 正在读这封邮件（从正文里抽时间地点）…") }
+            host.request("model.complete", {
+                task: ai_task()
+                input: {text: t}
+                schema: ai_schema()
+                class: "fast"
+            }, fn(r2){
+                if r2.is_ok && r2.data != nil && r2.data.output != nil {
+                    let o = r2.data.output
+                    pin_card(sub, o.when, o.where, via)
+                } else {
+                    pin_card(sub, when_of(t), where_of(t), via + "（AI 没答上，走本地规则）")
+                }
+            })
+        } else {
+            show("宿主没开 AI —— 走本地规则")
+            pin_card(sub, when_of(t), where_of(t), via + "（本地规则）")
+        }
+    })
+}
+
+// 人在界面上点某一封（照旧可用）。
+fn mail_pick(i){
+    if i >= mail_ids.len() { return }
+    mail_read(mail_ids[i], mail_subs[i], false)
+}
+
 // 问快览屏：我现在到底有几张卡在上面。
 fn refresh(){
     host.request("glance.list", {}, fn(r){
@@ -686,7 +884,7 @@ fn ai_schema(){
         }}
 }
 fn ai_task(){
-    return "把用户这句话里「要做的事」提取成一张卡的三个字段：title=要做的事（简短，可保留原话）；when=话里的时间（照原话说法，没提就空串）；where=话里的地点（没提就空串）。只输出 JSON，不要解释。"
+    return "把这句话里「要做的事」提取成一张卡的三个字段：title=要做的事（简短，可保留原话）；when=话里的时间（照原话说法，没提就空串）；where=话里的地点（**只填具体地点名**，如「3号楼2层会议室」「驿站」；不是地点就留空串，别把事由/主题当地点）。只输出 JSON，不要解释。"
 }
 
 // ---------------------------------------------------------------- 钉 / 撤 / 重钉
@@ -747,6 +945,21 @@ fn pin_new(){
 }
 
 fn repin(e){ publish(e, "已重钉（同一张卡原地更新）", false) }
+
+// 启动时把本机记着的卡「静默重钉」回快览屏（本地 2026-10-11 加）。
+// 缘由：宿主里的快览屏**不跨重启**（重启就空），而卡是我这边记着的 ⇒ 开机补回去，
+// 这样"常驻卡"才名副其实。不弹通知、不改提醒时刻，悄悄钉。
+fn repin_silent(e){
+    let args = {card_id: e.id title: clip("拾意 · " + e.text) source: CARD
+        data: {rec: {title: e.text subtitle: when_line(e) summary: where_line(e) as_of: stamp(e)}}
+        priority: 60 open: {app: "os.shiyi"} notify: false speak: false expires: 604800}
+    host.request("glance.publish", args, fn(r){ refresh() })
+}
+// 开机把记着的卡逐张补回快览屏（每钉一张，回执里顺手刷新计数）。
+fn restore_pins(){
+    if picks.len() == 0 { refresh() return }
+    for e in picks { repin_silent(e) }
+}
 
 fn unpin(e){ withdraw(e, "已从快览屏撤掉", true) }
 
@@ -972,9 +1185,12 @@ start_timeout(0.30, || ui.rows.render())
 start_timeout(0.35, || ui.speakstate.set_text(speak_state()))
 start_timeout(0.37, || ui.faststate.set_text(fast_state()))
 start_timeout(0.60, || refresh())
+start_timeout(0.70, || restore_pins())   // 开机把记着的常驻卡补回快览屏（宿主重启后它是空的）
 start_timeout(0.80, || watch_note(watch_boot()))
+start_timeout(0.90, || mail_poll())          // 开机先看一眼收件箱（只登记基线，不造卡）
 start_interval(1.0, || tick())
 start_interval(3.0, || watch_poll())
+start_interval(10.0, || mail_poll())         // 之后每 10 秒自己读一次：有新信就自己出常驻卡
 
 // ---------------------------------------------------------------- 界面
 SolidView{width: Fill height: Fill flow: Down padding: 10 spacing: 6 draw_bg.color: bg
@@ -991,6 +1207,23 @@ SolidView{width: Fill height: Fill flow: Down padding: 10 spacing: 6 draw_bg.col
     Flat{text: "造卡 · 钉到快览屏" on_click: || pin_new()}
     status := Label{width: Fill text: "" draw_text.color: accent draw_text.text_style.font_size: 11}
     watch := Label{width: Fill text: "" draw_text.color: faint draw_text.text_style.font_size: 10}
+    // 从邮件拾意（本地 2026-10-11 加）：桌面的信息源是邮件；点一封就用它造卡。
+    // 从邮件拾意（本地 2026-10-11）：桌面的信息源是邮件，**它自己读**。
+    // 只留一行状态（把纵向空间让给下面的「常驻卡」——卡才是主角）；
+    // 未绑邮箱时给一个绑定入口；想手动重读最近那封，点它一下即可。
+    mailbox := View{width: Fill height: Fit flow: Down spacing: 3 on_render: || {
+        if MAIL_ON {
+            Label{width: Fill text: "从邮件拾意 · " + mail_state draw_text.color: accent draw_text.text_style.font_size: 11}
+            if mail_ok {
+                if mail_rows.len() > 0 {
+                    Mini{text: "最近：" + mail_rows[0] + "（点它手动重读）" on_click: || mail_pick(0)}
+                }
+            }
+            if !mail_ok {
+                Mini{text: "绑定邮箱（弹出登录表单）" on_click: || mail_bind()}
+            }
+        }
+    }}
     // 语音播报开关（手机差异点）：只掐「念不念」这一步 —— 通知照弹、卡照留。
     View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
         Label{text: "语音播报" draw_text.color: dim draw_text.text_style.font_size: 11}

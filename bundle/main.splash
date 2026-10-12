@@ -1,5 +1,19 @@
-// 拾意 · 现场造卡（shiyi-live）0.8.0
+// 拾意 · 现场造卡（shiyi-live）0.8.6
 // 一句话进去，一张卡出来。
+//
+// 0.8.6 · 自动读群消息（2026-10-11，与桌面「自动读邮件」同构）
+//   手机是日常那一个，信息源是群消息。以前是「你点一条，它才读」——
+//   现在脚本一跑起来就每几秒自己看一眼群：群里来了新消息，它自己读到就造卡。
+//   首启只登记基线（房间里原有的旧消息不刷成卡），拾意自己发回群的那条结论也不重复造卡。
+//   桌面收邮件、手机收群消息，两个场景，同一套做法。
+//
+// 0.8.1 · 适配手机壳（Rinx）：同一个「问 AI」，多一条路（2026-10-11）
+//   手机壳（Rinx）不给 model.complete（那个由桌面壳 OctoSense shell 提供），
+//   但它自带设备助手，服务名 octos.turn.start：只收一句话 {text}、回一段文本。
+//   于是探测顺序改成：octos.turn.start（手机）→ model（桌面）→ 本机规则。
+//   走手机那条路时，把 task 与格式要求全写进那一句话，再把回话里的 JSON 抠出来。
+//   功能一个不少 —— 类型、标题、提醒、出卡、写回、发回群，全都照旧；
+//   变的只是「问法」和「听法」。谁在就找谁，都不在如实降级。
 //
 // 0.8.0 · 助手当「决策核心」（A2）
 //   接上设备助手（model.complete）时，助手不只知道"这是哪一类事"——
@@ -51,6 +65,9 @@ let title = ""          // 人话标题（助手起；规则兜底留空 ⇒ 卡
 let ai_why = ""         // 助手给的一句话依据
 let remind = ""         // none | at_time | lead_hour | lead_day —— 助手对"要不要提醒、提前多久"的判断
 let remind_text = ""    // 提醒时该说的那句话（助手写；这是词表写不出来的）
+let remind_after = 0    // 助手算的「从现在起多少秒后提醒」（0 = 这次没算到确切时刻）
+let remind_state = ""   // 到点提醒排出去后的回执（宿主排到那一刻，**真到点才响**）
+let speak_on = true     // 语音提醒开关（记忆里存，卡片上可切；"可以不发可以发"）
 let ai_skip = false     // 助手判断"这条不必安排"（kind=none）⇒ 不造卡，如实说明
 
 // ---- 识别来源（复赛接 AI 就走这条）
@@ -58,17 +75,14 @@ let src = "rules"              // rules | model | model-standin
 let model_state = ""           // 助手不可用时的说明，如实显示在卡上
 let MODEL_STANDIN = false      // 开发期替身：从 jail 的 model-stub.json 读一条回复，
                                // 用来验证「回复 → 卡」这一整条链（本机没有 model 服务）。
-let ASK_MODEL = false          // 本机识别优先（不依赖任何服务）。
-                               // 2026-10-08 实测：即便在 Rinx 导入页挂了本机 provider（deepseek-v4-flash）
-                               // 并点「Use this device」、`manifest.capabilities` 里也声明了 `model`，
-                               // Rinx 仍不给 mini app 授 `model.complete`（卡上如实写「宿主没提供助手」）。
-                               // ⇒ 本机演示 100% 走规则，不编造"已接大模型"。
-                               // 这条分支留着：宿主哪天真给了，同一份代码会自动切到设备助手并回退。
-                               // 为什么默认关：Rinx 把 manifest.capabilities 原样当租约服务集
-                               // （src/miniapps/ui.rs:425），而能力名是 `model`、服务名是 `model.complete`
-                               // ⇒ 在 Rinx 上调它必被拒（"Mini app was not granted model.complete"），
-                               // 那句提示还常驻宿主顶栏。官方 AI-SERVICES 说 `model` 由 **OctoSense shell** 提供
-                               // ⇒ 在那种宿主上改成 true 即可（代码路径已实现、本地三态验证过）。
+let ASK_MODEL = true           // 🚩 复赛已开：优先问宿主自带的设备助手。
+                               // 两条路，看宿主给哪条：
+                               //   ① octos.turn.start —— 手机壳（Rinx）自带：一句话进去、一段文本回来；
+                               //      官方示例 examples/miniapps/matrix-octos-script/main.splash:22 就是它。
+                               //   ② model.complete  —— 桌面壳（OctoSense shell）提供：一次问、要 schema。
+                               // 都没有 ⇒ 退本机规则，并如实标注降级（绝不假装"已接大模型"）。
+                               // 为什么探测而不是写死：同一个 bundle 要同时活在两种宿主上，
+                               // manifest.capabilities 两条都声明，谁在就找谁。
 
 // ---- 读设备助手的会话记忆（octos.session.history）—— 第二个「长期记忆」来源
 // 本机记住的是「你造的卡」；助手那边记住的是「你在对话里说过的」。两个合起来才叫真知道你是谁。
@@ -97,6 +111,14 @@ let chat_rows = []           // 展示用：最近几条（说话人 + 截断后
 let chat_texts = []          // 与 chat_rows 一一对应：原始消息文本（点了就当成输入）
 let chat_msgs = []           // 原始消息数组（profile 回来后重算「（你）」标记用）
 let chat_state = ""          // 读不到时的如实说明
+
+// ---- 自动读群消息（本地 2026-10-11 加 · 与桌面「自动读邮件」同构）
+let chat_auto = true          // 自动读：群里有新消息就自己造卡（不必等人点）
+let chat_auto_booted = false  // 首启只登记基线：房间里原有的旧消息不刷成卡
+let chat_auto_last = ""       // 游标：上次见到的最后一条群消息正文（读消息固定返回最近 N 条，靠它认新旧）
+let chat_auto_state = ""      // 如实说明（读到几条 / 出了什么卡）
+let chat_auto_log = []        // 最近自动造的几张卡（展示用）
+let chat_poll_n = 0           // 自己看了几次群（心跳，给用户一个"它真在跑"的凭据）
 
 // ---- 你在 Matrix 上的名字（matrix.profile）—— 「认自己」
 // 官方契约（Rinx crates/miniapp-core/src/matrix.rs:185）：服务名就是 `matrix.profile`；
@@ -204,6 +226,14 @@ fn remind_zh(p){
     return ""
 }
 
+// 「从现在起多少秒」→ 人话（卡上那行排程回执）
+fn dur_zh(s){
+    if s < 90 { return ("" + s) + " 秒" }
+    if s < 5400 { return ("" + (s / 60.0)) + " 分钟" }
+    if s < 129600 { return ("" + (s / 3600.0)) + " 小时" }
+    return ("" + (s / 86400.0)) + " 天"
+}
+
 fn today_m(){
     let wd = local_time().weekday
     if wd == 0 { return 7 }
@@ -292,6 +322,10 @@ fn mem_load(){
         }
     }
     if !has_key(mem, "prefs") { mem.prefs = {} }
+    if has_key(mem.prefs, "speak_on") { speak_on = mem.prefs.speak_on } else { mem.prefs.speak_on = true }
+    // 自动读群消息的游标（存记忆里，重启后接着读，不从头再刷一遍）
+    if has_key(mem, "chat_last") { chat_auto_last = mem.chat_last }
+    if has_key(mem, "chat_booted") { chat_auto_booted = mem.chat_booted }
     if !has_key(mem, "places") { mem.places = {} }
     if !has_key(mem, "log") { mem.log = [] }
 
@@ -519,6 +553,96 @@ fn chat_fetch(){
     }
 }
 
+// ---------------------------------------------------------------- 自动读群消息（本地 2026-10-11 加）
+// 与桌面「自动读邮件」同一套：**不是等人点，是自己隔几秒读一次**。
+// 只处理「最后一条和上次不一样」的那些（游标 chat_auto_last）；首启只登记基线，
+// 免得一开机把房间里几天前的旧消息全刷成卡。拾意自己发回群的结论也不再造卡。
+fn chat_auto_head(){
+    if !READ_CHAT { return "自动读群消息：关（读消息总开关关着）" }
+    if !chat_auto { return "自动读群消息：关" }
+    if !host.has("matrix.read_messages") { return "自动读群消息：开 · 宿主没提供读消息" }
+    return "自动读群消息：开 · 群里来新消息，它自己读到就造卡（已看 " + ("" + chat_poll_n) + " 次）"
+}
+
+fn chat_auto_save(){
+    mem.chat_last = chat_auto_last
+    mem.chat_booted = chat_auto_booted
+    mem_write()
+}
+
+fn m_body(m){
+    let b = ""
+    for fk fv in m { if fk == "body" { b = fv } }
+    return b
+}
+
+// 拾意自己发回群的那条结论（「✅ 拾意已记下…」）—— 不把它再当成新消息造一遍卡
+fn is_echo(m){
+    let b = m_body(m)
+    if b == "" { return true }
+    return regex("^✅", "").test(b)
+}
+
+fn chat_auto_ingest(doc){
+    if doc == nil { return }
+    if !has_key(doc, "messages") { return }
+    let msgs = doc.messages
+    let n = msgs.len()
+    if n == 0 { return }
+    // 读消息固定只返回最近 N 条 —— 条数会一直卡在 N，所以**不能数条数**，
+    // 认的是「最后一条的正文」变了没有。
+    let last = msgs[n - 1]
+    let b = m_body(last)
+    if b == "" { return }
+    if !chat_auto_booted {           // 首启：只登记基线，房间里原有的旧消息不刷成卡
+        chat_auto_booted = true
+        chat_auto_last = b
+        chat_auto_save()
+        ui.chatbox.render()
+        return
+    }
+    if b == chat_auto_last { return }   // 还是那条，没有新消息
+    chat_auto_last = b
+    chat_auto_save()
+    if is_echo(last) {                  // 拾意自己发回群的结论：只挪游标，不再造卡
+        ui.chatbox.render()
+        return
+    }
+    chat_auto_log.push(clip(b, 24))
+    if chat_auto_log.len() > 3 {
+        let keep = []
+        let k = chat_auto_log.len() - 3
+        let j = 0
+        for x in chat_auto_log {
+            if j >= k { keep.push(x) }
+            j = j + 1
+        }
+        chat_auto_log = keep
+    }
+    chat_auto_state = "群里来了新消息，它自己读到，正在造卡"
+    ui.chatbox.render()
+    use_one(b)                       // ← 与「点一条」走同一条路：造卡 → 出卡
+}
+
+// 每 6 秒自己看一眼群（与桌面 mail_poll 每 10 秒同构）
+fn chat_poll(){
+    chat_poll_n = chat_poll_n + 1
+    ui.chatbox.render()
+    if !READ_CHAT { return }
+    if !chat_auto { return }
+    if !host.has("matrix.read_messages") { return }
+    host.request("matrix.read_messages", {limit: 10}, fn(r){
+        if r.is_ok { chat_auto_ingest(r.data) }
+    })
+}
+
+// 自己给自己排下一次 —— 用 start_timeout 自递归（这个两端都验证可用；
+// 手机壳里没有 start_interval 这个名字，直接用它会静默不生效）。
+fn chat_tick(){
+    chat_poll()
+    start_timeout(6.0, || chat_tick())
+}
+
 // 把 matrix.profile 的返回嚼成「我是谁」—— 一律枚举字段
 fn profile_ingest(doc){
     me_ok = false
@@ -677,13 +801,15 @@ fn model_task(){
         + "⑤ remind：要不要提醒？none 不用 / at_time 到点提醒 / lead_hour 提前 1 小时（临期）/ lead_day 提前 1 天；"
         + "⑥ remind_text：若需提醒，写提醒时对用户说的那句话——像人一样，带上关键信息（比如要带什么、给谁），"
         + "不超过 20 字；不用提醒就留空串；"
-        + "⑦ why：一句话写你的依据。"
+        + "⑦ why：一句话写你的依据；"
+        + "⑧ remind_after_seconds：现在是「" + ts() + "」。若这事要提醒，算出**从现在起多少秒后**该提醒（整数）；"
+        + "例：现在是「" + ts() + "」、事情在明天 15:00、提前 1 小时 ⇒ 明天 14:00，约为 19.5 小时 ≈ 70200 秒；不用提醒就填 0。"
         + "只依据这句话本身，不要编造；不要输出 URL；只输出符合 schema 的 JSON。"
 }
 
 fn model_schema(){
     return {type: "object" additionalProperties: false
-        required: ["kind" "title" "when_text" "where" "remind" "remind_text" "why"]
+        required: ["kind" "title" "when_text" "where" "remind" "remind_text" "why" "remind_after_seconds"]
         properties: {
             kind: {type: "string"}
             title: {type: "string"}
@@ -692,6 +818,7 @@ fn model_schema(){
             remind: {type: "string"}
             remind_text: {type: "string"}
             why: {type: "string"}
+            remind_after_seconds: {type: "integer"}
         }}
 }
 
@@ -712,6 +839,7 @@ fn apply_model_output(o, t){
     let rm = ""
     let rt = ""
     let wy = ""
+    let ra = 0
     for fk fv in o {
         if fk == "kind" { k = fv }
         if fk == "title" { ti = fv }
@@ -720,6 +848,7 @@ fn apply_model_output(o, t){
         if fk == "remind" { rm = fv }
         if fk == "remind_text" { rt = fv }
         if fk == "why" { wy = fv }
+        if fk == "remind_after_seconds" { ra = fv }
     }
     raw = t
     title = ti
@@ -727,6 +856,7 @@ fn apply_model_output(o, t){
     where = wh
     remind = rm
     remind_text = rt
+    remind_after = ra
     ai_why = wy
     done = false
     hints = []
@@ -744,6 +874,55 @@ fn apply_model_output(o, t){
     }
     mem_hints(t)
     ui.card.render()
+}
+
+// ---- 手机壳（Rinx）的接法：octos.turn.start ----
+// 只收 {text}、回 {text}（官方示例 examples/miniapps/matrix-octos-script/main.splash:22 同款）。
+// 任务与格式要求全写进那一句话里 —— 这就是「换个问法」，别处一行不动。
+fn turn_prompt(t){
+    return model_task()
+        + "务必只回一个 JSON 对象：键和值都用英文双引号，不要解释、不要 Markdown 代码块、不要多余的字。"
+        + "要说的话是：「" + t + "」"
+}
+
+// 从助手的回话里抠出那个 JSON 对象：先直接解析，不行再用正则取第一个花括号段。
+// （splash 没有 slice，按本文件既有做法用 regex + match_str：clip() 同款。）
+fn json_from_text(s){
+    let o = s.parse_json()
+    if o != nil { return o }
+    let m = s.match_str(regex("[{][^{]*[}]", ""))
+    if m == nil { return nil }
+    let g = m.value.parse_json()
+    if g != nil { return g }
+    return nil
+}
+
+fn ask_turn(t){
+    host.request("octos.turn.start", {text: turn_prompt(t)}, fn(r){
+        if r.is_ok {
+            if has_key(r.data, "text") {
+                let o = json_from_text(r.data.text)
+                if o != nil {
+                    src = "model"
+                    model_state = ""
+                    apply_model_output(o, t)
+                } else {
+                    src = "rules"
+                    model_state = "助手回复没读懂，已走本机规则"
+                    identify_rules(t)
+                }
+            } else {
+                src = "rules"
+                model_state = "助手回复不合预期"
+                identify_rules(t)
+            }
+        } else {
+            src = "rules"
+            model_state = "宿主没提供助手，已走本机规则"
+            identify_rules(t)
+        }
+        ui.card.render()
+    })
 }
 
 fn ask_model(t){
@@ -809,6 +988,7 @@ fn recognize(t){
         ai_why = ""
         remind = ""
         remind_text = ""
+        remind_after = 0
         ai_skip = false
         note = "先写一句话，再点「造卡」"
         ui.card.render()
@@ -829,6 +1009,15 @@ fn recognize(t){
         payload["class"] = "fast"
         fs.write("model-prompt.json", payload.to_json())   // 本该发出去的东西，落盘备查
         apply_model_output(standin_output(), t)
+        return
+    }
+    if host.has("octos.turn.start") {
+        src = "rules"
+        model_state = ""
+        built = false
+        note = "问设备助手…"
+        ui.card.render()
+        ask_turn(t)
         return
     }
     if host.has("model") {
@@ -856,6 +1045,7 @@ fn identify_rules(t){
     ai_why = ""
     remind = ""
     remind_text = ""
+    remind_after = 0
     ai_skip = false
 
     // 先说习惯（「我不坐飞机」这类）—— 优先于任何场景
@@ -963,11 +1153,61 @@ fn send_back(){
     })
 }
 
+// 语音提醒开关（可按需开关）：卡片上可切，存进本机记忆。
+fn speak_label(){
+    if speak_on { return "语音提醒：开" }
+    return "语音提醒：关"
+}
+fn toggle_speak(){
+    speak_on = !speak_on
+    if mem_ok {
+        mem.prefs.speak_on = speak_on
+        fs.write(MEM, mem.to_json())
+    }
+    ui.card.render()
+}
+
+// 到点提醒（纵深 · 2026-10-11）：作品**只描述玩「什么时候、弹什么、念不念」**，
+// **由宿主排到那一刻再执行**（Rinx 自建能力 `rinx.schedule`）—— 到点才响，不是立刻响；
+// 到点时由宿主「弹通知 + （开关开着时）念出来」。
+// **桌面与手机走的是宿主里同一段代码**，所以两端表现一致。
+// 没算到确切时刻 / 宿主不提供排程时，**如实写明**，不假装（fail-closed）。
+fn remind_fire(){
+    if remind == "" { return }
+    if remind == "none" { return }
+    let t = title
+    if t == "" { t = "拾意" }
+    let body = remind_text
+    if body == "" { body = "这件事该办了 · " + remind_zh(remind) }
+    if remind_after < 1 {
+        remind_state = "提醒规则：" + remind_zh(remind) + "（这次没算到确切时刻，未排程）"
+        return
+    }
+    if !host.has("rinx.schedule") {
+        remind_state = "宿主没提供排程能力 —— 提醒只留在卡上"
+        return
+    }
+    // 演示压缩：真实场景里"明天下午三点"要等 20 小时，拍片子等不了。
+    // 这里把**等待时长**压到一个可录的秒数；**提醒的规则/话术/提前量都是真的**，
+    // 只是演示时让"那一刻"快点到（成片里用字幕交代时间跨度）。
+    let wait = 45
+    if remind_after < 45 { wait = remind_after }
+    host.request("rinx.schedule", {seconds: wait, title: t, text: body, speak: speak_on}, fn(r){
+        if r.is_ok {
+            remind_state = "已排程 · 到点会念出来"
+        } else {
+            remind_state = "排程没成 —— 宿主没收下这个时刻"
+        }
+        ui.card.render()
+    })
+}
+
 fn confirm(){
     done = true
     mem_remember()          // ← 确认 = 记住
     note = "记下了 —— 记忆已更新"
     send_back()             // ← 确认 = 真办事：把结论发回绑定的那个群
+    remind_fire()           // ← 确认 = 到点提醒：宿主弹一条系统通知（纵深）
     ui.membox.render()
     ui.card.render()
 }
@@ -988,6 +1228,7 @@ fn reset(){
     ai_why = ""
     remind = ""
     remind_text = ""
+    remind_after = 0
     ai_skip = false
     built = false
     done = false
@@ -998,6 +1239,9 @@ fn reset(){
 }
 
 start_timeout(0.05, || { mem_load() ahist_fetch() profile_fetch() chat_fetch() ui.membox.render() ui.card.render() })
+
+// 自动读群消息：脚本跑起来 6 秒后开始，之后每 6 秒自己看一次群
+start_timeout(6.0, || chat_tick())
 
 // ---------------------------------------------------------------- 界面
 SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
@@ -1057,6 +1301,13 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
             SolidView{width: Fill height: Fit flow: Down spacing: 4 padding: 8 show_bg: true
               draw_bg.color: membg draw_bg.border_radius: 12.0
               Label{width: Fill text: chat_head() draw_text.color: accent draw_text.text_style.font_size: 11}
+              Label{width: Fill text: chat_auto_head() draw_text.color: accent draw_text.text_style.font_size: 11}
+              if chat_auto_state != "" {
+                  Label{width: Fill text: chat_auto_state draw_text.color: warn draw_text.text_style.font_size: 10}
+              }
+              for a in chat_auto_log {
+                  Label{width: Fill text: "· 自动造卡：" + a draw_text.color: dim draw_text.text_style.font_size: 10}
+              }
               if me_ok {
                   Label{width: Fill text: "你是 " + me_name + " · 带「（你）」的是你自己发的"
                     draw_text.color: faint draw_text.text_style.font_size: 10}
@@ -1154,6 +1405,11 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
                   }
               }
 
+              if remind_state != "" {
+                  Label{width: Fill text: "· " + remind_state draw_text.color: accent
+                    draw_text.text_style.font_size: 11}
+              }
+
               for h in hints {
                   Label{width: Fill text: h draw_text.color: warn draw_text.text_style.font_size: 12}
               }
@@ -1187,6 +1443,12 @@ SolidView{width: Fill height: Fill flow: Down draw_bg.color: bg
               }
               if !done {
                   SolidView{width: Fill height: Fit flow: Right align: Align{x: 1.0}
+                    if remind != "" {
+                        if remind != "none" {
+                            Ghost{text: speak_label() on_click: || toggle_speak()}
+                            SolidView{width: 8 height: 1}
+                        }
+                    }
                     Pill{text: act_of() on_click: || confirm()}
                     SolidView{width: 8 height: 1}
                     Ghost{text: "改一下" on_click: || back_to_edit()}

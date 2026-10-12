@@ -4,7 +4,7 @@
 
 1. **快览屏（glance）集成** —— 拾意作为官方同级 **system app**（`os.shiyi`），把卡钉进**系统快览屏**、和应用同生命周期（**底层**）。
 2. **助手「原地改卡」** —— 给拾意挂一个它自己的工具 **`shiyi.repin`**，助手在卡的对话里就能把钉的那张卡**原地改掉**（**建在第 1 条之上**）。
-3. **拾意「会说话」** —— 给拾意加一张**嘴**：钉卡时用**系统 TTS** 把卡念出来（D2），到点**自己再弹一次提醒 + 再念一遍**（D1）。**输出侧、只说不听**，不碰 33OS。
+3. **拾意「会说话」** —— 给拾意加一张**嘴**：钉卡时用**系统 TTS** 把卡念出来（D2），到点**自己再弹一次提醒 + 再念一遍**（D1）。**输出侧、只说不听**，不碰内核一行。
 
 > 第 1 条（快览屏）的完整实证见 [`../docs/evidence/glance/`](../docs/evidence/glance/README.md)；
 > 第 2 条（改卡）见 [`../docs/evidence/repin/`](../docs/evidence/repin/README.md)；
@@ -49,7 +49,7 @@
 |---|---|---|
 | `apps/shiyi/bundle/tools.json` | **新增** | 拾意工具清单（此前不存在）。声明唯一工具 `shiyi.repin`，`risk:"act"`、`background:false`、`implemented_by:"host-service"`；input `card_id`(必填)/`title`(必填,1-80)/`when`/`where`/`as_of`；output `{card_id,replaced,expires_at}` |
 | `apps/shiyi/bundle/main.splash` | **修改** | 拾意的造卡 app。**D1 到点提醒**：+38 行（`arm()/fire()/tick()`；到点**复用已授权的 `glance.publish` + `notify:true`** 把同一张卡再发一次 = 原地更新 + 再弹一次通知）。repin 复用活卡的 L0 源码 |
-| `apps/shiyi/bundle/manifest.json` | 已有 | 系统 app 清单（`bundle_blake3` 留空，构建期由 `pack_system_app` 自动盖章）。**版本 0.2.0 → 0.2.1**（加语音）。**（本地试验 · 未推）0.2.1 → 0.3.0**：+ `matrix.read_messages`（群消息自动触发用）。**0.3.0 → 0.3.1**：时间写全日期（见 §2.2） |
+| `apps/shiyi/bundle/manifest.json` | 已有 | 系统 app 清单（`bundle_blake3` 留空，构建期由 `pack_system_app` 自动盖章）。**版本史**：0.2.0 → **0.2.1**（加语音）→ 0.3.0（+ `matrix.read_messages`）→ 0.3.1（时间写全日期）→ 0.3.2~0.3.6（手机通知/演示加速/真排程）→ 0.3.8（措辞对齐）→ **0.3.9**（+ `model` 能力 + 时间地点解析治本）→ 0.3.10（群消息自动改卡召回修复）→ **0.3.11（当前）**：**桌面真收邮件**（`mail` 能力 · 自动读来信出常驻卡 · 到点提醒念出来） |
 | `crates/shell/src/shiyi.rs` | **新增** | 拾意的 host service。`repin(app,args)`：从**活卡**取 L0 源码**原样复用**（模型只改数据、不改卡代码），只换 `rec` 数据 → `crate::glance::publish_for("os.shiyi", &publish)`。含 2 单测 |
 | `crates/shell/src/lib.rs` | **修改** | ① 加 `pub mod shiyi;`（`:90`）；② **`glance_notify()` 里 `note.app == "os.shiyi"` → `android_speak`**（**D2·输出侧、只说不听**；`spoken_title` 先 clone 规避 move）；③ `local_utc_offset_secs()`（**#343 时区修复**，另述） |
 | `crates/shell/src/apps.rs` | **修改** | `register_host_services()` 加 `crate::shiyi::register();`（`:228`，在 `glance_notice::serve_system_apps()` 兜底之前） |
@@ -85,7 +85,7 @@
 **为什么不算越界（划得清）**：
 
 - **输出侧、只说不听**：只往扬声器写，**不收麦克风**——不碰任何"对话/识别"。
-- **用 Android 系统 TTS**（本机 MIUI 的 `mibrain`），**与 33OS 无关**，不依赖任何自有语音资产。
+- **用 Android 系统 TTS**（本机 MIUI 的 `mibrain`），**不依赖任何自有语音资产**。
 - **不改内核**：走 `glance_notify` 这个**已有钩子** + `android_command` 这条**已有通道**，与官方既有通知同构。
 
 **⚠️ 诚实边界（必须讲清）**：
