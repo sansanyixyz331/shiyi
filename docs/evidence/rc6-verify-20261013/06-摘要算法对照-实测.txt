@@ -1,0 +1,4 @@
+forward-slash (new, portable_path) : 50404a65871a4fbe50f9b7740b7932d6fdae855164962a7b6b20d76a0f5cb909
+backslash     (old, host separator): 2d0a5a05e706f8f6faabe2bdd940cc47fbd01ecb9c56cf1da6e5d800d23f773e
+10-05 card-host reported           : 2d0a5a05e706f8f6faabe2bdd940cc47fbd01ecb9c56cf1da6e5d800d23f773e
+manifest declares                  : 50404a65871a4fbe50f9b7740b7932d6fdae855164962a7b6b20d76a0f5cb909

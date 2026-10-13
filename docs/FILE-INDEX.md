@@ -1,7 +1,7 @@
 ﻿# 文件索引
 
 > 本索引列出本仓**会提交的全部文件**（按目录分组，逐条列出）。
-> 材料按用途归类见 [`MATERIALS.md`](MATERIALS.md)；目录结构速查见 [`STRUCTURE.md`](STRUCTURE.md)；按官方材料要求逐项对照见 [`SUBMISSION.md`](SUBMISSION.md)。
+> 材料按用途归类见 [`../MATERIALS.md`](../MATERIALS.md)；目录结构速查见 [`STRUCTURE.md`](STRUCTURE.md)；按官方材料要求逐项对照见 [`../SUBMISSION.md`](../SUBMISSION.md)。
 
 **合计 283 个文件 / 175.9 MB。**
 
@@ -31,16 +31,16 @@
 
 - `.gitattributes`  — 0 KB
 - `.gitignore`  — 1 KB
-- `AGENTS.md`  — 3 KB
+- `../AGENTS.md`  — 3 KB
 - `FILE-INDEX.md`  — 17 KB
 - `LICENSE`  — 11 KB
-- `MATERIALS.md`  — 7 KB
+- `../MATERIALS.md`  — 7 KB
 - `NOTICE`  — 1 KB
-- `PRIVACY.md`  — 2 KB
-- `README.md`  — 24 KB
+- `../PRIVACY.md`  — 2 KB
+- `../README.md`  — 24 KB
 - `STRUCTURE.md`  — 5 KB
-- `SUBMISSION.md`  — 46 KB
-- `SUPPORT.md`  — 2 KB
+- `../SUBMISSION.md`  — 46 KB
+- `../SUPPORT.md`  — 2 KB
 - `评审速览.md`  — 11 KB
 
 ### bundle/（5 个）
@@ -65,22 +65,22 @@
 - `apps/shiyi-card/bundle/screenshots/03-plan.png`  — 46 KB
 - `apps/shiyi-card/bundle/screenshots/04-memo.png`  — 35 KB
 - `apps/shiyi-card/bundle/screenshots/05-done.png`  — 38 KB
-- `apps/shiyi-live/README.md`  — 24 KB
+- `../apps/shiyi-live/README.md`  — 24 KB
 
 ### octos/（8 个）
 
-- `octos/README.md`  — 13 KB
+- `../octos/README.md`  — 13 KB
 - `octos/apps/shiyi/bundle/main.splash`  — 67 KB
 - `octos/apps/shiyi/bundle/manifest.json`  — 0 KB
 - `octos/apps/shiyi/bundle/tools.json`  — 2 KB
 - `octos/crates/shell/src/shiyi.rs`  — 8 KB
-- `octos/host-extension/README.md`  — 6 KB
+- `../octos/host-extension/README.md`  — 6 KB
 - `octos/host-extension/build_host.sh`  — 4 KB
 - `octos/host-extension/speak_host_extension.patch`  — 21 KB
 
 ### android/（6 个）
 
-- `android/README.md`  — 7 KB
+- `../android/README.md`  — 7 KB
 - `android/SHA256SUMS.txt`  — 1 KB
 - `android/shiyi-live-0.8.6-rinx-bundle.zip`  — 83 KB
 - `android/shiyi-live-rinx.manifest.json`  — 1 KB
@@ -89,22 +89,22 @@
 
 ### docs/（说明文档）（16 个）
 
-- `docs/AI接入方案.md`  — 6 KB
-- `docs/Agent任务演示.md`  — 11 KB
-- `docs/Rinx宿主改造说明.md`  — 6 KB
-- `docs/作品让项目多了什么_2分钟陈述.md`  — 4 KB
-- `docs/作品设计_拾意.md`  — 8 KB
-- `docs/可独立复跑_发回群闭环_步骤说明.md`  — 11 KB
-- `docs/回归清单.md`  — 10 KB
-- `docs/复赛结构变更说明_20261010.md`  — 5 KB
-- `docs/失败场景与回退_系统留证.md`  — 9 KB
-- `docs/对标官方场景与评审口径.md`  — 8 KB
-- `docs/小程序机制笔记.md`  — 9 KB
-- `docs/手机端复现说明.md`  — 6 KB
+- `AI接入方案.md`  — 6 KB
+- `Agent任务演示.md`  — 11 KB
+- `Rinx宿主改造说明.md`  — 6 KB
+- `作品让项目多了什么_2分钟陈述.md`  — 4 KB
+- `作品设计_拾意.md`  — 8 KB
+- `可独立复跑_发回群闭环_步骤说明.md`  — 11 KB
+- `回归清单.md`  — 10 KB
+- `复赛结构变更说明_20261010.md`  — 5 KB
+- `失败场景与回退_系统留证.md`  — 9 KB
+- `对标官方场景与评审口径.md`  — 8 KB
+- `小程序机制笔记.md`  — 9 KB
+- `手机端复现说明.md`  — 6 KB
 - `docs/拾意_复赛答辩幻灯片.pptx`  — 1.3 MB
-- `docs/数据来源与限制.md`  — 12 KB
-- `docs/生成器MVP_意图即卡.md`  — 9 KB
-- `docs/造App的机器_一页.md`  — 13 KB
+- `数据来源与限制.md`  — 12 KB
+- `生成器MVP_意图即卡.md`  — 9 KB
+- `造App的机器_一页.md`  — 13 KB
 
 ### docs/evidence（每条能力一组）（115 个）
 
@@ -113,7 +113,7 @@
 - `docs/evidence/act/03-card-built.png`  — 217 KB
 - `docs/evidence/act/04-confirm-sent.png`  — 257 KB
 - `docs/evidence/act/05-room-message.png`  — 140 KB
-- `docs/evidence/act/README.md`  — 3 KB
+- `evidence/act/README.md`  — 3 KB
 - `docs/evidence/act/rinx-act-end-to-end.mp4`  — 446 KB
 - `docs/evidence/assist-memory/00-default-unchanged.png`  — 92 KB
 - `docs/evidence/assist-memory/01-assist-memory-4-rows.png`  — 118 KB
@@ -125,21 +125,21 @@
 - `docs/evidence/chat-read/02-card-built-from-message.png`  — 139 KB
 - `docs/evidence/chat-read/03-confirmed.png`  — 149 KB
 - `docs/evidence/chat-read/04-memory-5-cards.png`  — 120 KB
-- `docs/evidence/chat-read/README.md`  — 3 KB
+- `evidence/chat-read/README.md`  — 3 KB
 - `docs/evidence/chat-read/cardhost/00-default-unchanged.png`  — 92 KB
 - `docs/evidence/chat-read/cardhost/01-stub-reads-3.png`  — 127 KB
 - `docs/evidence/chat-read/cardhost/02-unavailable.png`  — 98 KB
 - `docs/evidence/demo-desktop-mail-20261011/01-mail-and-shiyi.png`  — 1.2 MB
 - `docs/evidence/demo-desktop-mail-20261011/02-glance-cards.png`  — 491 KB
 - `docs/evidence/demo-desktop-mail-20261011/03-autoread-and-speak.png`  — 613 KB
-- `docs/evidence/demo-desktop-mail-20261011/README.md`  — 3 KB
+- `evidence/demo-desktop-mail-20261011/README.md`  — 3 KB
 - `docs/evidence/demo-desktop-mail-20261011/字幕.srt`  — 1 KB
 - `docs/evidence/demo-desktop-mail-20261011/拾意_桌面_工作场景_演示.mp4`  — 1.2 MB
 - `docs/evidence/demo-phone-groupmsg-20261012/01-selfread-status.png`  — 372 KB
 - `docs/evidence/demo-phone-groupmsg-20261012/02-card.png`  — 387 KB
 - `docs/evidence/demo-phone-groupmsg-20261012/03-confirmed-sentback-scheduled.png`  — 337 KB
 - `docs/evidence/demo-phone-groupmsg-20261012/04-fired-notification.png`  — 950 KB
-- `docs/evidence/demo-phone-groupmsg-20261012/README.md`  — 4 KB
+- `evidence/demo-phone-groupmsg-20261012/README.md`  — 4 KB
 - `docs/evidence/demo-phone-groupmsg-20261012/字幕.srt`  — 1 KB
 - `docs/evidence/demo-phone-groupmsg-20261012/拾意_手机_群消息_演示.mp4`  — 1.9 MB
 - `docs/evidence/generator/generator-at-work.mp4`  — 353 KB
@@ -149,14 +149,14 @@
 - `docs/evidence/glance/04-phone-app.png`  — 261 KB
 - `docs/evidence/glance/05-phone-grid.png`  — 187 KB
 - `docs/evidence/glance/06-phone-2cards.png`  — 328 KB
-- `docs/evidence/glance/README.md`  — 8 KB
+- `evidence/glance/README.md`  — 8 KB
 - `docs/evidence/glance/desktop_glance_end_to_end.mp4`  — 1.7 MB
 - `docs/evidence/glance/phone_glance_demo.mp4`  — 2.0 MB
 - `docs/evidence/group-update/01-before-update.jpg`  — 238 KB
 - `docs/evidence/group-update/02-bug-time-in-where.jpg`  — 229 KB
 - `docs/evidence/group-update/03-v0.3.10-installed.jpg`  — 234 KB
 - `docs/evidence/group-update/04-after-fix.jpg`  — 236 KB
-- `docs/evidence/group-update/README.md`  — 5 KB
+- `evidence/group-update/README.md`  — 5 KB
 - `docs/evidence/identify/card-model.png`  — 53 KB
 - `docs/evidence/identify/card-rules-vs-model.png`  — 117 KB
 - `docs/evidence/identify/card-rules.png`  — 52 KB
@@ -170,7 +170,7 @@
 - `docs/evidence/live-app/07-card-built.png`  — 115 KB
 - `docs/evidence/live-app/08-confirmed.png`  — 110 KB
 - `docs/evidence/live-app/09-memory-3.png`  — 115 KB
-- `docs/evidence/live-run/README.md`  — 3 KB
+- `evidence/live-run/README.md`  — 3 KB
 - `docs/evidence/live-run/frame-0.5.png`  — 134 KB
 - `docs/evidence/live-run/frame-12.png`  — 264 KB
 - `docs/evidence/live-run/frame-19.5.png`  — 302 KB
@@ -190,7 +190,7 @@
 - `docs/evidence/phone-live-20261011/03-ai-card-pinned.png`  — 339 KB
 - `docs/evidence/phone-live-20261011/04-ai-source-device-assistant.png`  — 367 KB
 - `docs/evidence/phone-live-20261011/05-sent-back-to-group.png`  — 348 KB
-- `docs/evidence/phone-live-20261011/README.md`  — 3 KB
+- `evidence/phone-live-20261011/README.md`  — 3 KB
 - `docs/evidence/phone-live-20261011/kernel-log-ai-call.txt`  — 1 KB
 - `docs/evidence/phone-notify-20261011/01-card-remind-lead-hour.png`  — 330 KB
 - `docs/evidence/phone-notify-20261011/02-system-notification.png`  — 914 KB
@@ -198,7 +198,7 @@
 - `docs/evidence/phone-notify-20261011/04-card-notify-and-spoke.png`  — 75 KB
 - `docs/evidence/phone-notify-20261011/05-switch-off.png`  — 34 KB
 - `docs/evidence/phone-notify-20261011/06-switch-on-with-remind.png`  — 332 KB
-- `docs/evidence/phone-notify-20261011/README.md`  — 6 KB
+- `evidence/phone-notify-20261011/README.md`  — 6 KB
 - `docs/evidence/phone-notify-20261011/notification-dump.txt`  — 1 KB
 - `docs/evidence/phone-notify-20261011/tts-logcat.txt`  — 2 KB
 - `docs/evidence/phone-schedule-20261011/01-system-notification.png`  — 908 KB
@@ -208,7 +208,7 @@
 - `docs/evidence/profile/01-profile-rinx-live.png`  — 120 KB
 - `docs/evidence/profile/02-chat-with-you-tag.png`  — 23 KB
 - `docs/evidence/profile/03-review-five-services.png`  — 100 KB
-- `docs/evidence/repin/README.md`  — 9 KB
+- `evidence/repin/README.md`  — 9 KB
 - `docs/evidence/repin/card_after_repin.png`  — 1.4 MB
 - `docs/evidence/repin/desktop_card_chat.jsonl`  — 6 KB
 - `docs/evidence/repin/desktop_repin_end_to_end.mp4`  — 1.8 MB
@@ -218,7 +218,7 @@
 - `docs/evidence/repin/phone_card_chat.jsonl`  — 4 KB
 - `docs/evidence/repin/phone_repin_end_to_end.mp4`  — 5.8 MB
 - `docs/evidence/repin/phone_tool_audit.jsonl`  — 0 KB
-- `docs/evidence/speak/README.md`  — 3 KB
+- `evidence/speak/README.md`  — 3 KB
 - `docs/evidence/speak/d1_evidence.mp4`  — 3.1 MB
 - `docs/evidence/speak/key_frames/01_publish_notify.png`  — 775 KB
 - `docs/evidence/speak/key_frames/02_reminder_notify.png`  — 695 KB
@@ -226,14 +226,14 @@
 
 ### ai/（21 个）
 
-- `ai/AGENT.md`  — 5 KB
-- `ai/README.md`  — 3 KB
+- `../ai/AGENT.md`  — 5 KB
+- `../ai/README.md`  — 3 KB
 - `ai/manifest.ai.json`  — 1 KB
 - `ai/templates/bindings_octos_turn.json`  — 0 KB
 - `ai/templates/page.data.加reply占位.json`  — 0 KB
 - `ai/templates/显示AI回复的卡.page.card`  — 2 KB
 - `ai/tools.json`  — 3 KB
-- `ai/本地跑通_20261004.md`  — 6 KB
+- `../ai/本地跑通_20261004.md`  — 6 KB
 - `ai/证据/4轮问答_汇总.jsonl`  — 3 KB
 - `ai/证据/AI_会话_g1.jsonl`  — 1 KB
 - `ai/证据/AI_会话_g2.jsonl`  — 1 KB
@@ -250,8 +250,8 @@
 
 ### rinx/（15 个）
 
-- `rinx/L0卡接宿主服务_实战指南.md`  — 6 KB
-- `rinx/README.md`  — 6 KB
+- `../rinx/L0卡接宿主服务_实战指南.md`  — 6 KB
+- `../rinx/README.md`  — 6 KB
 - `rinx/bindings.json`  — 0 KB
 - `rinx/manifest.send.json`  — 0 KB
 - `rinx/证据/01_Review通过_显示能力与房间绑定.png`  — 94 KB
@@ -341,13 +341,13 @@
 
 ### tools/（3 个）
 
-- `tools/README.md`  — 3 KB
+- `../tools/README.md`  — 3 KB
 - `tools/l0_bindings_lint.py`  — 8 KB
 - `tools/证据/前后对照_20261004.txt`  — 2 KB
 
 ### review/（3 个）
 
-- `review/ANSWERS.md`  — 9 KB
+- `../review/ANSWERS.md`  — 9 KB
 - `review/GATE.txt`  — 1 KB
 - `review/scan-packet.json`  — 66 KB
 

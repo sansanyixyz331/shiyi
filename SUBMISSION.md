@@ -5,7 +5,7 @@
 >
 > 另：按类别列出的**全部提交材料**见 [`MATERIALS.md`](MATERIALS.md)。
 >
-> **当前版本**：主应用 = **根 `bundle/`**（脚本应用）**0.8.6** ｜ L0 卡片包 = `apps/shiyi-card/bundle/` **0.3.3** ｜ 系统 app = `octos/` **0.3.11**；路径以 [`STRUCTURE.md`](STRUCTURE.md) 为准。文中更早的版本号（如 `0.7.x`）皆为**当时那一次取证/录屏的快照**（属事实，见 §E 证据索引）。
+> **当前版本**：主应用 = **根 `bundle/`**（脚本应用）**0.8.6** ｜ L0 卡片包 = `apps/shiyi-card/bundle/` **0.3.3** ｜ 系统 app = `octos/` **0.3.11**；路径以 [`docs/STRUCTURE.md`](docs/STRUCTURE.md) 为准。文中更早的版本号（如 `0.7.x`）皆为**当时那一次取证/录屏的快照**（属事实，见 §E 证据索引）。
 
 ---
 
@@ -15,7 +15,7 @@
 | -- | ------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1  | **只收 OctoScript 应用**      | ✅           | 根 `bundle/main.splash`（脚本应用，复赛主提交，含 `model`）                                                                                                                                                                                                                                                               |
 | 2  | 代码仓库（**公开 + Apache-2.0**） | ✅           | <https://github.com/sansanyixyz331/shiyi> · `LICENSE`                                                                                                                                                                                                                                                      |
-| 3  | **必须有 README**            | ✅           | `README.md`（含顶部 30 秒版）+ `评审速览.md`                                                                                                                                                                                                                                                                          |
+| 3  | **必须有 README**            | ✅           | `README.md`（含顶部 30 秒版）+ `docs/评审速览.md`                                                                                                                                                                                                                                                                          |
 | 4  | 简短需求                      | ✅           | `README.md` §1–§2                                                                                                                                                                                                                                                                                          |
 | 5  | 可运行最小原型 + **启动说明**        | ✅           | 原型 = 根 `bundle/`（脚本应用）+ `apps/shiyi-card/bundle/`（卡片包）+ `src/`（流程）；启动说明 = `README.md` §8。**提交材料即到此为止**                                                                                                                                                                                                     |
 | 6  | **固定版本源码或包**              | ✅           | **固定版本 = tag `gosim-semifinal-submission`**（复赛参赛版）· 内容版本另见 tag `v0.3.3`（卡片包）· `manifest.json` 内容寻址摘要                                                                                                                                                                                                       |
@@ -42,7 +42,7 @@
 |---|---|---|---|
 | **①** | 「发回群」闭环目前只有真机录屏证据，建议提供**可独立复跑的步骤说明**，或再录一版**带时间戳的完整链路** | ✅ **已落实** | **复跑说明**：[`docs/可独立复跑_发回群闭环_步骤说明.md`](docs/可独立复跑_发回群闭环_步骤说明.md)（三档复跑 / 逐步判据 / fail-closed 四态 / 主片时间戳对照）；**连续真录屏（非帧拼）**：[`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/)（20.7s）、[`docs/evidence/act/rinx-act-end-to-end.mp4`](docs/evidence/act/)（27s） |
 | **②** | Rinx 若放开 `model` 能力映射，把 **`ASK_MODEL` 打开**并补一条**真实模型识别证据** | ✅ **已落实** | 根 `bundle/main.splash` 的 **`ASK_MODEL = true`** —— 三级探测：`octos.turn.start`（手机壳）→ `model.complete`（桌面壳）→ 本机规则（都不在时**如实降级**，绝不假装接了模型）；卡上如实标「**识别来源 · 设备助手（决策：类型 + 标题 + 提醒）**」；证据：[`docs/evidence/model-path/`](docs/evidence/model-path/)、[`docs/evidence/identify/`](docs/evidence/identify/) |
-| **③** | 新发布流程只认仓库根 `bundle/`：`apps/shiyi-live/bundle` 需要**调整仓库结构** | ✅ **已落实** | **结构改制（2026-10-10）**：可交付 bundle 已归位**仓库根 [`bundle/`](bundle/)**，即复赛主提交；说明见 [`docs/复赛结构变更说明_20261010.md`](docs/复赛结构变更说明_20261010.md) 与 [`STRUCTURE.md`](STRUCTURE.md)；`apps/shiyi-live/` 保留为该形态的**详细说明** |
+| **③** | 新发布流程只认仓库根 `bundle/`：`apps/shiyi-live/bundle` 需要**调整仓库结构** | ✅ **已落实** | **结构改制（2026-10-10）**：可交付 bundle 已归位**仓库根 [`bundle/`](bundle/)**，即复赛主提交；说明见 [`docs/复赛结构变更说明_20261010.md`](docs/复赛结构变更说明_20261010.md) 与 [`docs/STRUCTURE.md`](docs/STRUCTURE.md)；`apps/shiyi-live/` 保留为该形态的**详细说明** |
 
 > **版本锚点**：评委按 tag **`gosim-semifinal-submission`** 取版即为复赛参赛版（含三形态全量）。
 
@@ -60,7 +60,7 @@
 | **④ 真机连续录屏 · 端到端**                  | [`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/rinx-live-end-to-end.mp4)（**20.7 秒 / 1316×1436 / H.264**，**一段连续真实录屏，非帧拼**）：导入 → Review（5 服务）→ Run → 读房间消息 → 点一条 → 造卡 → **确认行程** → 长期记忆 **0→1**。全程由宿主自带的 `MAKEPAD_REMOTE` 遥控口驱动，无人手介入；复现见 [`docs/evidence/live-run/README.md`](docs/evidence/live-run/README.md) |                                                                                                                                                                                                                                                                                       |                                                                                                                                                                                                                                                                                               |
 | **⑤ 真机连续录屏 · 「确认 = 办事」**            | [`docs/evidence/act/rinx-act-end-to-end.mp4`](docs/evidence/act/rinx-act-end-to-end.mp4)（**27 秒 / 2200×1440 / H.264**，一段连续真实录屏、非帧拼；该次录屏时为 `0.7.3`）：导入（绑房间）→ Review 列出 **6 个服务** → Run → 读到房间 **4 条真消息** → 点一条 → 造卡 → **确认 → 群里真多一条回执**（长期记忆 0→1）。逐步 5 帧截图见 [`docs/evidence/act/`](docs/evidence/act/)，复现见其 `README.md`                     |                                                                                                                                                                                                                                                                                       |                                                                                                                                                                                                                                                                                               |
 
-> **摘要分平台**：卡片包交 **Linux 评测** ⇒ 留 Linux digest；脚本应用跑在 **Windows 宿主（Rinx）** ⇒ 留 Windows digest（**谁运行它，就用谁那一侧的 hub 盖章**）。系统 app 跑在 **OctoSense 本体**，其 bundle 摘要由构建期 `pack_system_app` **自动盖章**（无需手动签名）。
+> **摘要**：`bundle_blake3` 按**目录内容**算、**与平台无关**（上游已统一 —— Windows 分隔符与 Git 行尾转换这两处平台输入已修）：同一份包在 Windows 与 Linux 上算出同一个值。跑参考宿主建议加 `--stamp`（只重算摘要、不改包内容；新旧工具都适用）。系统 app 跑在 **OctoSense 本体**，其 bundle 摘要由构建期 `pack_system_app` **自动盖章**（无需手动签名）。
 >
 > **【定性】形态三不走 App Hub 提交** —— 它是**原生宿主扩展**形态（随宿主源码构建），与官方两大交付形态**并列陈述**，只&#x4F5C;**「技术深度证据」**、**不作「上架作品」计**；也不占本仓 App Hub 提交位。本仓真正"上架"的是形态一与形态二。
 >
@@ -188,7 +188,7 @@ python build/record_demo.py                                  # → build/_video/
 | 宿主内逐屏抓图                                | `build/_evidence/shots/*.png`                                    | 五个末帧，字节各不相同（非同一张）                                                                                                                                                                                                                            |
 | 宿主运行日志                                 | `build/_evidence/host_*.log`                                     | 含 `admitted` / `[SPLASH] eval`                                                                                                                                                                                                               |
 | 失败态证据（宿主拒绝日志）                          | `build/_evidence/neg_unsigned.log`、`neg_tampered.log`            | 含 `refused:` 原文；**我们卡片零渲染**（fail-closed）；宿主在窗口里画**它自带的拒绝说明页**（截图 `neg_unsigned.png`/`neg_tampered.png`，演示片 ③ 段 ≈95–135s 画面）                                                                                                                  |
-| **★ 交付演示片（两条）**                       | `docs/evidence/demo-desktop-mail-20261011/` · `docs/evidence/demo-phone-groupmsg-20261012/` | 桌面 40.8s + 手机 111.9s（**合计 2′33″**），均**一镜到底 + 旁白 + 硬字幕** |
+| **★ 交付演示片（两条）**                       | `docs/evidence/demo-desktop-mail-20261011/` · `docs/evidence/demo-phone-groupmsg-20261012/` | 桌面 40.8s + 手机 111.9s（**合计 2′33″**），均**一镜到底 + 旁白 + 硬字幕**；**在线观看（B 站，已过审）** → [桌面](https://www.bilibili.com/video/BV1xGpq6uEeF) ／ [手机](https://www.bilibili.com/video/BV1tTpq6kEfa) |
 | **长期记忆文件**                             | `.local-state/memory.json`                                       | 运行期生成（`.gitignore` 排除）；`flow_run.json` 的 `memory` 段有三条断言的实测值                                                                                                                                                                                 |
 | 门禁 / 审查包                               | `build/review.json`                                              | `hub scan` 7 问                                                                                                                                                                                                                               |
 | **「确认 = 办事」真机取证**                      | `docs/evidence/act/`                                             | Review 列出 6 服务 / 造卡 / 确认已发回群 / 群里新回执 + **27s 连续录屏** + 复现 README（该次录屏时为 `0.7.3`）                                                                                                                                                              |
@@ -218,7 +218,7 @@ python build/record_demo.py                                  # → build/_video/
 
 ## H. 技术突破奖 · 项目反哺（按官方"项目反哺 + 效果证据"申报）
 
-官方：**"项目反哺：应用接入、数据能力、组件、协议或测试工具带来可复用的改进"**；**"效果证据：版本、补丁、复现步骤与前后对照"**，**"不以 PR 数量直接判定"**。我们 **4 条已被官方 merged + 2 条 open + 1 条平台扩展**，每条带前后对照：
+官方：**"项目反哺：应用接入、数据能力、组件、协议或测试工具带来可复用的改进"**；**"效果证据：版本、补丁、复现步骤与前后对照"**，**"不以 PR 数量直接判定"**。我们 **4 条已被官方 merged + 4 条 open + 1 条平台扩展**，每条带前后对照：
 
 | 编号 | 贡献                                  | 状态       | 前后对照（摘要）                                   |
 | -- | ----------------------------------- | -------- | ------------------------------------------ |
@@ -228,6 +228,8 @@ python build/record_demo.py                                  # → build/_video/
 | C4 | #64 Rinx Windows 构建/运行文档            | ✅ merged | Windows 上可跑有据                              |
 | C5 | #343 脚本 VM 时区（`local_time()` 恒 UTC） | 🟡 open  | +72−0                                      |
 | C6 | #151 L0 卡↔宿主契约 + 检查器                | 🟡 open  | **+933−0**；检查器与官方 hub **6/6 一致**           |
-| C7 | 宿主语音扩展（让 app 说话）                    | 已并入作品    | 补丁 91 行、基线官方源、`git apply --check` 通过       |
+| C7 | #121 未打包构建在可执行文件旁取资源（换机后图标/字体全缺） | 🟡 open  | 复用上游已有 `read_file_cwd_or_exe_relative`；`cargo check` 通过 |
+| C8 | #122 未打包构建在可执行文件旁取字体              | 🟡 open  | 同上；`cx_native.rs` 已有现成路径解析                |
+| C9 | 宿主语音扩展（让 app 说话）                    | 已并入作品    | 补丁 91 行、基线官方源、`git apply --check` 通过       |
 
-> 逐条复核直接看上面的 PR 编号即可（一键命令：`gh pr view 79/80/83/64/343/151`）；本表即仓库内的完整版。
+> 逐条复核直接看上面的 PR 编号即可（一键命令：`gh pr view 79/80/83/64/121/122/343/151`）；本表即仓库内的完整版。open 者一律口径为"**已提交、待上游处理**"。

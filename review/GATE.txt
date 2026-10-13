@@ -8,3 +8,24 @@ shiyi-live 0.8.6 — PASSED
 # bundle 摘要: 50404a65871a4fbe50f9b7740b7932d6fdae855164962a7b6b20d76a0f5cb909
 # 说明：带发布者签名（key_id=sansanyixyz331），本地准入验证用。
 # 正式发布按官方主推的 GitHub 溯源（publisher-github-v1，未签名包）。
+
+# ── 2026-10-13 更新（提交版本变更）────────────────────────────────────────
+# 主提交 bundle 已按官方 publisher-github-v1 要求【去签名】：
+#   · 上面的 PASSED 是 10-12「带签名版本」的本地准入复检 —— 历史留证，当时有效。
+#   · 10-13 起 integrity.signature 已移除；bundle_blake3 未变（摘要不含签名字段）。
+#   · 复检命令请改用：hub check bundle --allow-unsigned
+#     （当时在 Windows 上该工具会因自身路径规范化行为误报
+#       not a portable bundle path —— 与包无关，listing.json 里是正斜杠；
+#       上游 App-Hub #75 已修此工具缺陷，新版在 Windows 上可直接跑）
+#   · 参考宿主运行建议加 --stamp（摘要按目录算；旧版工具存在平台差异，
+#     上游 #79 / Rinx #75 已修，新版不加亦一致 —— 见 2026-10-13 19:3x 核对）；
+#     完整命令与说明见 README §8.2「两个必读」。
+#
+# 去签名的依据（均为实测）：
+#   card-host --help 原文：A signed manifest is still refused:
+#                          card-host verifies no publisher keys.
+#   实跑（带签名）：refused: no signature verifier is installed, so the signature
+#                   from key "sansanyixyz331" cannot be checked
+#   实跑（去签名 + --stamp）：shiyi-live 0.8.6 admitted
+#                             → isolate jailed …
+#                             → [SPLASH] eval: 59625 bytes view=true

@@ -43,7 +43,7 @@ L0 卡接宿主服务（`bindings.json`）有三条**会整卡失败**的坑，�
 ### 上游
 
 这三条已作为 issue 报给官方（附实证与源码依据）：
-**→ [OctoSense-org/OctoScript-App-Design-Flow#150](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/issues/150)**
+**→ [OctoSense-org/OctoSense-App-Flow#150](https://github.com/OctoSense-org/OctoSense-App-Flow/issues/150)**
 
 配套可复用说明：[`../rinx/L0卡接宿主服务_实战指南.md`](../rinx/L0卡接宿主服务_实战指南.md)。
 本检查器可作为 `hub check` 的一条补充规则（**已向官方表态愿意上游**）；在此之前它先在本仓保障

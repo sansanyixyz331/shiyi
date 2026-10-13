@@ -11,11 +11,7 @@
   },
   "id": "shiyi",
   "integrity": {
-    "bundle_blake3": "986c4ac18113a198e6688a9b86084fdc1aa638d68d82db421b92ac41b74966a2",
-    "signature": {
-      "key_id": "sansanyixyz331",
-      "value": "df09e626b37492d2aa824adb8e4dbf99048d59763c0ccf9f79517fa210c02b85e00bbe26fd1bc432db0dc54f3aca4272a7c339207e39468a399d1a684f222302"
-    }
+    "bundle_blake3": "986c4ac18113a198e6688a9b86084fdc1aa638d68d82db421b92ac41b74966a2"
   },
   "name": "拾意 Pickup",
   "network": {

@@ -14,11 +14,7 @@
   },
   "id": "shiyi-live",
   "integrity": {
-    "bundle_blake3": "50404a65871a4fbe50f9b7740b7932d6fdae855164962a7b6b20d76a0f5cb909",
-    "signature": {
-      "key_id": "sansanyixyz331",
-      "value": "ce0381f93aeb1ad994dbb91fb389f56d0111d0301d16e2ffbccd19fba7a4afe52cf12335c5a5092b67db989db1aa4d1584bcd1cd16b27eb10c6d52c73d776f0b"
-    }
+    "bundle_blake3": "50404a65871a4fbe50f9b7740b7932d6fdae855164962a7b6b20d76a0f5cb909"
   },
   "name": "拾意 · 现场造卡",
   "network": {

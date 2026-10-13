@@ -6,7 +6,7 @@
 >
 > **0.8.0 主升级**：把设备助手升为**决策核心**（给**人话标题** / 判**要不要提醒、提前多久** / 写**提醒时那句话** / 给**依据**，
 > 纯寒暄 `kind=none` 时**主动不造卡**）；助手不可用时**规则路径照常兜底**。
-> 当前版本以根 [`bundle/manifest.json`](../../bundle/manifest.json) 与 [`STRUCTURE.md`](../../STRUCTURE.md) 为准。
+> 当前版本以根 [`bundle/manifest.json`](../../bundle/manifest.json) 与 [`STRUCTURE.md`](../../docs/STRUCTURE.md) 为准。
 
 > 📍 **位置说明（2026-10-10 结构整理）**：这个形态的**可交付 bundle 已移到仓库根 [`bundle/`](../../bundle/)**，
 > 作为**复赛主提交**（本仓带 `model`（真实模型调用）能力的 App Hub 形态）。**本文件保留为形态①的详细说明**
@@ -57,35 +57,30 @@
 
 **验持久化**：造卡 → 确认 → 关掉应用 → 再打开。记忆条里的张数、偏好、常去都还在（这就是"长期"）。
 
-## ⚠️ 盖章必须用「与运行宿主同平台」的 hub（2026-10-05 实测踩到）
+## ⚠️ 摘要按目录内容算 —— 跑之前让工具重算一次（`--stamp`）
 
-这个 bundle 的**摘要是分平台的**（官方 #75：`digest_dir` 把相对路径也一起哈希 —— Windows 算 `\`、
-Linux 算 `/`）。而**这个应用跑在 Windows 的 Rinx / card-host 上** ⇒ **必须用 Windows 的 hub 盖章**：
+摘要是**按 bundle 目录的内容**算的（路径、长度、字节），**与平台无关**：同一份目录在 Windows 与 Linux 上算出同一个值。
+（上游 App-Hub `#79` 与 Rinx `#75` 已修正两处会让平台影响摘要的地方 —— **Windows 路径分隔符**、**Git 自动行尾转换**。）
+
+⇒ 最省事的做法：**跑之前加 `--stamp`**，让宿主按本机目录重算一次：
 
 ```bash
-hub.exe stamp bundle                     # ← 本应用用 Windows 的 hub（复赛结构：bundle 在仓库根）
+card-host --bundle bundle --app-data <tmp> --allow-unsigned --stamp --remote 8977
 ```
 
-**实测**：Linux hub 盖出 `3292adc8…`，而 Windows card-host 自己算出 `1eb813d4…` ⇒ **当场被拒**；
-被拒时宿主只画一张失败卡（`card-host refused this bundle / bundle digest … does not match`）。
-换 Windows hub 盖章后才 `admitted`：
+**为什么仍建议加**：该参数只重算摘要、不改动包内容，**新旧工具都适用**；万一你手上的工具早于 2026-10-07（摘要规则统一之前），
+它会按旧规则算出别的值而报不符 —— 加上 `--stamp` 就不受影响。
 
-```
-card-host: shiyi-live 0.5.0 admitted — capabilities {"model","storage"}, storage 262144 bytes
-```
+**实测**：本仓 `manifest.json` 的摘要值与现行规则下**任何平台**复算的结果一致（在 Windows 上复算 = 清单值）。
 
-> ⚠️ **别把「平台差异」误诊成「忘盖章」（我本人踩过，已做决定性实验定案）**：
-> 拿 **Linux hub 去 check 一个 Windows 盖章的包**，它**永远**报 digest 不一致 —— 这**不是**包坏了。
-> 判据：**先确认「盖章用的 hub 平台 == 运行宿主的平台」，再谈摘要对不对。**
-> 定案实验：取**改动前**的包内容 + **Windows** hub 重算 → 得到的正好是清单里原本那个值
-> ⇒ **原来的章是对的**，之前的"不一致"纯粹是拿 Linux 看 Windows 的包。
->
-> 注意与**卡片包形态**（`apps/shiyi-card/bundle/`，交 **Linux** 评测）**相反**：那边**留 Linux digest**。
-> 一句话：**谁运行它，就用谁的 hub 盖章。**
->
-> 补充实测：Windows 的 `hub check` 目前**本身还跑不通**（同一个 #75 的路径 bug，
-> 报 `not a portable bundle path: "assets\icon.svg"`）⇒ Windows 侧只能用 `stamp`，
-> 验收靠宿主日志里的 `admitted` 或抓帧。修这个 bug 的 PR 就是本队的 `#79`。
+> ⚠️ **别把「工具版本差异」误诊成「包坏了」**：宿主的准则是"自己算一遍、再与清单比对"。
+> 若报 `bundle digest … does not match the manifest's …`，先确认**工具版本**，不要先怀疑包内容。
+> 定案实验：用**改动前**的包内容 + 现行规则重算 → 得到的就是清单里原本那个值 ⇒ 包一直是好的。
+
+> 更正（2026-10-13）：本条此前写作"**摘要是分平台的**、必须用与运行宿主同平台的 hub 盖章"，
+> 那是 **2026-10-05** 旧工具的行为。上游此后把两处平台相关的摘要输入修掉了，**现在两个平台算出同一个值**。
+> 另外 Windows 上 `hub check` 曾因同一处路径 bug 跑不通（报 `not a portable bundle path: "assets\icon.svg"`），
+> 上游亦已修，**新版工具在 Windows 上可直接跑**。
 
 ## 跑
 
@@ -149,7 +144,7 @@ host.request("model.complete", {
 
 > ⚠️ **上表描述的是当时（0.7.1）的出厂态。** **现行复赛主提交 = 仓库根 [`bundle/`](../../bundle/)（0.8.6），其 `ASK_MODEL` 已为 `true`** ——
 > 且改为**三级探测**：`octos.turn.start`（手机壳）→ `model.complete`（桌面壳）→ 本机规则（都不在时如实降级）。
-> **以根 `bundle/manifest.json` 与 [`STRUCTURE.md`](../../STRUCTURE.md) 为准。**
+> **以根 `bundle/manifest.json` 与 [`STRUCTURE.md`](../../docs/STRUCTURE.md) 为准。**
 | `MODEL_STANDIN` | `false` —— 开发期替身 | 保持 `false`。仅在本地验证用：从 jail 的 `model-stub.json` 读一条回复，走**同一条**「回复 → 卡」解析路径 |
 
 **未启用时卡上照旧**写 `识别来源 · 本机规则（不依赖任何服务）`；启用后如实标注走了哪条：

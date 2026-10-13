@@ -21,7 +21,7 @@
 | ④ | `apps/shiyi-live/` | 形态①的详细说明文档（bundle 已移到根） | — | — | ❌ 仅文档 |
 
 > **另附（复核用）**：**`android/`** —— **能直接装上试的安卓包**（宿主 APK **分卷**，含 AI 内核；另附拾意应用包）。
-> 为方便不想编译的人复核手机端能力而附；**不参与 App Hub 提交**。安装 / 验收 / 坑清单见 [`android/README.md`](android/README.md)。
+> 为方便不想编译的人复核手机端能力而附；**不参与 App Hub 提交**。安装 / 验收 / 坑清单见 [`../android/README.md`](../android/README.md)。
 
 ## 三、当前版本现状（2026-10-12 复核）
 
@@ -50,15 +50,15 @@ grep '"version"' octos/apps/shiyi/bundle/manifest.json           # ③ 系统 ap
 
 | 顺序 | 文件 | 作用 |
 |---|---|---|
-| 1 | [`MATERIALS.md`](MATERIALS.md) | 提交材料清单（按类别列出全部材料） |
+| 1 | [`../MATERIALS.md`](../MATERIALS.md) | 提交材料清单（按类别列出全部材料） |
 | 1b | [`FILE-INDEX.md`](FILE-INDEX.md) | 文件索引（到文件级，按目录逐条列出会提交的全部文件） |
-| 2 | [`README.md`](README.md) | 作品说明（§30 秒版 + §8 复现 + §9 证据索引） |
+| 2 | [`../README.md`](../README.md) | 作品说明（§30 秒版 + §8 复现 + §9 证据索引） |
 | 3 | [`评审速览.md`](评审速览.md) | 速览 + 逐条对官方评分口径 |
-| 4 | [`SUBMISSION.md`](SUBMISSION.md) | 按"官方要什么"逐项对照（含复现命令） |
-| 5 | [`review/ANSWERS.md`](review/ANSWERS.md) | 官方门禁 scan 七问逐条回答（带源码行号） |
-| 6 | [`review/GATE.txt`](review/GATE.txt) | 门禁报告（`hub check` 输出，含 grants 行） |
-| 7 | [`docs/数据来源与限制.md`](docs/数据来源与限制.md) | 数据来源 / 已知限制 |
-| 8 | [`docs/Rinx宿主改造说明.md`](docs/Rinx宿主改造说明.md) | 宿主可用性改造（逐条改了什么 / 为什么 / 许可与归属） |
+| 4 | [`../SUBMISSION.md`](../SUBMISSION.md) | 按"官方要什么"逐项对照（含复现命令） |
+| 5 | [`../review/ANSWERS.md`](../review/ANSWERS.md) | 官方门禁 scan 七问逐条回答（带源码行号） |
+| 6 | [`review/GATE.txt`](../review/GATE.txt) | 门禁报告（`hub check` 输出，含 grants 行） |
+| 7 | [`数据来源与限制.md`](数据来源与限制.md) | 数据来源 / 已知限制 |
+| 8 | [`Rinx宿主改造说明.md`](Rinx宿主改造说明.md) | 宿主可用性改造（逐条改了什么 / 为什么 / 许可与归属） |
 
 ---
 

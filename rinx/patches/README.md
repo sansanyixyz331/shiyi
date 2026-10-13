@@ -26,10 +26,10 @@
 | 文件 | 改什么 | 涉及文件 | 规模 |
 |---|---|---|---|
 | `01-rinx-windows-build-path.patch` | Windows 上的构建与运行路径说明 | `README.md`、`packaging/README-octos.md` | 58 行 |
-| `02-rinx-host-usability-and-services.patch` | **① 可用性改造**（列表区分自带/导入、导入应用常驻可删可改、「打开 / 修改 / 删除」三个按钮、房间选择挪进应用界面、路径自适应、浅色主题、中英双标、资源查找）**② 三项宿主服务**（`rinx.schedule` 到点排程 / `rinx.notify` 系统通知 / `rinx.speak` 念出来）**③ 跨平台完整性摘要修复**（路径分隔符统一，避免同一份 bundle 在桌面与安卓算出两个摘要）**④ 安卓侧原生实现**（通知 + TTS + 清单权限） | 8 个 | 1,113 行 |
+| `02-rinx-host-usability-and-services.patch` | **① 可用性改造**（列表区分自带/导入、导入应用常驻可删可改、「打开 / 修改 / 删除」三个按钮、房间选择挪进应用界面、路径自适应、浅色主题、中英双标、资源查找）**② 三项宿主服务**（`rinx.schedule` 到点排程 / `rinx.notify` 系统通知 / `rinx.speak` 念出来）**③ 跨平台完整性摘要修复**（路径分隔符统一，避免同一份 bundle 在桌面与安卓算出两个摘要。**注：上游 Rinx `#75` 于 2026-10-07 已自行落地同类修复；本补丁该部分作用于我们的 vendor 副本与基线 `f18869e`，在新版上游上会重复**）**④ 安卓侧原生实现**（通知 + TTS + 清单权限） | 8 个 | 1,113 行 |
 | `03-makepad-portable-resource-lookup.patch` | 便携包场景的**字体**查找兜底：中文字体在「换一台机器解压运行」时也能找到 | `platform/src/cx_api.rs` | 33 行 |
 | `04-makepad-splash-eval-budget.patch` | 小应用脚本评估的**时限闸**从 `64ms` 放宽到 `3000ms`（原值在慢一点的机器上会让 59KB 的界面脚本超时被掐断 ⇒ **整块画面空白**） | `widgets/src/widget_async.rs` | 23 行 |
-| `05-makepad-unpackaged-resource-fallback.patch` | 便携包（**直接跑 exe**）场景下**图标等资源**的查找兜底：原逻辑只按「编译那台机器的绝对路径」找，换机后**整个界面一个图标都不画**；本补丁补上「exe 同目录 `resources/`」这条路 | `platform/src/script/res.rs` | 78 行 |
+| `05-makepad-unpackaged-resource-fallback.patch` | 便携包（**直接跑 exe**）场景下**图标等资源**的查找兜底：原逻辑只按「编译那台机器的绝对路径」找，换机后**整个界面一个图标都不画**；本补丁补上「exe 同目录 `resources/`」这条路（**注：该分支在安卓构建中被 `#[cfg(not(target_os = "android"))]` 排除 —— 安卓恒走打包资源路径，故本补丁只对桌面便携包生效**） | `platform/src/script/res.rs` | 78 行 |
 
 **为什么分两层**：01/02 是 Rinx 仓库内的改动；03/04/05 改的是**它引用的 makepad 依赖**。
 只打 01/02 而漏掉 makepad 那三个，会分别出现：**中文字体缺失**（漏 03）、**慢机器上应用页整块空白**（漏 04）、**整个界面没有图标**（漏 05）。

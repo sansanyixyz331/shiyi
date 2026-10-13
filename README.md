@@ -7,7 +7,30 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品 · 队伍
 
 ---
 
-## ⚡ 30 秒版（评委先看这段）
+## 🧭 评委导航（**先看这里 · 一屏看完**）
+
+> 本仓材料不少 —— **你要看的其实就下面这些**，按手上有多少时间选，**不用自己翻**。
+
+| 你有多久 | 看什么 |
+|---|---|
+| **3 分钟** | **两条演示片**（各 ≤2 分钟，均**一镜到底 + 旁白 + 硬字幕**）：[桌面 · 工作场景](https://www.bilibili.com/video/BV1xGpq6uEeF) ／ [手机 · 日常场景](https://www.bilibili.com/video/BV1tTpq6kEfa) |
+| **20 分钟** | 上面两条 ＋ [**评审速览**（一页）](docs/评审速览.md) ＋ [`docs/作品设计_拾意.md`](docs/作品设计_拾意.md) |
+| **要亲手验** | 直接跳 [**§8 怎么跑（复现）**](#8-怎么跑复现) —— 分三档：看已有证据 / 一键重跑 / 改着试 |
+
+**官方要看的四件事 → 一步到位：**
+
+| 官方评分维度 | 直接点这里 |
+|---|---|
+| ① **需求与任务价值** | 两条演示片 · [`docs/作品设计_拾意.md`](docs/作品设计_拾意.md) |
+| ② **核心流程可用性** | [`docs/evidence/act/`](docs/evidence/act/)（确认＝**真办事**）· [`docs/evidence/phone-live-20261011/`](docs/evidence/phone-live-20261011/)（手机整链闭环）· [`review/GATE.txt`](review/GATE.txt)（**门禁 PASSED**） |
+| ③ **数据来源与失败状态** | [`docs/数据来源与限制.md`](docs/数据来源与限制.md) · [`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md) |
+| ④ **复现与材料** | [§8 怎么跑](#8-怎么跑复现) · [`MATERIALS.md`](MATERIALS.md)（**材料清单**）· [`SUBMISSION.md`](SUBMISSION.md)（逐项对照官方要求） |
+
+**其余都是备查**：结构 [`docs/STRUCTURE.md`](docs/STRUCTURE.md) ｜ 到文件级全量索引 [`docs/FILE-INDEX.md`](docs/FILE-INDEX.md) ｜ 逐问逐答 [`review/ANSWERS.md`](review/ANSWERS.md) ｜ 官方评分口径逐条对照 [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)
+
+---
+
+## ⚡ 30 秒版（**这个作品是什么**）
 
 |                |                                                                                                                                                                                    |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -17,14 +40,13 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品 · 队伍
 | **两个场景**（演示分场） | **桌面＝消息来源「邮件」** ｜ **手机＝「家庭日常」**                                                                                                                                                    |
 | **AI 在哪**      | 接在**宿主服务层**，**不写在卡里**（L0 规范本身就禁止卡内调用）；**换任意 OpenAI 兼容模型，作品代码零改动**                                                                                                                  |
 | **怎么跑**        | 见 [§8 启动说明](#8-怎么跑复现)；门禁自检 `"$HUB_BIN" check bundle --allow-unsigned` → **PASSED**；五屏端到端 + 失败态 + 记忆取证 `python build/verify_flow.py`                                                |
-| **达标**         | OctoScript 应用 ✅ · 公开仓 **Apache-2.0** ✅ · README ✅ · **失败态** ✅（[`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)）· 演示片 ✅ · **答辩幻灯片** ✅（[`docs/拾意_复赛答辩幻灯片.pptx`](docs/拾意_复赛答辩幻灯片.pptx)） |
+| **达标**         | OctoScript 应用 ✅ · 公开仓 **Apache-2.0** ✅ · README ✅ · **失败态** ✅（[`docs/失败场景与回退_系统留证.md`](docs/失败场景与回退_系统留证.md)）· 演示片 ✅（[B 站 · 桌面](https://www.bilibili.com/video/BV1xGpq6uEeF) ／ [手机](https://www.bilibili.com/video/BV1tTpq6kEfa)）· **答辩幻灯片** ✅（[`docs/拾意_复赛答辩幻灯片.pptx`](docs/拾意_复赛答辩幻灯片.pptx)） |
 | **🔧 造 App 的机器** | 拾意不只是"一张卡"：本仓还有**一台把意图变成卡片的机器** —— 一条命令从一句话走到「通过官方门禁的 L0 bundle + 渲染出图 + 自评修订」；识别**两条路**（设备助手优先 / 本机规则兜底，**卡上自己标注走哪条**）。一页说明 [`docs/造App的机器_一页.md`](docs/造App的机器_一页.md)，代码 `build/pipeline.py`、`src/intent_model.py` |
-| **材料清单**       | [`MATERIALS.md`](MATERIALS.md) —— 按类别列出本仓提交的全部材料（作品本体 / 演示 / 证据 / 说明 / 复现 / 仓库文件）；**到文件级的全量索引见 [`FILE-INDEX.md`](FILE-INDEX.md)** |
-| **一页速览**       | [`评审速览.md`](评审速览.md)（3 分钟看懂）· [`docs/对标官方场景与评审口径.md`](docs/对标官方场景与评审口径.md)（逐条对官方评分口径）· 材料对照 [`SUBMISSION.md`](SUBMISSION.md)                                                       |
+| **去哪儿看**       | 见本页顶部「🧭 评委导航」；材料清单 [`MATERIALS.md`](MATERIALS.md) ｜ 一页速览 [`docs/评审速览.md`](docs/评审速览.md) ｜ 全量文件索引 [`docs/FILE-INDEX.md`](docs/FILE-INDEX.md) |
 
 > **本仓库只有一个提交物**：根 `bundle/`。卡片形态在 `apps/shiyi-card/bundle/`，系统 app 形态在 `octos/`，
 >   
-> 两者都**不以 App Hub 上架作品计**（下面 §3 讲清三种形态各自证什么）。结构速查：[`STRUCTURE.md`](STRUCTURE.md)。
+> 两者都**不以 App Hub 上架作品计**（下面 §3 讲清三种形态各自证什么）。结构速查：[`docs/STRUCTURE.md`](docs/STRUCTURE.md)。
 
 ---
 
@@ -71,7 +93,7 @@ GOSIM **Agentic App 黑客松 2026「意图即应用」** 参赛作品 · 队伍
 >   
 > ③ 是**原生宿主扩展**形态，只作**技术深度证据**，**不占本仓 App Hub 上架位**。
 >   
-> 当前结构以 [`STRUCTURE.md`](STRUCTURE.md) 为准。
+> 当前结构以 [`docs/STRUCTURE.md`](docs/STRUCTURE.md) 为准。
 
 ## 4. 两个端 · 两个真场景
 
@@ -225,6 +247,8 @@ export CARD_HOST_BIN="$WORK"/cache/target/debug/card-host.exe
 export APP_REPO=~/shiyi               # ← 本作品仓库
 
 # 1. 盖章（每次改完 bundle 都要重盖；改动会改变摘要）
+#    ★ 请【不要】对提交仓里的 bundle 直接盖章 —— 那会改动提交物本身。
+#      要复现就在自己的副本上做：  cp -r "$APP_REPO/bundle" /tmp/shiyi-bundle
 "$HUB_BIN" stamp "$APP_REPO/bundle"
 
 # 2. 门禁自检（→ PASSED）
@@ -234,9 +258,37 @@ export APP_REPO=~/shiyi               # ← 本作品仓库
 "$HUB_BIN" scan "$APP_REPO/bundle" --packet "$APP_REPO/build/review.json"
 
 # 4. 参考宿主运行（须在 Hub 仓库里启动，宿主资源才解析得到）
+#    ★ 建议带 --stamp（原因见下方「两个必读」第 2 条）
 cd "$WORK"/octosense-org/OctoSense-App-Hub
-"$CARD_HOST_BIN" --bundle "$APP_REPO/bundle" --app-data "$APP_REPO/.local-state" --allow-unsigned --remote
+"$CARD_HOST_BIN" --bundle "$APP_REPO/bundle" --app-data "$APP_REPO/.local-state" --allow-unsigned --stamp --remote
 ```
+
+> **⚠️ 两个必读（否则会看到"拒绝说明页"，而不是作品）**
+>
+> **1. 本作品的主提交 bundle 是【未签名】的 —— 这是官方要求。**
+> 官方新的发布机制是 `publisher-github-v1`（GitHub provenance + Sigstore 存证，**不需要发布者私钥**）；
+> 官方模板 `.github/workflows/publish-app.yml` 明确写着：**新流程要求 bundle 为「未签名」状态**
+> （`publisher-prepare` 会拒绝**已签名 / 已封存**的包）。参考宿主 `card-host` 同理 —— 它 `--help` 里的原文：
+> `--allow-unsigned` … *"A signed manifest is still refused: card-host verifies no publisher keys."*
+> ⇒ 用 `--allow-unsigned` 即可正常跑；**签过名的包反而会被拒**（这是宿主的准入策略，不是作品问题）。
+>
+> **2. `bundle_blake3` 是按目录内容算的；请让工具按本机重算一次（加 `--stamp`）。**
+> 本仓 `bundle/manifest.json` 里的摘要按**官方发布流水线（Linux）**记。宿主的准则是“自己算一遍、再与 manifest 比对”。
+> **若你手上的工具早于 2026-10-07**，它的摘要规则与现在不同 —— 上游 App-Hub `#79` / Rinx `#75`（均已合并）
+> 修正了两点：**Windows 的路径分隔符会被算进摘要**、**Git 的自动行尾转换会改变被哈希的字节**。
+> 用那时的工具直接跑，会判 `bundle digest … does not match the manifest's …`，并画**拒绝说明页**。
+> ⇒ **统一加 `--stamp`**（先按本机目录重算一次摘要再启动）：**新旧工具都适用**，只重算摘要、不改动你的包内容。
+>
+> 实测对照（Windows 桌面 · 官方 `card-host`）：
+>
+> | 跑法 | 结果 |
+> |---|---|
+> | 带签名（旧状态） | ❌ 拒绝页：`no signature verifier is installed, so the signature from key … cannot be checked` |
+> | 未签名、不加 `--stamp`（**早于 2026-10-07 的工具**） | ❌ 拒绝页：`bundle digest … does not match the manifest's …` |
+> | **未签名 + `--stamp`** | ✅ `shiyi-live 0.8.6 admitted` → `isolate jailed …` → `[SPLASH] eval: 59625 bytes view=true` |
+>
+> 说明：上表“不加 `--stamp` 被拒”一行是用 **2026-10-05** 构建的官方宿主实测的，当时摘要规则尚未统一；
+> 上游此后已修正（见上），**新版工具下两种跑法摘要一致**。因 `--stamp` 只重算摘要、无副作用，**新旧工具上都建议带上**。
 
 **端到端验证（正流程 + 两个失败态 + 记忆取证，一次跑完）**：
 
@@ -274,6 +326,8 @@ python src/shiyi_flow.py                    # 只看流程逻辑（打印每屏�
 | **手机端真机**（读群 → 出卡 → 确认 → 发回群）          | `docs/evidence/phone-live-20261008/`                                                                       |
 | **★ 冻结版正片 · 桌面「工作 · 邮件」**（一镜到底 40.8s，旁白 + 硬字幕） | `docs/evidence/demo-desktop-mail-20261011/` |
 | **★ 冻结版正片 · 手机「日常 · 群消息」**（一镜到底 111.9s，旁白 + 硬字幕） | `docs/evidence/demo-phone-groupmsg-20261012/` |
+| **官方最新版宿主验证**（rc.6 上可运行 + 提交物摘要与官方算法一致） | `docs/evidence/rc6-verify-20261013/`（准入日志 + 界面截图 + 摘要对照） |
+| **★ 队外真人试用**（外部用户自行解压、启动、实操的实录回传） | `docs/evidence/user-trial-20261013/`（录屏 2:26 + 4 张关键帧） |
 | 宿主语音扩展（可应用补丁）                          | `octos/host-extension/`                                                                                    |
 
 ## 10. 已知限制（诚实声明）
@@ -286,8 +340,19 @@ python src/shiyi_flow.py                    # 只看流程逻辑（打印每屏�
 - **模型可替换**：演示环境用的模型是**宿主侧配置**，**作品不绑定任何提供方**；换模型**作品零改动**。
 - **宿主侧的一道环境要求（换机 / 慢机器）—— 如实写明，附实测与对策**：宿主给"迷你应用脚本评估"设了一道**默认时限 64ms**（`makepad/widgets/src/widget_async.rs` → `with_splash_budget`）。本作品界面脚本 **59,625 字节**——我们实测的机器里，**快的正常、慢的超时**：超时后宿主会**掐断整段评估**，表现为「应用打开了（标题 / 房间下拉 / Running 都在）但**正文整块空白**」，宿主日志原话 `script time budget exceeded`、`[SPLASH] eval … view=false`。**这不是作品逻辑问题**：同一份脚本在正常环境下完整可用（官方参考宿主跑通、五屏与证据齐备）。
   **对策**：① 用我们修好的宿主（[`rinx/patches/04`](rinx/patches/04-makepad-splash-eval-budget.patch)，已把该时限放宽到 3000ms）；② 若只看结论，走 §8.0 的 **L0（零安装、读已有原始产物）**，不依赖任何宿主的运行速度。
-  **测量范围（按取证要求标注）**：以上「慢机器会空白」在 **Rinx 宿主**上实测（3 台机器对照 + 日志逐行）。**官方 `card-host` 我们未在本机实测**；但两者经 `[patch]` 指向**同一份 makepad**（`OctoSense-App-Hub/Cargo.toml` → `../makepad/widgets`，该文件实测值同为 **64ms**）⇒ 若官方宿主上也遇到同样空白，属**同一机制**，不是作品缺陷。
+  **测量范围（按取证要求标注）**：以上「慢机器会空白」在 **Rinx 宿主**上实测（3 台机器对照 + 日志逐行）。**官方 `card-host` 我们已在本机实测（2026-10-13）**：直接用它跑本仓 `bundle/` → **`admitted` → `[SPLASH] eval: 59625 bytes view=true`** + 抓到完整画面帧 ⇒ **在官方**未打补丁**的原始宿主上也能正常跑**（`OctoSense-App-Hub/Cargo.toml` 经 `[patch]` 指向 `../makepad/widgets`，该文件实测值 = **64ms**）。⇒ 若在**较慢的机器**上遇到同样空白，属**同一机制**（宿主默认时限的边界），不是作品缺陷。
 - **换机（便携包）场景的资源查找**：直接跑可执行文件时，图标 / 字体按「编译那台机器的绝对路径」查找、换机后落空 ⇒ **整个界面一个图标都不画**（悬停仍有名字）、中文变方框。已收进我们提交的补丁（[`rinx/patches/03`](rinx/patches/03-makepad-portable-resource-lookup.patch)、[`05`](rinx/patches/05-makepad-unpackaged-resource-fallback.patch)），并做过同机对照验证（同一台机器：修复前图标像素 **47** → 修复后 **2335**，与编译机一致）。
+
+- **在非编译机上，官方宿主可能渲染不全（文字不显示 / 图标缺失）—— 这是宿主侧的资源查找问题，不是作品缺陷**：
+  同一份 `bundle/` 在**编译那台机器**上完整渲染；换一台机器，`card-host` 会打出
+  `font member lxgw_wenkai_regular (<编译机绝对路径>\widgets\resources\LXGWWenKaiRegular.ttf) is not available in this build`
+  —— 路径是**编译时那台机器的绝对路径**，换机后落空 ⇒ 文字不渲染（**框线仍在、文字全无**）。
+  **我们已把同类修复作为补丁提交**（[`rinx/patches/03`](rinx/patches/03-makepad-portable-resource-lookup.patch) 字体兜底、
+  [`rinx/patches/05`](rinx/patches/05-makepad-unpackaged-resource-fallback.patch) 图标兜底），并做过**同机对照验证**
+  （同一台机器：修复前图标像素 **47** → 修复后 **2335**，与编译机一致）。
+  **测量范围**：本作品 `bundle/` 在 **Windows 桌面**、**官方 `card-host`** 上：编译机完整渲染；
+  第二台机器（2015 年 i5-6500 / Intel HD 530）**准入通过、脚本评估通过（`[SPLASH] eval … view=true`）、但文字不显示**（字体路径落空）。
+  这条与 `rinx/patches/` 里修的是**同一个根因**（资源按编译机绝对路径查找）。
 
 ## 11. 附录 · L0 卡片开发实测笔记（选读）
 

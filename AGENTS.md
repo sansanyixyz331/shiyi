@@ -28,6 +28,10 @@ record its revision; do not invent missing requirements:
 - 原生行为与外观验证**独立于** bundle 门禁；如实报告测过哪些平台与流程。
 - 每次改 `bundle/` 后 `hub stamp` → `hub check`；审查包放在 bundle 外；
   只在**最终字节**上签名，签后任何修改都要重盖公章并重签。发布密钥不入库。
+- ⚠️ **本仓的例外（按官方新流程）**：主提交 `bundle/` 保持**未签名** —— 官方发布走 `publisher-github-v1`
+  （GitHub provenance + Sigstore 存证，**不需要发布者私钥**），其模板明确要求包为**未签名**状态；
+  参考宿主 `card-host` 也**拒收**带签名的包。本地手签（`build/restamp_bundle.sh` + `hub check --publisher-key`）
+  仅用于**自测准入**，**提交前必须摘掉** `integrity.signature`。
 
 ## 本 app 特有的要求
 
