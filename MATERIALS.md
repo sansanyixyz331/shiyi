@@ -20,7 +20,8 @@
 
 | 材料 | 路径 | 说明 |
 |---|---|---|
-| 宿主可用性改造说明 | `docs/Rinx宿主改造说明.md` | 逐条列出在现成宿主上做的易用性改造（图标渲染 / 内置与导入分界线 / 「打开·修改·删除」三个按钮 / 房间选择挪进应用界面 / 路径自适应 / 双击后零点击直进 / 浅色主题 / 中英双标；另新增三项宿主服务 `rinx.schedule` / `rinx.notify` / `rinx.speak`）；许可与归属一并说明 |
+| 宿主可用性改造说明 | `docs/Rinx宿主改造说明.md` | 逐条列出在现成宿主上做的改造：**换机可用性**（图标 / 字体资源查找兜底、脚本评估时限 64ms→3000ms —— 不打这三条，换一台电脑会出现"整界面没图标 / 中文变方框 / 应用页整块空白"）＋ **易用性**（内置与导入分界线 / 「打开·修改·删除」三个按钮 / 房间选择挪进应用界面 / 路径自适应 / 双击后零点击直进 / 浅色主题 + 深色图标 / 中英双标）＋ **三项宿主服务** `rinx.schedule` / `rinx.notify` / `rinx.speak`；许可与归属一并说明 |
+| **宿主改造补丁（可自行编译 / 可审计）** | [`rinx/patches/`](rinx/patches/) | **5 个补丁 + 说明**：01 Rinx Windows 构建路径 · 02 Rinx 可用性改造 + 三项宿主服务 + 跨平台摘要修复 + 安卓原生实现 · **03 makepad 字体查找兜底** · **04 makepad 脚本评估时限 64ms→3000ms** · **05 makepad 便携包图标查找兜底**。基线、`git apply` 命令、打完能得到什么、以及"改 makepad 后必须 `cargo clean -p` 强编"的坑都写在 [`rinx/patches/README.md`](rinx/patches/README.md) |
 | 改造版宿主（便携物料） | 随作品另行提供（不入仓） | 解压即用、免注册；内含改造版宿主 + 作品 + 使用说明 |
 
 
@@ -77,6 +78,7 @@
 | 材料 | 路径 | 说明 |
 |---|---|---|
 | **安卓现成安装包** | [`android/`](android/) | **宿主 APK（分卷，含 AI 内核）＋ 拾意应用包 ＋ 安装 / 验收 / 坑清单** —— 先看 [`android/README.md`](android/README.md) |
+| **宿主改造补丁** | [`rinx/patches/`](rinx/patches/) | 5 个补丁（含 makepad 三条换机/慢机器修复），基线 + `git apply` 命令 + 复现说明 |
 | 手机端复现说明（自行构建） | [`docs/手机端复现说明.md`](docs/手机端复现说明.md) | 从源码编 Rinx 安卓包 → 装机 → 导入 → 绑房间（含"打包器与宿主必须同版 makepad"这个必踩坑） |
 | 复现说明 | [`README.md`](README.md) §8 | 三级：看已有证据 / 一键重跑 / 改着试（前置与耗时已如实标注） |
 | 五屏端到端脚本 | `build/verify_flow.py` | 正流程 + 失败态 + 记忆三条断言 |
@@ -96,6 +98,7 @@
 - 到点排程 / 发声（`rinx.schedule`）同为 Rinx 专有，宿主缺失时同样降级。
 - 手机端**未在 OctoSense Home 宿主上验证**；`listing.platforms` 的 `android` 指实测过的运行路径（真机 + Rinx 本地导入）。
 - 桌面端走标准 SMTP / IMAP 外部服务器，**未做企业邮箱域规模验证**。
+- **宿主侧一道环境要求**：宿主对"迷你应用脚本评估"有 **64ms 默认时限**（`makepad/widgets/src/widget_async.rs`），本作品界面脚本 59.6KB，**在较慢的机器上会被掐断 ⇒ 正文整块空白**（宿主日志 `script time budget exceeded`）。**实测 3 台机器对照得出**；对策：用我们修好的宿主（[`rinx/patches/04`](rinx/patches/04-makepad-splash-eval-budget.patch)，放宽到 3000ms），或走零安装的 L0 证据层。**官方 `card-host` 未在本机实测**，但它与本作品所用宿主经 `[patch]` 指向**同一份 makepad**（该文件实测值同为 64ms）。
 - 逐条限制见 [`docs/数据来源与限制.md`](docs/数据来源与限制.md)。
 
 ## 附、材料与官方评分维度的对应

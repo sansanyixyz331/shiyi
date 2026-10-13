@@ -1,0 +1,78 @@
+diff --git a/platform/src/script/res.rs b/platform/src/script/res.rs
+index 42b9f4cfe..89d028de5 100644
+--- a/platform/src/script/res.rs
++++ b/platform/src/script/res.rs
+@@ -421,8 +421,21 @@ fn load_packaged_resource(cx: &Cx, dep_path: &str) -> Option<Rc<Vec<u8>>> {
+ ))]
+ fn load_packaged_resource(cx: &Cx, dep_path: &str) -> Option<Rc<Vec<u8>>> {
+     let root = cx.package_root.as_deref()?;
+-    let full_path = format!("{}/{}", root, dep_path);
+-    crate::os::cx_native::read_file_cwd_or_exe_relative(&full_path).map(Rc::new)
++    // Desktop portable packages collect every crate's assets under
++    // <root>/resources/<crate>/..., but this lookup only tried <root>/<crate>/...,
++    // so icons, fonts and translations silently missed once the build was packaged
++    // for another machine. Try the packaged layout as well; the original path is
++    // tried first so nothing changes for layouts that already worked.
++    let candidates = [
++        format!("{}/{}", root, dep_path),
++        format!("{}/resources/{}", root, dep_path),
++    ];
++    for candidate in candidates {
++        if let Some(data) = crate::os::cx_native::read_file_cwd_or_exe_relative(&candidate) {
++            return Some(Rc::new(data));
++        }
++    }
++    None
+ }
+ 
+ /// Load a file directly from the filesystem (desktop/mobile only, not wasm).
+@@ -674,12 +687,43 @@ fn load_script_resource_impl(
+                             return;
+                         }
+                     }
+-                } else if let Some(result) = load_file_direct(&res.abs_path) {
+-                    res.data = match result {
+-                        Ok(data) => CxScriptResourceData::Loaded(data),
+-                        Err(e) => CxScriptResourceData::Error(e),
+-                    };
+-                    return;
++                } else {
++                    if let Some(result) = load_file_direct(&res.abs_path) {
++                        res.data = match result {
++                            Ok(data) => CxScriptResourceData::Loaded(data),
++                            Err(e) => CxScriptResourceData::Error(e),
++                        };
++                        return;
++                    }
++                    // ------------------------------------------------------------------
++                    // 2026-10-13 (ShiYi portable package): an UNPACKAGED exe that has
++                    // been copied to another machine has no build-time paths at all.
++                    // `res.abs_path` is absolute and points at the build machine's
++                    // checkout, so every crate resource (nav-rail icons, back arrows,
++                    // article icon fonts, i18n tables, ...) failed to load and the
++                    // whole UI rendered WITHOUT its icons -- while the same exe on the
++                    // build machine -- worked, because there the build-time path
++                    // happens to exist. Desktop packages collect every crate's assets
++                    // under <exe dir>/resources/<crate>/..., so look there too.
++                    // (load_packaged_resource above only runs when package_root is
++                    // Some; the portable package runs unpackaged, hence this branch.)
++                    // ------------------------------------------------------------------
++                    #[cfg(not(target_os = "android"))]
++                    if let Some(dep_path) = res.dependency_path.as_deref() {
++                        let candidates = [
++                            format!("resources/{}", dep_path),
++                            dep_path.to_string(),
++                        ];
++                        for candidate in candidates {
++                            if let Some(data) =
++                                crate::os::cx_native::read_file_cwd_or_exe_relative(&candidate)
++                            {
++                                crate::log!("SHIYI-RES-FALLBACK-2026 hit {}", candidate);
++                                res.data = CxScriptResourceData::Loaded(Rc::new(data));
++                                return;
++                            }
++                        }
++                    }
+                 }
+             }
+ 

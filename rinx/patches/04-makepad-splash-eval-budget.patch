@@ -1,0 +1,23 @@
+diff --git a/widgets/src/widget_async.rs b/widgets/src/widget_async.rs
+index d2f22abeb..03e930707 100644
+--- a/widgets/src/widget_async.rs
++++ b/widgets/src/widget_async.rs
+@@ -453,10 +453,16 @@ pub fn contain_isolate_panic(what: &str, f: impl FnOnce()) -> bool {
+ 
+ /// A Splash isolate runs untrusted-ish user script on the UI thread; cap how long any
+ /// single entry into it may run.
++///
++/// 2026-10-13 (Liu / ShiYi): raised 64ms -> 3000ms. A 59KB mini-app splash body
++/// evaluates in well under 64ms on a fast desktop but EXCEEDS 64ms on slower /
++/// loaded machines, where the hard budget then bails the eval and the whole
++/// mini-app canvas renders BLANK (log: "script time budget exceeded",
++/// vm.rs:1046). 3000ms keeps the guard while letting normal machines finish.
+ fn with_splash_budget<R>(vm: &mut ScriptVm, f: impl FnOnce(&mut ScriptVm) -> R) -> R {
+     let old_budget = vm.bx.run_budget.replace(ScriptRunBudget::from_durations(
+-        std::time::Duration::from_millis(64),
+-        std::time::Duration::from_millis(64),
++        std::time::Duration::from_millis(3000),
++        std::time::Duration::from_millis(3000),
+         512,
+     ));
+     let out = f(vm);

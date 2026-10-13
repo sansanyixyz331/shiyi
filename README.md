@@ -284,6 +284,10 @@ python src/shiyi_flow.py                    # 只看流程逻辑（打印每屏�
 - **车次为演示样例**（`source: sample`）：`src/shiyi_flow.py` 的 S3 三个班次是**示例**，接真实票务服务前**不当作事实**。
 - **长期记忆存在本机文件**：`.local-state/memory.json`（纯本地、不联网）；首次运行用内建初始值播种并如实标注来源。
 - **模型可替换**：演示环境用的模型是**宿主侧配置**，**作品不绑定任何提供方**；换模型**作品零改动**。
+- **宿主侧的一道环境要求（换机 / 慢机器）—— 如实写明，附实测与对策**：宿主给"迷你应用脚本评估"设了一道**默认时限 64ms**（`makepad/widgets/src/widget_async.rs` → `with_splash_budget`）。本作品界面脚本 **59,625 字节**——我们实测的机器里，**快的正常、慢的超时**：超时后宿主会**掐断整段评估**，表现为「应用打开了（标题 / 房间下拉 / Running 都在）但**正文整块空白**」，宿主日志原话 `script time budget exceeded`、`[SPLASH] eval … view=false`。**这不是作品逻辑问题**：同一份脚本在正常环境下完整可用（官方参考宿主跑通、五屏与证据齐备）。
+  **对策**：① 用我们修好的宿主（[`rinx/patches/04`](rinx/patches/04-makepad-splash-eval-budget.patch)，已把该时限放宽到 3000ms）；② 若只看结论，走 §8.0 的 **L0（零安装、读已有原始产物）**，不依赖任何宿主的运行速度。
+  **测量范围（按取证要求标注）**：以上「慢机器会空白」在 **Rinx 宿主**上实测（3 台机器对照 + 日志逐行）。**官方 `card-host` 我们未在本机实测**；但两者经 `[patch]` 指向**同一份 makepad**（`OctoSense-App-Hub/Cargo.toml` → `../makepad/widgets`，该文件实测值同为 **64ms**）⇒ 若官方宿主上也遇到同样空白，属**同一机制**，不是作品缺陷。
+- **换机（便携包）场景的资源查找**：直接跑可执行文件时，图标 / 字体按「编译那台机器的绝对路径」查找、换机后落空 ⇒ **整个界面一个图标都不画**（悬停仍有名字）、中文变方框。已收进我们提交的补丁（[`rinx/patches/03`](rinx/patches/03-makepad-portable-resource-lookup.patch)、[`05`](rinx/patches/05-makepad-unpackaged-resource-fallback.patch)），并做过同机对照验证（同一台机器：修复前图标像素 **47** → 修复后 **2335**，与编译机一致）。
 
 ## 11. 附录 · L0 卡片开发实测笔记（选读）
 

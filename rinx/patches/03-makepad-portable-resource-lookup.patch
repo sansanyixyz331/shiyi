@@ -31,31 +31,3 @@ index 71c12d2a3..e99c4396d 100644
          let resources = self.script_data.resources.resources.borrow();
          let res = resources.iter().find(|res| res.abs_path == path)?;
          if let crate::script::res::CxScriptResourceData::Loaded(data) = &res.data {
-diff --git a/platform/src/script/res.rs b/platform/src/script/res.rs
-index 42b9f4cfe..bd1611eeb 100644
---- a/platform/src/script/res.rs
-+++ b/platform/src/script/res.rs
-@@ -421,8 +421,21 @@ fn load_packaged_resource(cx: &Cx, dep_path: &str) -> Option<Rc<Vec<u8>>> {
- ))]
- fn load_packaged_resource(cx: &Cx, dep_path: &str) -> Option<Rc<Vec<u8>>> {
-     let root = cx.package_root.as_deref()?;
--    let full_path = format!("{}/{}", root, dep_path);
--    crate::os::cx_native::read_file_cwd_or_exe_relative(&full_path).map(Rc::new)
-+    // Desktop portable packages collect every crate's assets under
-+    // <root>/resources/<crate>/..., but this lookup only tried <root>/<crate>/...,
-+    // so icons, fonts and translations silently missed once the build was packaged
-+    // for another machine. Try the packaged layout as well; the original path is
-+    // tried first so nothing changes for layouts that already worked.
-+    let candidates = [
-+        format!("{}/{}", root, dep_path),
-+        format!("{}/resources/{}", root, dep_path),
-+    ];
-+    for candidate in candidates {
-+        if let Some(data) = crate::os::cx_native::read_file_cwd_or_exe_relative(&candidate) {
-+            return Some(Rc::new(data));
-+        }
-+    }
-+    None
- }
- 
- /// Load a file directly from the filesystem (desktop/mobile only, not wasm).
