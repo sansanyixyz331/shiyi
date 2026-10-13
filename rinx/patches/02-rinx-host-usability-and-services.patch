@@ -173,7 +173,7 @@ index 12db49f..94b7ecc 100644
              labels.push(name);
              self.rooms.push(id);
 diff --git a/src/miniapps/ui.rs b/src/miniapps/ui.rs
-index e4f0a99..003cd6d 100644
+index e4f0a99..1bcf55f 100644
 --- a/src/miniapps/ui.rs
 +++ b/src/miniapps/ui.rs
 @@ -37,59 +37,81 @@ script_mod! {
@@ -366,7 +366,7 @@ index e4f0a99..003cd6d 100644
          self.view.view(cx, ids!(import_form)).set_visible(cx, false);
          self.view.view(cx, ids!(app_content)).set_visible(cx, false);
          self.view.view(cx, ids!(header)).set_visible(cx, false);
-@@ -245,11 +296,301 @@ impl MiniAppsPanel {
+@@ -245,11 +296,306 @@ impl MiniAppsPanel {
          self.showing_catalog = false;
          self.view.view(cx, ids!(catalog)).set_visible(cx, false);
          self.view.view(cx, ids!(import_form)).set_visible(cx, true);
@@ -640,7 +640,12 @@ index e4f0a99..003cd6d 100644
 +    }
 +
 +    /// 便携包把应用放在 <exe 目录>/app/ 下：打开导入表单时自动填好路径，用户不必手打。
-+    fn prefill_bundle_path(&mut self, cx: &mut Cx) {        if !self.view.text_input(cx, ids!(import_form.path)).text().trim().is_empty() {
++    fn prefill_bundle_path(&mut self, cx: &mut Cx) {
++        // 有值且仍然有效（指向真正的应用包）⇒ 保留；否则按 exe 所在目录重填。
++        // —— 便携包被拷到别的电脑 / 别的目录时旧路径会失效，必须能自愈。
++        let cur = self.view.text_input(cx, ids!(import_form.path)).text();
++        let cur = cur.trim().to_string();
++        if !cur.is_empty() && std::path::Path::new(&cur).join("manifest.json").is_file() {
 +            return;
 +        }
 +        let Some(exe) = std::env::current_exe().ok() else { return };
@@ -669,7 +674,7 @@ index e4f0a99..003cd6d 100644
      }
      fn open_builtin(&mut self, cx: &mut Cx, index: usize) -> Result<(), String> {
          let app = crate::system_apps::apps().get(index).ok_or("Unknown built-in app")?;
-@@ -261,7 +602,7 @@ impl MiniAppsPanel {
+@@ -261,7 +607,7 @@ impl MiniAppsPanel {
              self.package = None;
              let package = Package::load_builtin(&app.manifest.id, &crate::app_data_dir().join("miniapps/imports"))?;
              self.show_import(cx);
@@ -678,7 +683,7 @@ index e4f0a99..003cd6d 100644
              self.review_package(cx, package)?;
              if app.manifest.id == super::palpo::APP_ID {
                  if let Some(account) = crate::sliding_sync::current_user_id()
-@@ -317,7 +658,7 @@ impl MiniAppsPanel {
+@@ -317,7 +663,7 @@ impl MiniAppsPanel {
          let status = crate::octos_service::status();
          self.view
              .label(cx, ids!(import_form.assistant_status))
@@ -687,7 +692,22 @@ index e4f0a99..003cd6d 100644
      }
      /// An explicit remote server (standalone only; hosted Rinx uses
      /// OctoSense's AI settings and offers no endpoint or key form).
-@@ -372,12 +713,14 @@ impl MiniAppsPanel {
+@@ -357,7 +703,13 @@ impl MiniAppsPanel {
+                 crate::octos_service::configure_local_provider(&family, &model, &base, &key)?;
+             }
+             self.view.text_input(cx, ids!(import_form.core.local_key)).set_text(cx, "");
+-            self.show_assistant_status(cx);
++            // 明确写出「已保存」——原来只更新成 primary: ready，用户看不出密钥存没存进去。
++            self.view
++                .label(cx, ids!(import_form.assistant_status))
++                .set_text(cx, crate::i18n::pick(
++                    "✓ 已保存 —— 助手已启用（密钥只存在本机，不外传）",
++                    "✓ 已保存 —— 助手已启用（密钥只存在本机，不外传） / Saved — assistant is on; your key stays on this device.",
++                ));
+             Ok(())
+         }
+         #[cfg(not(feature = "octos-local"))]
+@@ -372,12 +724,14 @@ impl MiniAppsPanel {
              Package::load_builtin(id, &snapshots)?
          } else {
              let path = self.view.text_input(cx, ids!(path)).text();
@@ -704,7 +724,7 @@ index e4f0a99..003cd6d 100644
          if !room.trim().is_empty() {
              ruma::RoomId::parse(room.trim()).map_err(|_| "Invalid Matrix room ID")?;
          }
-@@ -385,14 +728,20 @@ impl MiniAppsPanel {
+@@ -385,14 +739,20 @@ impl MiniAppsPanel {
          let imported = package.builtin_id().is_none();
          let origin = if imported { "Local unsigned bundle" } else { crate::i18n::tr("Built-in apps") };
          self.view.view(cx, ids!(bundle_path)).set_visible(cx, imported);
@@ -730,7 +750,7 @@ index e4f0a99..003cd6d 100644
          let notice = self.review_notice.clone();
          self.notice(cx, &notice);
          self.reviewed_room = room.trim().to_string();
-@@ -407,7 +756,7 @@ impl MiniAppsPanel {
+@@ -407,7 +767,7 @@ impl MiniAppsPanel {
          let account = crate::sliding_sync::current_user_id()
              .ok_or("Log in to Matrix before running a mini app")?
              .to_string();
@@ -739,7 +759,7 @@ index e4f0a99..003cd6d 100644
          if room.trim() != self.reviewed_room {
              return Err("Room access changed. Review the bundle again".into());
          }
-@@ -480,6 +829,7 @@ impl MiniAppsPanel {
+@@ -480,6 +840,7 @@ impl MiniAppsPanel {
          self.lease = Some(lease);
          self.publish_to_assistant();
          self.render(cx)?;
@@ -747,7 +767,7 @@ index e4f0a99..003cd6d 100644
          let calls = self.package.as_ref().unwrap().bindings.on_open.clone();
          for call in calls {
              self.binding(cx, call, "root", &Value::Null)?;
-@@ -636,7 +986,132 @@ impl MiniAppsPanel {
+@@ -636,7 +997,132 @@ impl MiniAppsPanel {
          }
          Ok(())
      }
@@ -880,7 +900,7 @@ index e4f0a99..003cd6d 100644
          let Some(lease) = self.lease.clone() else {
              return;
          };
-@@ -658,11 +1133,25 @@ impl MiniAppsPanel {
+@@ -658,11 +1144,25 @@ impl MiniAppsPanel {
              let result = rinx_miniapp_core::parse_arguments(&req.args_json).and_then(|args| {
                  if req.service == "rinx.event" {
                      self.event(cx, args)
@@ -907,7 +927,7 @@ index e4f0a99..003cd6d 100644
                  splash_host_respond(
                      cx,
                      req.heap_key,
-@@ -806,7 +1295,13 @@ impl Widget for MiniAppsPanel {
+@@ -806,7 +1306,13 @@ impl Widget for MiniAppsPanel {
                              if crate::sliding_sync::current_user_id().is_none_or(|user| user.as_str() != account) { continue; }
                              self.return_to_hub = true;
                              self.reviewed_room = room.clone().unwrap_or_default();
@@ -922,7 +942,7 @@ index e4f0a99..003cd6d 100644
                              let result = Package::load_verified(bundle.clone(), &crate::app_data_dir().join("miniapps/imports"))
                                  .and_then(|package| { self.package = Some(package); self.run(cx) });
                              if let Err(error) = result {
-@@ -821,15 +1316,67 @@ impl Widget for MiniAppsPanel {
+@@ -821,14 +1327,66 @@ impl Widget for MiniAppsPanel {
              }
              if self.view.button(cx, ids!(import_app)).clicked(actions) {
                  self.show_import(cx);
@@ -948,15 +968,15 @@ index e4f0a99..003cd6d 100644
 +                if index >= builtin_len && item.button(cx, ids!(card.edit)).clicked(actions) {
 +                    edit_request = Some(index);
 +                    break;
-+                }
+                 }
 +                if index >= builtin_len
 +                    && item.button(cx, ids!(card.remove)).clicked(actions)
 +                    && let Some((id, label, _)) = self.imported_apps.get(index - builtin_len)
 +                {
 +                    remove_request = Some((id.clone(), label.clone()));
 +                    break;
-                 }
-             }
++                }
++            }
 +            if let Some(index) = launch_request {
 +                let imported_path = if index >= builtin_len {
 +                    self.imported_apps.get(index - builtin_len).map(|(_, _, p)| p.clone())
@@ -990,11 +1010,10 @@ index e4f0a99..003cd6d 100644
 +            if let Some((id, label)) = remove_request {
 +                self.request_remove(cx, &id, &label);
 +                return;
-+            }
+             }
              let approve = self
                  .view
-                 .button(cx, ids!(approval.buttons.allow))
-@@ -886,20 +1433,72 @@ impl Widget for MiniAppsPanel {
+@@ -886,20 +1444,72 @@ impl Widget for MiniAppsPanel {
              handled.set(true);
              if self.navigate_back(cx) { cx.action(MiniAppsAction::Close); }
          }
@@ -1033,7 +1052,7 @@ index e4f0a99..003cd6d 100644
 +                        row.set_visible(cx, false);
                          row.draw_all(cx, &mut Scope::empty());
 +                        continue;
-+                    }
+                     }
 +                    row.set_visible(cx, true);
 +                    if index < builtin_len {
 +                        // 内置应用：不显示分界线，也没有删除/修改按钮（那是 Rinx 自带的）。
@@ -1067,12 +1086,12 @@ index e4f0a99..003cd6d 100644
 +                        };
 +                        row.label(cx, ids!(card.copy.name)).set_text(cx, &shown_name);
 +                        row.label(cx, ids!(card.copy.subtitle)).set_text(cx, crate::i18n::pick("已导入", "已导入 · 点「打开」直接运行 / Imported · tap Open to run"));
-                     }
++                    }
 +                    row.draw_all(cx, &mut Scope::empty());
                  }
              }
          }
-@@ -984,7 +1583,7 @@ mod tests {
+@@ -984,7 +1594,7 @@ mod tests {
          // The hidden Hub also has a `room` DropDown. Generic ids!(room)
          // resolves it first, losing a developer-import room grant.
          let room = "!import-room:example.org";
@@ -1081,7 +1100,7 @@ index e4f0a99..003cd6d 100644
          let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/miniapps/matrix-octos-script");
          let snapshots = tempfile_path_for_room_test();
          let package = Package::load_in(&path, &snapshots).expect("example bundle");
-@@ -1010,3 +1609,71 @@ mod tests {
+@@ -1010,3 +1620,71 @@ mod tests {
          assert!(panel.showing_catalog, "Catalog import returns to the catalog");
      }
  }
