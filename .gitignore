@@ -40,3 +40,8 @@ build/_probe/
 Thumbs.db
 desktop.ini
 *.swp
+
+# 内部提交前自检脚本（team-local）：只在本机跑，不进公开仓
+# 原因：它内含本团队对外口径词表（红线/排他），属内部口径，不宜公开。
+build/preflight_submit.py
+build/.banned-words.local.txt
