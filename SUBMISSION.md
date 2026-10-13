@@ -34,6 +34,20 @@
 
 ---
 
+## 🎯 官方初赛评审建议 → 落实对照（复赛收口）
+
+官方 **2026-10-09** 在我方 App Hub 提交 issue **#76** 给出初赛结论（`Preliminary result: shortlisted (score 83/100)`），并列出 **3 条改进建议**。**复赛工作即照此三条展开**，逐条对照如下：
+
+| # | 官方建议（要点） | 落实 | 位置 / 证据 |
+|---|---|---|---|
+| **①** | 「发回群」闭环目前只有真机录屏证据，建议提供**可独立复跑的步骤说明**，或再录一版**带时间戳的完整链路** | ✅ **已落实** | **复跑说明**：[`docs/可独立复跑_发回群闭环_步骤说明.md`](docs/可独立复跑_发回群闭环_步骤说明.md)（三档复跑 / 逐步判据 / fail-closed 四态 / 主片时间戳对照）；**连续真录屏（非帧拼）**：[`docs/evidence/live-run/rinx-live-end-to-end.mp4`](docs/evidence/live-run/)（20.7s）、[`docs/evidence/act/rinx-act-end-to-end.mp4`](docs/evidence/act/)（27s） |
+| **②** | Rinx 若放开 `model` 能力映射，把 **`ASK_MODEL` 打开**并补一条**真实模型识别证据** | ✅ **已落实** | 根 `bundle/main.splash` 的 **`ASK_MODEL = true`** —— 三级探测：`octos.turn.start`（手机壳）→ `model.complete`（桌面壳）→ 本机规则（都不在时**如实降级**，绝不假装接了模型）；卡上如实标「**识别来源 · 设备助手（决策：类型 + 标题 + 提醒）**」；证据：[`docs/evidence/model-path/`](docs/evidence/model-path/)、[`docs/evidence/identify/`](docs/evidence/identify/) |
+| **③** | 新发布流程只认仓库根 `bundle/`：`apps/shiyi-live/bundle` 需要**调整仓库结构** | ✅ **已落实** | **结构改制（2026-10-10）**：可交付 bundle 已归位**仓库根 [`bundle/`](bundle/)**，即复赛主提交；说明见 [`docs/复赛结构变更说明_20261010.md`](docs/复赛结构变更说明_20261010.md) 与 [`STRUCTURE.md`](STRUCTURE.md)；`apps/shiyi-live/` 保留为该形态的**详细说明** |
+
+> **版本锚点**：评委按 tag **`gosim-semifinal-submission`** 取版即为复赛参赛版（含三形态全量）。
+
+---
+
 ## 🔬 三种交付面（同一件作品，三副面孔）
 
 官方赛道一承认**两种交付形态**（进程应用 / App Card）。「拾意」把两种都做了，并在 **OctoSense 本体（系统 app）** 上把能力做到最深 —— 覆盖官方问答里"不要静态概念稿"的正面回答：

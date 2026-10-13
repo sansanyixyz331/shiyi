@@ -146,6 +146,10 @@ host.request("model.complete", {
 | 开关 | 现在 | 复赛怎么做 |
 |---|---|---|
 | `ASK_MODEL` | **`false`** —— 一律走本机规则（`model.complete` 在 Rinx 上必被拒，且顶栏会常驻一条提示 ⇒ 出厂关） | 在**提供 `model` 服务的宿主**（OctoSense shell）上改成 `true`，就会真的调设备助手 |
+
+> ⚠️ **上表描述的是当时（0.7.1）的出厂态。** **现行复赛主提交 = 仓库根 [`bundle/`](../../bundle/)（0.8.6），其 `ASK_MODEL` 已为 `true`** ——
+> 且改为**三级探测**：`octos.turn.start`（手机壳）→ `model.complete`（桌面壳）→ 本机规则（都不在时如实降级）。
+> **以根 `bundle/manifest.json` 与 [`STRUCTURE.md`](../../STRUCTURE.md) 为准。**
 | `MODEL_STANDIN` | `false` —— 开发期替身 | 保持 `false`。仅在本地验证用：从 jail 的 `model-stub.json` 读一条回复，走**同一条**「回复 → 卡」解析路径 |
 
 **未启用时卡上照旧**写 `识别来源 · 本机规则（不依赖任何服务）`；启用后如实标注走了哪条：
