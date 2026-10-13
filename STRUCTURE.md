@@ -62,4 +62,4 @@ grep '"version"' octos/apps/shiyi/bundle/manifest.json           # ③ 系统 ap
 
 ---
 
-*（`gosim-semifinal-submission` 现指向结构改制前的快照 `185d43c`；本页描述的是复赛版结构，发布前会重打该 tag。）*
+*（复赛 tag `gosim-semifinal-submission` 现指向**结构改制前的快照**（commit `185d43c`，2026-10-09）—— **提交时会重打为最终版**；本页描述的是复赛版结构，**版本一律以该 tag 为准**。）*

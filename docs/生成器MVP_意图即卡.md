@@ -69,7 +69,7 @@ build/pipeline.py            ← 一条命令
   App Studio（ADR 0006）也分里程碑。
 - 覆盖**单屏确认卡**；五屏流转（`cards/`）仍手写，生成器尚未接管。
 - 生成器**不产出提交物**：产出在 `build/_gen/`（已 ignore）。`bundle/`（冻结的参赛提交物）
-  **一字节不动**，固定版本一律以 **tag `gosim-initial-submission`** 为准。
+  **一字节不动**，固定版本一律以 **tag `gosim-semifinal-submission`**（复赛参赛版）为准。
 
 ## 八、文件
 

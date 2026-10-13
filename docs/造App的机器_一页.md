@@ -198,6 +198,6 @@ host.request("model.complete", {
   App Studio 也分里程碑）。
 - 覆盖**单屏确认卡 + 五屏流转**；**"图 → 卡片"**这一路（官方 image-to-card）**不做**。
 - 生成器**不产出提交物**：产出在 `build/_gen/`；冻结的 `bundle/`
-  **一字节不动**，固定版本一律以 **tag `gosim-initial-submission`** 为准。
+  **一字节不动**，固定版本一律以 **tag `gosim-semifinal-submission`**（复赛参赛版）为准。
 - 本机模型这条路是**开发期桥**（`src/host_local.py`）；真机上由宿主决定有没有模型，
   应用不依赖它。

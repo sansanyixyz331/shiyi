@@ -11,10 +11,10 @@
 
 | 形态 | 路径 | 版本 | 说明 |
 |---|---|---|---|
-| ① **脚本应用**（主提交） | `bundle/` | **0.8.6** | `main.splash`；一句话进去 → 出卡；含自动读邮件 / 自动读群消息；门禁 `hub check` PASSED |
+| ① **脚本应用**（主提交） | `bundle/` | **0.8.6** | `main.splash`；一句话进去 → 出卡；含**自动读群消息**（群里来新消息它自己读到就造卡；「自动读邮件」在系统 app 形态 `octos/`）；门禁 `hub check` PASSED |
 | ② L0 卡片包 | `apps/shiyi-card/bundle/` | **0.3.3** | `page.card` + `bindings.json` + `apps/shiyi-card/bundle/kit/` |
 | ③ 系统 app | `octos/` | **0.3.11** | `os.shiyi` + 宿主语音扩展（技术深度证据，不占 App Hub 提交位） |
-| 五屏截图 | `bundle/screenshots/` | — | 五屏，515×1073 |
+| 五屏截图 | `apps/shiyi-card/bundle/screenshots/` | — | 五屏（`01-read` … `05-done`），515×1073 |
 
 ## 一·B、宿主可用性改造（陌生用户能自己跑起来的原因）
 
